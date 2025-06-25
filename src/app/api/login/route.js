@@ -8,7 +8,9 @@ export async function POST(req) {
     const { email, password } = body;
 
     if (!email || !password) {
-      return new Response(JSON.stringify({ message: 'Email and password are required' }), {
+      return new Response(JSON.stringify({ 
+        message: 'Email and password are required' 
+      }), {
         status: 400,
       });
     }
@@ -51,7 +53,9 @@ export async function POST(req) {
 
   } catch (err) {
     console.error('Login error:', err);
-    return new Response(JSON.stringify({ message: 'Server error' }), {
+    return new Response(JSON.stringify({ 
+      message: 'Server error' 
+    }), {
       status: 500,
     });
   }
