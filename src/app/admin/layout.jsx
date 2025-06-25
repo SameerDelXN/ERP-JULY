@@ -11,7 +11,7 @@ const layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div className="max-h-screen bg-gray-50">
-      <div>
+      <aside>
         <DashboardSidebar
           items={sidebarItems}
           activeTab={activeTab}
@@ -45,7 +45,7 @@ const layout = ({ children }) => {
             </div>
           </Header>
         </div>
-      </div>
+      </aside>
       {children}
     </div>
   );

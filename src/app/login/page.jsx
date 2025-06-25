@@ -1,19 +1,46 @@
 "use client";
 import React, { useState } from "react";
 import { User, Lock, UserCheck, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 const page = () => {
-  const [selectedRole, setSelectedRole] = useState("admin");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
+  const router = useRouter();
+
+  const [selectedRole, setSelectedRole] = useState("admin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Login attempt:", { role: selectedRole, username, password });
-    // Handle login logic here
-  };
+    console.log("Login attempt:", { role: selectedRole, email, password });
+    setError("");
+
+     try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: selectedRole, email, password }),
+      });
+       const data = await res.json();
+        
+      if (res.ok) {
+         if (data.role !== selectedRole) {
+          setError("Role mismatch. Please select the correct role.");
+          return;
+        }
+        router.push(`/admin/${data.role}`);
+      } else {
+        setError(data.message || "Login failed.");
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      setError("Something went wrong.");
+    }
+  };    
   return (
     <>
-      <div className="max-h-screen lg:flex bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600">
+      <div className="min-h-screen lg:flex bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600">
         {/* Left Side - Illustration */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="bg-white rounded-3xl p-8 max-w-md shadow-2xl">
@@ -111,17 +138,17 @@ const page = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
+                  Email Id
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-500 w-5 h-5" />
                   <input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder={`${
                       selectedRole === "admin" ? "Admin" : "Staff"
-                    } Username`}
+                    } Email Id`}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                     required
                   />
@@ -160,7 +187,7 @@ const page = () => {
                   Forgot Password?
                 </a>
               </div>
-
+               {error && <p className="text-red-600 text-sm text-center mb-3">{error}</p>}
               <button
                 onClick={handleLogin}
                 className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-indigo-600 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg"
@@ -169,6 +196,16 @@ const page = () => {
                 <span className="ml-2">→</span>
               </button>
             </div>
+            
+            <div className="mt-6 text-center text-sm text-gray-600">
+            Don't Have an account?{" "}
+            <a
+              href="/register"
+              className="text-blue-600 hover:underline font-medium"
+            >
+              Sign up
+            </a>
+          </div>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600 text-sm">
