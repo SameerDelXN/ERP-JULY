@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "student", "staff", "parents"],
       default: "student",
     },
+    agreeToTerms: {
+      type: Boolean,
+      required: true
+    },
+
 
     isVerified: {
       type: Boolean,

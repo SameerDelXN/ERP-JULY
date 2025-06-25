@@ -6,7 +6,7 @@ const page = () => {
 
   const router = useRouter();
 
-  const [selectedRole, setSelectedRole] = useState("admin");
+  const [selectedRole, setSelectedRole] = useState("Admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,16 +20,20 @@ const page = () => {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: selectedRole, email, password }),
+        body: JSON.stringify({ role: selectedRole.toLowerCase(), email, password }),
       });
        const data = await res.json();
         
       if (res.ok) {
-         if (data.role !== selectedRole) {
+         if (data.user.role !== selectedRole.toLowerCase()) {
+          console.log(data.user.role);
+          
+          console.log(selectedRole.toLowerCase());
+          
           setError("Role mismatch. Please select the correct role.");
           return;
         }
-        router.push(`/admin/${data.role}`);
+        router.push(`/${data.user.role}`);
       } else {
         setError(data.message || "Login failed.");
       }
@@ -110,9 +114,9 @@ const page = () => {
             {/* Role Selection */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <button
-                onClick={() => setSelectedRole("admin")}
+                onClick={() => setSelectedRole("Admin")}
                 className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                  selectedRole === "admin"
+                  selectedRole === "Admin"
                     ? "bg-indigo-500 border-indigo-500 text-white shadow-lg"
                     : "border-gray-200 text-gray-600 hover:border-indigo-300"
                 }`}
@@ -122,9 +126,9 @@ const page = () => {
               </button>
 
               <button
-                onClick={() => setSelectedRole("staff")}
+                onClick={() => setSelectedRole("Staff")}
                 className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                  selectedRole === "staff"
+                  selectedRole === "Staff"
                     ? "bg-indigo-500 border-indigo-500 text-white shadow-lg"
                     : "border-gray-200 text-gray-600 hover:border-indigo-300"
                 }`}
@@ -147,7 +151,7 @@ const page = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={`${
-                      selectedRole === "admin" ? "Admin" : "Staff"
+                      selectedRole === "Admin" ? "Admin" : "Staff"
                     } Email Id`}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                     required
