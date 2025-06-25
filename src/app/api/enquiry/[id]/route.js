@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
-import Enquiry from '../../../models/enquiryschema';
+import Enquiry from '../../../models/enquirySchema';
 
 // DELETE /api/enquiry/[id]
 export async function DELETE(_, { params }) {
