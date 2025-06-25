@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import userSchema from '../../models/usermodel';
+import userSchema from '../../models/userSchema';
 import { connectToDatabase } from '../../lib/mongodb';
 
 export async function POST(req) {
