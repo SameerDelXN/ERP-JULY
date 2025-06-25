@@ -11,13 +11,17 @@ export async function POST(req) {
       phone,
       password,
       confirmPassword,
-      role
+      role,
+      agreeToTerms
     } = body;
 
     // Check for missing fields
-    if (!fullName || !email || !phone || !password || !confirmPassword || !role) {
+    if (
+      !fullName || !email || !phone || !password ||
+      !confirmPassword || !role || agreeToTerms !== true
+    ) {
       return new Response(JSON.stringify({
-        message: 'All fields are required',
+        message: 'All fields are required and you must agree to the terms',
       }), { status: 400 });
     }
 
@@ -56,6 +60,7 @@ export async function POST(req) {
       phone,
       password: hashedPassword,
       role,
+      agreeToTerms: true
     });
 
     await user.save();
