@@ -47,7 +47,6 @@ export async function POST(req) {
 
         return NextResponse.json({ 
             message: 'Academic year created successfully', 
-            data: newAcademic 
         }, { 
             status: 201 
         });
