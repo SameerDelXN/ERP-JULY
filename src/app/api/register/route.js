@@ -22,7 +22,9 @@ export async function POST(req) {
     ) {
       return new Response(JSON.stringify({
         message: 'All fields are required and you must agree to the terms',
-      }), { status: 400 });
+      }), {
+        status: 400
+      });
     }
 
     // Validate role
@@ -30,14 +32,18 @@ export async function POST(req) {
     if (!validRoles.includes(role)) {
       return new Response(JSON.stringify({
         message: 'Invalid role selected',
-      }), { status: 400 });
+      }), {
+        status: 400
+      });
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
       return new Response(JSON.stringify({
         message: 'Passwords do not match',
-      }), { status: 400 });
+      }), {
+        status: 400
+      });
     }
 
     await connectToDatabase();
@@ -47,7 +53,9 @@ export async function POST(req) {
     if (existingUser) {
       return new Response(JSON.stringify({
         message: 'User with this email already exists',
-      }), { status: 409 });
+      }), {
+        status: 409
+      });
     }
 
     // Hash the password
@@ -79,6 +87,8 @@ export async function POST(req) {
     console.error('Registration error:', error);
     return new Response(JSON.stringify({
       message: 'Server error',
-    }), { status: 500 });
+    }), {
+      status: 500
+    });
   }
 }

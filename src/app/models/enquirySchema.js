@@ -2,10 +2,15 @@ import mongoose from 'mongoose';
 
 const { Schema, model, models, Types } = mongoose;
 
-const EnquirySchema = new Schema({
-  name: {
+const enquirySchema = new Schema({
+  first: {
     type: String,
-    required: true,
+    required: true
+  },
+  middle: String,
+  last: {
+    type: String,
+    required: true
   },
   phone: {
     type: String,
@@ -42,4 +47,6 @@ const EnquirySchema = new Schema({
   },
 });
 
-export default models.Enquiry || model('Enquiry', EnquirySchema);
+const enquiry = mongoose.models.enquiry|| mongoose.model('enquiry', enquirySchema);
+
+export default enquiry;
