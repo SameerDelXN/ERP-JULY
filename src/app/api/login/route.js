@@ -1,15 +1,26 @@
 import bcrypt from 'bcryptjs';
-import userSchema from '../../models/userSchema'; 
+import userSchema from '../../models/userSchema';
 import { connectToDatabase } from '../../lib/mongodb';
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const { email, password, role } = body;
 
-    if (!email || !password) {
-      return new Response(JSON.stringify({ 
-        message: 'Email and password are required' 
+    // Validate input
+    if (!email || !password || !role) {
+      return new Response(JSON.stringify({
+        message: 'Email, password, and role are required'
+      }), {
+        status: 400,
+      });
+    }
+
+    // Validate role
+    const validRoles = ["admin", "student", "staff", "parents"];
+    if (!validRoles.includes(role)) {
+      return new Response(JSON.stringify({
+        message: 'Invalid role'
       }), {
         status: 400,
       });
@@ -17,21 +28,22 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    const userFromDB = await userSchema.findOne({ email });
+    // Find user by email and role
+    const userFromDB = await userSchema.findOne({ email, role });
 
     if (!userFromDB) {
-      return new Response(JSON.stringify({ 
-        message: 'Invalid email' 
+      return new Response(JSON.stringify({
+        message: 'Invalid email or role'
       }), {
         status: 401,
       });
     }
 
+    // Check password
     const passwordMatch = await bcrypt.compare(password, userFromDB.password);
-
     if (!passwordMatch) {
-      return new Response(JSON.stringify({ 
-        message: 'Incorrect password' 
+      return new Response(JSON.stringify({
+        message: 'Incorrect password'
       }), {
         status: 401,
       });
@@ -53,8 +65,8 @@ export async function POST(req) {
 
   } catch (err) {
     console.error('Login error:', err);
-    return new Response(JSON.stringify({ 
-      message: 'Server error' 
+    return new Response(JSON.stringify({
+      message: 'Server error'
     }), {
       status: 500,
     });
