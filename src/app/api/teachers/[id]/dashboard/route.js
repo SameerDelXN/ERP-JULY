@@ -9,14 +9,14 @@ import mongoose from 'mongoose';
 export async function GET(req, { params }) {
   try {
     await connectToDatabase();
-    const { _id } = params;
+    const { id } = params;
 
-    if (!_id || !mongoose.Types.ObjectId.isValid(id)) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid or missing teacher ID' }, { status: 400 });
     }
 
     // Get teacher details
-    const teacher = await teacherSchema.findById(_id).select('-password');
+    const teacher = await teacherSchema.findById(id).select('-password');
     if (!teacher) {
       return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }

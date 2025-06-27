@@ -1,72 +1,39 @@
-// hod functions can add yr, subjects, division
+// // hod functions can add yr, subjects, division
 
-// app/api/academic/route.js
+// // src/app/api/academics/route.js
 
-// import { NextResponse } from 'next/server';
 // import { connectToDatabase } from '../../lib/mongodb';
 // import academicSchema from '../../models/academicSchema';
+// import { NextResponse } from 'next/server';
 
 // export async function POST(req) {
-//     try {
-//         await connectToDatabase();
-//         const body = await req.json();
+//   try {
+//     await connectToDatabase();
+//     const data = await req.json();
 
-//         const {
-//             year,               // e.g., "Second Year"
-//             subjects,           // e.g., [{ name: "Math", code: "MATH101" }, ...]
-//             divisions           // e.g., [{ name: "A", classTeacher: "<ObjectId>" }, ...]
-//         } = body;
-
-//         // Validate required fields
-//         if (!year || !Array.isArray(subjects) || !Array.isArray(divisions)) {
-//             return NextResponse.json({ 
-//                 error: 'Missing required fields' 
-//             }, { 
-//                 status: 400 
-//             });
-//         }
-
-//         // Check for duplicate academic year
-//         const existing = await academicSchema.findOne({ year });
-//         if (existing) {
-//             return NextResponse.json({ 
-//                 error: 'Academic year already exists' 
-//             }, { 
-//                 status: 409 
-//             });
-//         }
-
-//         const newAcademic = new academicSchema({
-//             year,
-//             subjects,
-//             divisions,
-//             // timetable, assignments, attendanceRecords, exams will be empty by default
-//         });
-
-//         await newAcademic.save();
-
-//         return NextResponse.json({ 
-//             message: 'Academic year created successfully', 
-//         }, { 
-//             status: 201 
-//         });
-
-//     } catch (error) {
-//         console.error('Error creating academic year:', error);
-//         return NextResponse.json({ 
-//             error: 'Internal Server Error' 
-//         }, { 
-//             status: 500 
-//         });
+//     // Validate required fields
+//     if (!data.year || !Array.isArray(data.divisions)) {
+//       return NextResponse.json({ error: 'Missing year or divisions' }, { status: 400 });
 //     }
+
+//     const newAcademic = new academicSchema(data);
+//     await newAcademic.save();
+
+//     return NextResponse.json(
+//       { message: 'Academic record created successfully', academic: newAcademic },
+//       { status: 201 }
+//     );
+//   } catch (error) {
+//     console.error('Error creating academic record:', error);
+//     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+//   }
 // }
 
 
 
-// src/app/api/academics/route.js
-
 import { connectToDatabase } from '../../lib/mongodb';
 import academicSchema from '../../models/academicSchema';
+import teacherSchema from '../../models/teacherSchema';
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
@@ -74,11 +41,34 @@ export async function POST(req) {
     await connectToDatabase();
     const data = await req.json();
 
-    // Validate required fields
+    // Validate year and divisions array
     if (!data.year || !Array.isArray(data.divisions)) {
       return NextResponse.json({ error: 'Missing year or divisions' }, { status: 400 });
     }
 
+    // Loop through divisions and validate teacher existence for each subject
+    for (const division of data.divisions) {
+      if (!division.name || !Array.isArray(division.subjects)) {
+        return NextResponse.json({ error: 'Each division must have a name and subjects' }, { status: 400 });
+      }
+
+      for (const subject of division.subjects) {
+        if (!subject.name || !subject.teacher) {
+          return NextResponse.json({ error: 'Each subject must have a name and teacher' }, { status: 400 });
+        }
+
+        const teacher = await teacherSchema.findById(subject.teacher);
+        if (!teacher) {
+          return NextResponse.json({ error: `Teacher not found for subject ${subject.name}` }, { status: 404 });
+        }
+
+        // Add teacher info directly (if you want to embed)
+        subject.teacherId = teacher.teacherId;
+        subject.teacherName = teacher.fullName;
+      }
+    }
+
+    // Create and save academic document
     const newAcademic = new academicSchema(data);
     await newAcademic.save();
 
