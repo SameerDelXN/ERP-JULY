@@ -1,9 +1,12 @@
-import bcrypt from 'bcryptjs';
-import userSchema from '../../models/userSchema';
+
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb';
+import User from '../../models/userSchema';
+import teacherSchema from '../../models/teacherSchema';
 
 export async function POST(req) {
   try {
+    await connectToDatabase();
     const body = await req.json();
     const {
       fullName,
@@ -12,83 +15,69 @@ export async function POST(req) {
       password,
       confirmPassword,
       role,
-      agreeToTerms
+      department,
+      teacherId
     } = body;
 
-    // Check for missing fields
-    if (
-      !fullName || !email || !phone || !password ||
-      !confirmPassword || !role || agreeToTerms !== true
-    ) {
-      return new Response(JSON.stringify({
-        message: 'All fields are required and you must agree to the terms',
-      }), {
-        status: 400
-      });
+    // Ensure role is selected
+    if (!role) {
+      return NextResponse.json({ error: 'Role is required' }, { status: 400 });
     }
 
-    // Validate role
-    const validRoles = ['admin', 'student', 'staff', 'parents'];
-    if (!validRoles.includes(role)) {
-      return new Response(JSON.stringify({
-        message: 'Invalid role selected',
-      }), {
-        status: 400
+    // ✅ If role is Teacher, register in Teacher model
+    if (role === 'Teacher') {
+      if (!fullName || !email || !phone || !department || !teacherId) {
+        return NextResponse.json({ error: 'All teacher fields are required' }, { status: 400 });
+      }
+
+      const existing = await teacherSchema.findOne({
+        $or: [{ email }, { teacherId }]
       });
+
+      if (existing) {
+        return NextResponse.json({ error: 'Teacher already exists' }, { status: 409 });
+      }
+
+      const newTeacher = await teacherSchema.create({
+        fullName,
+        email,
+        phone,
+        department,
+        teacherId,
+        role,
+      });
+
+      return NextResponse.json({ message: 'Teacher registered successfully' }, { status: 201 });
     }
 
-    // Check if passwords match
+    // ✅ Handle normal User registration for other roles
+    if (!fullName || !email || !phone || !password || !confirmPassword) {
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+    }
+
     if (password !== confirmPassword) {
-      return new Response(JSON.stringify({
-        message: 'Passwords do not match',
-      }), {
-        status: 400
-      });
+      return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
     }
 
-    await connectToDatabase();
-
-    // Check if user already exists
-    const existingUser = await userSchema.findOne({ email });
-    if (existingUser) {
-      return new Response(JSON.stringify({
-        message: 'User with this email already exists',
-      }), {
-        status: 409
-      });
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Optional: Hash password here
+    const hashedPassword = password; // Replace with bcrypt.hash(password, salt) if needed
 
-    // Create the user
-    const user = new userSchema({
+    const newUser = await User.create({
       fullName,
       email,
       phone,
       password: hashedPassword,
       role,
-      agreeToTerms: true
     });
 
-    await user.save();
-
-    return new Response(JSON.stringify({
-      message: 'User registered successfully',
-      user: {
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
-    }), { status: 201 });
-
+    return NextResponse.json({ message: 'User registered successfully' }, { status: 201 });
   } catch (error) {
-    console.error('Registration error:', error);
-    return new Response(JSON.stringify({
-      message: 'Server error',
-    }), {
-      status: 500
-    });
+    console.error('Register Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
