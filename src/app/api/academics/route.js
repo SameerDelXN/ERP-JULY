@@ -1,36 +1,5 @@
 // // hod functions can add yr, subjects, division
 
-// // src/app/api/academics/route.js
-
-// import { connectToDatabase } from '../../lib/mongodb';
-// import academicSchema from '../../models/academicSchema';
-// import { NextResponse } from 'next/server';
-
-// export async function POST(req) {
-//   try {
-//     await connectToDatabase();
-//     const data = await req.json();
-
-//     // Validate required fields
-//     if (!data.year || !Array.isArray(data.divisions)) {
-//       return NextResponse.json({ error: 'Missing year or divisions' }, { status: 400 });
-//     }
-
-//     const newAcademic = new academicSchema(data);
-//     await newAcademic.save();
-
-//     return NextResponse.json(
-//       { message: 'Academic record created successfully', academic: newAcademic },
-//       { status: 201 }
-//     );
-//   } catch (error) {
-//     console.error('Error creating academic record:', error);
-//     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-//   }
-// }
-
-
-
 import { connectToDatabase } from '../../lib/mongodb';
 import academicSchema from '../../models/academicSchema';
 import teacherSchema from '../../models/teacherSchema';

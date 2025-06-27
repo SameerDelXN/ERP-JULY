@@ -52,7 +52,7 @@ const academicSchema = new mongoose.Schema({
           student: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User', // assuming student is stored in 'User' model
-            required: true,
+            //required: true,
           },
           subject: { type: String, required: true },
           date: { type: Date, required: true },

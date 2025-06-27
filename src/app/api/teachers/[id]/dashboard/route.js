@@ -15,40 +15,42 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: 'Invalid or missing teacher ID' }, { status: 400 });
     }
 
-    // Get teacher details
+    // Fetch teacher details
     const teacher = await teacherSchema.findById(id).select('-password');
     if (!teacher) {
       return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
 
-    // Get all academic records where this teacher is teaching a subject
+    // Fetch all academic records where this teacher is assigned
     const academicRecords = await academicSchema.find({
       'divisions.subjects.teacher': id,
     }).lean();
 
-    // Format the data to only show relevant divisions/subjects
-    const teachingSubjects = [];
+    const assignments = [];
 
     for (const record of academicRecords) {
       for (const division of record.divisions) {
-        const matchingSubjects = division.subjects.filter(
-          (subj) => subj.teacher.toString() === id
+        const subjectsTaught = division.subjects.filter(
+          (subject) => subject.teacher.toString() === id
         );
 
-        if (matchingSubjects.length > 0) {
-          teachingSubjects.push({
+        if (subjectsTaught.length > 0) {
+          assignments.push({
             year: record.year,
             division: division.name,
-            subjects: matchingSubjects.map((s) => s.name),
+            subjects: subjectsTaught.map((s) => s.name),
           });
         }
       }
     }
 
-    return NextResponse.json({
-      teacher,
-      assignments: teachingSubjects,
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        teacher,
+        assignments,
+      },
+      { status: 200 }
+    );
 
   } catch (error) {
     console.error('Error fetching teacher dashboard:', error);
