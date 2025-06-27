@@ -17,6 +17,11 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  password: {
+    type: String,
+    required: true,
+  },
+
   department: {
     type: String,
     required: true,
@@ -26,30 +31,30 @@ const teacherSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  subjects: [{
-    name: String, 
-    code:String
-  }],
-  assignedDivisions: [{
-    year: String,
-    division: String
-  }],
-//   timetable: [{
-//     day: String, // e.g., 'Monday'
-//     period: Number,
-//     subject: String,
-//     division: String
-//   }],
+  // subjects: [{
+  //   name: String, 
+  //   code:String
+  // }],
+  // assignedDivisions: [{
+  //   year: String,
+  //   division: String
+  // }],
+  //   timetable: [{
+  //     day: String, // e.g., 'Monday'
+  //     period: Number,
+  //     subject: String,
+  //     division: String
+  //   }],
   dateOfJoining: {
     type: Date,
     default: Date.now,
   },
   role: {
     type: String,
-    default: 'Teacher'
+    default: 'teacher'
   }
 });
 
-const teacher = mongoose.models.teacher|| mongoose.model('teacher', teacherSchema);
+const teacher = mongoose.models.teacher || mongoose.model('teacher', teacherSchema);
 
 export default teacher;

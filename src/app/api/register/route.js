@@ -1,8 +1,8 @@
-
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb';
 import User from '../../models/userSchema';
 import teacherSchema from '../../models/teacherSchema';
+import bcrypt from 'bcryptjs'; // If you want to hash passwords
 
 export async function POST(req) {
   try {
@@ -25,9 +25,13 @@ export async function POST(req) {
     }
 
     // ✅ If role is Teacher, register in Teacher model
-    if (role === 'Teacher') {
-      if (!fullName || !email || !phone || !department || !teacherId) {
+    if (role === 'teacher') {
+      if (!fullName || !email || !phone || !department || !teacherId || !password || !confirmPassword) {
         return NextResponse.json({ error: 'All teacher fields are required' }, { status: 400 });
+      }
+
+      if (password !== confirmPassword) {
+        return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
       }
 
       const existing = await teacherSchema.findOne({
@@ -38,6 +42,8 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Teacher already exists' }, { status: 409 });
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10); // 🔐 Hashing password
+
       const newTeacher = await teacherSchema.create({
         fullName,
         email,
@@ -45,6 +51,7 @@ export async function POST(req) {
         department,
         teacherId,
         role,
+        password: hashedPassword,
       });
 
       return NextResponse.json({ message: 'Teacher registered successfully' }, { status: 201 });
@@ -64,8 +71,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'User already exists' }, { status: 409 });
     }
 
-    // Optional: Hash password here
-    const hashedPassword = password; // Replace with bcrypt.hash(password, salt) if needed
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       fullName,
