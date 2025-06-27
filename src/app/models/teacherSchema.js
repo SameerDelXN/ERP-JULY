@@ -34,12 +34,12 @@ const teacherSchema = new mongoose.Schema({
     year: String,
     division: String
   }],
-  timetable: [{
-    day: String, // e.g., 'Monday'
-    period: Number,
-    subject: String,
-    division: String
-  }],
+//   timetable: [{
+//     day: String, // e.g., 'Monday'
+//     period: Number,
+//     subject: String,
+//     division: String
+//   }],
   dateOfJoining: {
     type: Date,
     default: Date.now,
