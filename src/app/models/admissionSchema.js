@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
 const admissionSchema = new mongoose.Schema({
-
   enquiryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'enquiry',
@@ -38,26 +37,13 @@ const admissionSchema = new mongoose.Schema({
   country: String,
 
   // 4. Academic Interest
-  currentSchoolName: {
-    type: String,
-    // required: true
-  },
-  currentClass: {
-    type: String,
-    // required: true
-  },
-  applyingForClass: {
-    type: String,
-    // required: true
-  },
-  academicYear: {
-    type: String,
-    // required: true
-  },
+  currentSchoolName: String,
+  currentClass: String,
+  applyingForClass: String,
+  academicYear: String,
   preferredMedium: {
     type: String,
     enum: ['English', 'Hindi', 'Other'],
-    // required: true
   },
 
   // 5. Documents
@@ -75,17 +61,19 @@ const admissionSchema = new mongoose.Schema({
   },
 
   // 6. Consent & Verification
-  consent: {
-    type: Boolean,
-    // required: true
-  },
-  captchaVerified: {
-    type: Boolean,
-    // required: true
-  },
+  consent: Boolean,
+  captchaVerified: Boolean,
+
+  // 7. Status Field
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending',
+  }
 
 }, { timestamps: true });
-delete mongoose.models.Admission
-const admission = mongoose.models.Admission || mongoose.model('Admission', admissionSchema);
+
+delete mongoose.models.admission;
+const admission = mongoose.models.admission || mongoose.model('admission', admissionSchema);
 
 export default admission;
