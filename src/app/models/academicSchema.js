@@ -1,115 +1,72 @@
+// models/academicSchema.js
+
 import mongoose from 'mongoose';
 
-const academicSchema = new mongoose.Schema({    // e.g., "2025-2026"
-    year: {
-        type: String,
-        required: true
-    },               // e.g., "Second Year"
-
-    // Common subjects for all divisions
-    subjects: [
-        {
-            name: { type: String, required: true },
-            code: { type: String, required: true, unique: true }
-        }
-    ],
-
-    // Multiple divisions
-    divisions: [
-        {
-            name: {
-                type: String,
-                required: true
-            },  // e.g., "A", "B"
-            classTeacher: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
-                required: true
-            },
-        }
-    ],
-
-    timetable:
+const academicSchema = new mongoose.Schema({
+  year: {
+    type: String,
+    required: true, // e.g. "2nd Year"
+  },
+  divisions: [
     {
-        divisionName: {
-            type: String,
-            //required: true
+      name: {
+        type: String, // A, B, C
+        required: true,
+      },
+      subjects: [
+        {
+          name: { type: String, required: true }, // e.g. OOPs, CNS
+          teacher: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'teacher', 
+            required: true,
+          },
         },
-        days: [{
-            type: String,
-            //required: true
-        }],   // e.g., "Monday"
-        slots: [
-            {
-                time: {
-                    type: String,
-                    //required: true
-                },        // e.g., "10:00 - 11:00"
-                subjectCode: {
-                    type: String,
-                    //required: true
-                }, // references subject.code
-                teacher: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'User',
-                    //required: true
-                }
-            }
-        ]
+      ],
+      timetable: [
+        {
+          day: { type: String, required: true }, // Monday, Tuesday...
+          period: { type: String, required: true }, // Period 1, 2...
+          subject: { type: String, required: true },
+          teacher: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+          },
+          time: {
+            start: { type: String }, // "10:00"
+            end: { type: String },   // "10:45"
+          },
+        },
+      ],
+      exams: [
+        {
+          type: { type: String, required: true }, // Unit Test, Mid Term, etc.
+          subject: { type: String, required: true },
+          totalMarks: { type: Number, required: true },
+          date: { type: Date, required: true },
+        },
+      ],
+      attendance: [
+        {
+          student: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User', // assuming student is stored in 'User' model
+            required: true,
+          },
+          subject: { type: String, required: true },
+          date: { type: Date, required: true },
+          status: { type: String, enum: ['Present', 'Absent'], required: true },
+          recordedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User', // recorded by teacher
+            required: true,
+          },
+        },
+      ],
     },
-
-    //assignment from teacher
-
-    assignments: [
-        {
-            title: String,
-            description: String,
-            subjectCode: String,
-            //teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-            dueDate: Date,
-            fileUrl: String,
-            createdAt: { type: Date, default: Date.now }
-        }
-    ],
-
-    //attendance from teacher
-
-    attendanceRecords: [
-        {
-            date: { type: Date, 
-                //required: true 
-
-            },
-            subjectCode: { type: String, //required: true 
-            },
-            students: [
-                {
-                    student: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-                    present: Boolean
-                }
-            ]
-        }
-    ],
-
-
-
-
-    exams: [
-        {
-            subjectCode: String,
-            examType: String, // e.g., "Midterm"
-            examDate: Date,
-            totalMarks: Number,
-            marks: [
-                {
-                    student: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-                    marksObtained: Number
-                }
-            ]
-        }
-    ]
+  ],
 });
 
-const academic = mongoose.models.academic || mongoose.model("academic", academicSchema);
-
-export default academic;
+export default mongoose.models.Academic ||
+  mongoose.model('Academic', academicSchema);
