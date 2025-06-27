@@ -1,3 +1,4 @@
+//POST route handler to create/fill admission form 
 import { connectToDatabase } from '../../lib/mongodb';
 import admissionSchema from '../../models/admissionSchema';
 
@@ -103,6 +104,36 @@ export async function POST(req) {
       error: error.message
     }), {
       status: 500
+    });
+  }
+}
+
+
+export async function GET() {
+  try {
+    await connectToDatabase();
+
+    const allAdmissions = await admissionSchema.find().sort({ createdAt: -1 }); // newest first
+
+    return new Response(JSON.stringify({
+      message: 'Admissions fetched successfully',
+      data: allAdmissions,
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json' // 👈 Enables JSON syntax highlighting in Postman
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching admissions:', error);
+    return new Response(JSON.stringify({
+      message: 'Server error while fetching admissions',
+      error: error.message,
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json' // 👈 Always specify this for consistency
+      }
     });
   }
 }

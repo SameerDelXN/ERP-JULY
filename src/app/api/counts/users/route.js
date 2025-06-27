@@ -1,3 +1,4 @@
+//GET route handler to fetch number of users
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
 import userSchema from '../../../models/userSchema';

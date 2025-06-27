@@ -1,3 +1,4 @@
+//GET route handler to fetch number of enquiries 
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
 import enquirySchema from '../../../models/enquirySchema';

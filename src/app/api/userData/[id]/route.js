@@ -1,5 +1,5 @@
 // app/api/users/[id]/route.js
-
+//PUT and DELETE handler to update and delete user by id
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
 import userSchema from '../../../models/userSchema';

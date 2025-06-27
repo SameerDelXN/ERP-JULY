@@ -1,3 +1,4 @@
+//database schema for enquiry form 
 import mongoose from 'mongoose';
 
 const { Schema, model, models, Types } = mongoose;

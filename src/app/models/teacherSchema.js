@@ -1,4 +1,4 @@
-// models/teacherSchema.js
+// database schema for teachers
 
 import mongoose from 'mongoose';
 

@@ -1,3 +1,4 @@
+//GET route handler to fetch number of admissions 
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
 import admissionSchema from '../../../models/admissionSchema';
