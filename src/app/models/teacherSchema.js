@@ -31,20 +31,6 @@ const teacherSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  // subjects: [{
-  //   name: String, 
-  //   code:String
-  // }],
-  // assignedDivisions: [{
-  //   year: String,
-  //   division: String
-  // }],
-  //   timetable: [{
-  //     day: String, // e.g., 'Monday'
-  //     period: Number,
-  //     subject: String,
-  //     division: String
-  //   }],
   dateOfJoining: {
     type: Date,
     default: Date.now,
