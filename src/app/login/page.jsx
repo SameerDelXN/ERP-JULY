@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { User, Lock, UserCheck, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 const page = () => {
 
   const router = useRouter();
@@ -10,8 +11,10 @@ const page = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
+    setLoading(true)
     e.preventDefault();
     console.log("Login attempt:", { role: selectedRole, email, password });
     setError("");
@@ -40,11 +43,35 @@ const page = () => {
     } catch (err) {
       console.error("Login Error:", err);
       setError("Something went wrong.");
-    }
-  };    
+    }finally {
+        setLoading(false);
+      }
+  };   
+  
+  
+     if (loading)
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+             <Image 
+              src="/loading.svg" 
+              alt="Loading..."
+              width={300} 
+              height={300}
+              className="mb-4"
+            />
+            {/* <Loader/> */}
+          </div>
+        );
+    
+      if (error)
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="p-6 text-red-600">Error: {error}</div>
+          </div>
+        );
   return (
     <>
-      <div className="min-h-screen lg:flex bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600">
+      <div className="max-h-screen lg:flex bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600">
         {/* Left Side - Illustration */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="bg-white rounded-3xl p-8 max-w-md shadow-2xl">
@@ -200,16 +227,6 @@ const page = () => {
                 <span className="ml-2">→</span>
               </button>
             </div>
-            
-            <div className="mt-6 text-center text-sm text-gray-600">
-            Don't Have an account?{" "}
-            <a
-              href="/register"
-              className="text-blue-600 hover:underline font-medium"
-            >
-              Sign up
-            </a>
-          </div>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600 text-sm">
