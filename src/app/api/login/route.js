@@ -1,3 +1,4 @@
+//POST handler to login users
 import bcrypt from 'bcryptjs';
 import userSchema from '../../models/userSchema';
 import { connectToDatabase } from '../../lib/mongodb';

@@ -1,5 +1,4 @@
-// models/academicSchema.js
-
+//databse schema for academics 
 import mongoose from 'mongoose';
 
 const academicSchema = new mongoose.Schema({

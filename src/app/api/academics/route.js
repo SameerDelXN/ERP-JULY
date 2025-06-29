@@ -1,4 +1,4 @@
-// // hod functions can add yr, subjects, division
+// POST route handler so that hod can add functions yr, subjects, division
 
 import { connectToDatabase } from '../../lib/mongodb';
 import academicSchema from '../../models/academicSchema';

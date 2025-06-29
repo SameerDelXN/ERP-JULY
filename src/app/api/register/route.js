@@ -1,3 +1,4 @@
+//POST handler to register user
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb';
 import User from '../../models/userSchema';
