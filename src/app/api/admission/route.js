@@ -1,6 +1,6 @@
 import { connectToDatabase } from '../../lib/mongodb';
 import admissionSchema from '../../models/admissionSchema';
-
+//sample chnage
 export async function POST(req) {
   try {
     await connectToDatabase();

@@ -1,0 +1,81 @@
+|-- .gitignore
+|-- jsconfig.json
+|-- next.config.mjs
+|-- package-lock.json
+|-- package.json
+|-- postcss.config.mjs
+|-- public
+    |-- file.svg
+    |-- globe.svg
+    |-- next.svg
+    |-- vercel.svg
+    |-- window.svg
+|-- README.md
+|-- src
+    |-- app
+        |-- admin
+            |-- layout.jsx
+            |-- page.jsx
+        |-- api
+            |-- academics
+                |-- route.js
+            |-- admission
+                |-- route.js
+            |-- counts
+                |-- admission
+                    |-- route.js
+                |-- enquiry
+                    |-- route.js
+                |-- users
+                    |-- route.js
+            |-- enquiry
+                |-- route.js
+                |-- [id]
+                    |-- route.js
+            |-- login
+                |-- route.js
+            |-- register
+                |-- route.js
+            |-- teachers
+                |-- route.js
+                |-- [id]
+                    |-- dashboard
+                        |-- route.js
+            |-- upload
+                |-- route.js
+            |-- userData
+                |-- route.js
+                |-- [id]
+                    |-- route.js
+        |-- docs
+            |-- sample birth cert.pdf
+            |-- sample id proof.pdf
+        |-- enquiry-form
+            |-- page.jsx
+        |-- favicon.ico
+        |-- globals.css
+        |-- layout.js
+        |-- lib
+            |-- googleDriveUpload.js
+            |-- mongodb.js
+        |-- login
+            |-- page.jsx
+        |-- models
+            |-- academicSchema.js
+            |-- admissionSchema.js
+            |-- enquirySchema.js
+            |-- teacherSchema.js
+            |-- userSchema.js
+        |-- page.js
+        |-- register
+            |-- page.jsx
+        |-- satff
+            |-- layout.jsx
+            |-- page.jsx
+    |-- components
+        |-- Avatar.jsx
+        |-- DashboardSidebar.jsx
+        |-- Header.jsx
+        |-- TableData.jsx
+    |-- data
+        |-- data.js
