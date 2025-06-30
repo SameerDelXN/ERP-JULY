@@ -1,25 +1,88 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import {
   Search,
-  Filter,
   Plus,
   Eye,
   Edit,
   Trash2,
-  Phone,
-  Mail,
-  Calendar,
   User,
   GraduationCap,
-  MapPin,
-  Star,
-  Clock,
-  CheckCircle,
+  Calendar,
   XCircle,
-  AlertCircle,
+  CheckCircle,
+  Star,
+  Save,
 } from "lucide-react";
 import Image from "next/image";
+
+const AssignCounselorModal = ({ onClose, onSubmit }) => {
+  const [formData, setFormData] = useState({
+    assignCounselor: "",
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Assign Counselor
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Counselor *
+            </label>
+            <select
+              value={formData.assignCounselor}
+              onChange={(e) =>
+                setFormData({ ...formData, assignCounselor: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              {
+                
+              <option value="">Select Counselor</option>
+              }
+              
+            </select>
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Assign
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const EnquiriesLeads = () => {
   const [activeTab, setActiveTab] = useState("All");
@@ -27,7 +90,7 @@ const EnquiriesLeads = () => {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAssignCounselorModal,setShowAssignCounselorModal] = useState(false)
+  const [showAssignCounselorModal, setShowAssignCounselorModal] = useState(false);
 
   const totalEnquiries = enquiries.length;
   const newLeads = enquiries.filter((e) => e.status === "New").length;
@@ -45,9 +108,8 @@ const EnquiriesLeads = () => {
         const enquiriesData = await res.json();
         setEnquiries(enquiriesData);
       } catch (error) {
-        setError(err.message);
-        console.error("Failed to fetch users:", err);
-        console.log(error);
+        setError(error.message);
+        console.error("Failed to fetch enquiries:", error);
       } finally {
         setLoading(false);
       }
@@ -55,8 +117,6 @@ const EnquiriesLeads = () => {
 
     fetchEnquiries();
   }, []);
-
-  console.log(enquiries);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -83,6 +143,11 @@ const EnquiriesLeads = () => {
     return matchesSearch && enquiry.status === activeTab;
   });
 
+  const handleAssignCounselor = (formData) => {
+    console.log("Assigning counselor:", formData.assignCounselor);
+    setShowAssignCounselorModal(false);
+  };
+
   if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -93,7 +158,6 @@ const EnquiriesLeads = () => {
           height={300}
           className="mb-4"
         />
-        {/* <Loader/> */}
       </div>
     );
 
@@ -103,234 +167,6 @@ const EnquiriesLeads = () => {
         <div className="p-6 text-red-600">Error: {error}</div>
       </div>
     );
-
-  const AssignCounselorModal = () => {
-        const [formData, setFormData] = useState({
-          assignCounselor : "",
-          
-        });
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Add New User
-            </h2>
-            <button
-              onClick={() => setShowAssignCounselorModal(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border ${
-                    formErrors.fullName ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="Enter full name"
-                />
-                {formErrors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.fullName}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role *
-                </label>
-                <select
-                  value={formData.role.toLowerCase()}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border ${
-                    formErrors.role ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                >
-                  <option value="">Select Role</option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.name.toLowerCase()}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.role && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
-                )}
-              </div>
-            </div>
-
-            {formData.role === "teacher" && (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.department || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, department: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter department"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teacher ID *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.teacherId || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, teacherId: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter teacher ID"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border ${
-                    formErrors.email ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="Enter email address"
-                />
-                {formErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.email}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border ${
-                    formErrors.phone ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="Enter phone number"
-                />
-                {formErrors.phone && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.phone}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border ${
-                    formErrors.password ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="Enter password"
-                />
-                {formErrors.password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.password}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password *
-                </label>
-                <input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  className={`w-full px-3 py-2 border ${
-                    formErrors.confirmPassword
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="Confirm password"
-                />
-                {formErrors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.confirmPassword}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowAssignCounselorModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 ${
-                  isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-                }`}
-              >
-                {isSubmitting ? (
-                  <span>Processing...</span>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>Add User</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -426,9 +262,6 @@ const EnquiriesLeads = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            {/* <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-5 h-5 text-gray-600" /> 
-            </button> */}
           </div>
         </div>
       </div>
@@ -510,14 +343,11 @@ const EnquiriesLeads = () => {
                       <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
                         <Eye className="w-4 h-4" />
                       </button>
-                      {/* <button className="p-1 text-green-600 hover:bg-green-50 rounded">
-                        <Phone className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-gray-600 hover:bg-gray-50 rounded">
-                        <Mail className="w-4 h-4" />
-                      </button> */}
-                      <button className="p-1 text-amber-600 hover:bg-amber-50 rounded">
-                        <Edit className="w-4 h-4" onClick={() => setShowAssignCounselorModal(false)}/>
+                      <button
+                        className="p-1 text-amber-600 hover:bg-amber-50 rounded"
+                        onClick={() => setShowAssignCounselorModal(true)}
+                      >
+                        <Edit className="w-4 h-4" />
                       </button>
                       <button className="p-1 text-red-600 hover:bg-red-50 rounded">
                         <Trash2 className="w-4 h-4" />
@@ -552,12 +382,16 @@ const EnquiriesLeads = () => {
           </button>
         </div>
       </div>
+
+      {/* Modal */}
+      {showAssignCounselorModal && (
+        <AssignCounselorModal
+          onClose={() => setShowAssignCounselorModal(false)}
+          onSubmit={handleAssignCounselor}
+        />
+      )}
     </div>
   );
-
-  
-      {/* Modals */}
-      {showAssignCounselorModal && <AssignCounselorModal />}
 };
 
 export default EnquiriesLeads;

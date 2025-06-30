@@ -31,7 +31,10 @@ export const adminSidebarItems = [
 export const staffSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
-
+  // { id: "followup-tracker", label: "Follow-up Tracker", icon: FileTextIcon },
+  // { id: "application-management", label: "Application Management", icon: BookImage },
+  // { id: "admission-test-scheduling", label: "Admission Test Scheduling", icon: BookImage },
+  // { id: "communication-logs", label: "Communication Logs (Email/SMS)", icon: BookImage },
 ];
 
 export const studentSidebarItems = [
@@ -45,35 +48,6 @@ export const studentSidebarItems = [
 
 ];
 
-export const columns = [
-  { header: 'Reg.Id', accessor: 'Reg.Id' },
-  { header: 'First Name', accessor: 'name' },
-  { header: 'Last Name', accessor: 'name' },
-  { header: 'Date of Birth', accessor: 'name' },
-  { header: 'Gender', accessor: 'name' },
-  { header: 'Nationality', accessor: 'name' },
-  { header: 'Father’s Full Name', accessor: 'name' },
-  { header: 'Mother’s Full Name', accessor: 'name' },
-  { header: 'Mobile Number', accessor: 'name' },
-  { header: 'Email Address', accessor: 'name' },
-  { header: 'Address Line 1', accessor: 'name' },
-  { header: 'City', accessor: 'name' },
-  { header: 'State', accessor: 'name' },
-  { header: 'Postal/Zip Code', accessor: 'Postal/Zip Code' },
-  { header: 'Country', accessor: 'name' },
-  { header: 'Current School Name', accessor: 'name' },
-  { header: 'Current Class', accessor: 'name' },
-  { header: 'Applying For Class', accessor: 'name' },
-  { header: 'Academic Year Applying For', accessor: 'name' },
-  { header: 'Preferred Medium of Instruction', accessor: 'name' },
-  { header: 'Birth Certificate', accessor: 'name' },
-  { header: 'Parent Aadhaar or PAN Card', accessor: 'name' },
-  { header: 'Action', accessor: 'name' },
-];
-
-export const data = [
-
-];
 
 export const roles = [
   // {

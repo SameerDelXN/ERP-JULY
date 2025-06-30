@@ -1,7 +1,7 @@
 //POST route handler to create/fill admission form 
 import { connectToDatabase } from '../../lib/mongodb';
 import admissionSchema from '../../models/admissionSchema';
-
+//sample chnage2
 export async function POST(req) {
   try {
     await connectToDatabase();
