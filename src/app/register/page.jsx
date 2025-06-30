@@ -25,10 +25,10 @@ const page = () => {
 
   const handleSubmit = async () => {
     console.log("Signup data:", { ...formData, role: selectedRole });
-    // if (formData.password !== formData.confirmPassword) {
-    //   alert("Passwords do not match!");
-    //   return;
-    // }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
 
     try {
       const res = await fetch("/api/register", {
@@ -48,7 +48,7 @@ const page = () => {
       });
 
       const data = await res.json();
-      // console.log(data);
+      console.log(data);
       
       if (!res.ok) {
         throw new Error(data.message || "Something went wrong");

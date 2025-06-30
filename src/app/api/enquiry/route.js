@@ -1,4 +1,4 @@
-//for GET and POST enquiry
+//GET and POST handler to create neew enquiry and fetch all enquiry
 
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb';

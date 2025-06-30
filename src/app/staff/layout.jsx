@@ -1,7 +1,7 @@
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import React, { useState } from "react";
-import { adminSidebarItems } from "@/data/data";
+import { staffSidebarItems } from "@/data/data";
 import { Bell, ChevronDown } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 const layout = ({ children }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(
-    adminSidebarItems[0]?.id || "overview"
+    staffSidebarItems[0]?.id || "overview"
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -20,13 +20,13 @@ const layout = ({ children }) => {
     setActiveTab(newTab);
     if(newTab === "overview")
     {
-       router.push('/admin')
+       router.push('/staff')
     }else{
-      router.push(`/admin/${newTab}`)
+      router.push(`/staff/${newTab}`)
     }
   };
 
-  const activeTabItem = adminSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = staffSidebarItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "overview") {
@@ -44,7 +44,7 @@ const layout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={adminSidebarItems}
+        items={staffSidebarItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
@@ -60,10 +60,10 @@ const layout = ({ children }) => {
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
             </button>
             <div className="flex items-center space-x-3">
-              <Avatar name="Admin User" />
+              <Avatar name="Staff User" />
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">Admin User</p>
-                <p className="text-xs text-gray-500">Super Admin</p>
+                <p className="text-sm font-medium text-gray-900">Staff User</p>
+                <p className="text-xs text-gray-500">Staff</p>
               </div>
               <ChevronDown className="w-4 h-4 text-gray-500" />
             </div>

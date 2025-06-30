@@ -1,5 +1,5 @@
 // src/app/api/teachers/[id]/dashboard/route.js
-
+//GET handler to fetch teacher data based on id to show on dashboard
 import { connectToDatabase } from '../../../../lib/mongodb';
 import academicSchema from '../../../../models/academicSchema';
 import teacherSchema from '../../../../models/teacherSchema';

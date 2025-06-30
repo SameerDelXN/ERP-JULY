@@ -1,3 +1,4 @@
+//database schema for admission form 
 import mongoose from 'mongoose';
 
 const admissionSchema = new mongoose.Schema({

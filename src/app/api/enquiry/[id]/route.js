@@ -1,4 +1,4 @@
-//for PUT and DELETE enquiry based on id
+//PUT and DELETE route handler to update and delete enquiry based on id
 
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';

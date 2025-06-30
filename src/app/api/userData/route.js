@@ -1,4 +1,4 @@
-//GET all user data and show it on admin dashboard
+//GET handler to fetch all user data and show it on admin dashboard
 
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb'; // Adjust path if needed
