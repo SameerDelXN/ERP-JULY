@@ -10,7 +10,9 @@ import {
   CreditCard,
   FileTextIcon,
   BookImage,
-  DollarSign
+  DollarSign,
+  Award,
+  BookMarked
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -35,56 +37,65 @@ export const staffSidebarItems = [
   // { id: "communication-logs", label: "Communication Logs (Email/SMS)", icon: BookImage },
 ];
 
-export const studentSidebarItems = [];
+export const studentSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  { id: "profile", label: "Profile", icon: UserCheck },
+  { id: "attendance", label: "Attendance", icon: FileText },
+  { id: "grades", label: "Grades", icon: GraduationCap },
+  { id: "assignments", label: "Assignments", icon: BookOpen },
+  { id: "schedule", label: "Schedule", icon: TrendingUp },
+  { id: "certificates", label: "Certificates", icon: Award },
+
+];
 
 
 export const roles = [
-    // {
-    //   id: 1,
-    //   name: 'Super Admin',
-    //   description: 'Full system access with all permissions',
-    //   userCount: 2,
-    //   permissions: ['Full Access', 'User Management', 'System Settings', 'Reports', 'Financial Management'],
-    //   color: 'bg-red-500'
-    // },
-    {
-      id: 2,
-      name: 'Admin',
-      description: 'Administrative access with limited system settings',
-      userCount: 5,
-      permissions: ['User Management', 'Student Management', 'Teacher Management', 'Reports', 'Fee Management'],
-      color: 'bg-blue-500'
-    },
-    {
-      id: 3,
-      name: 'Teacher',
-      description: 'Teaching staff with classroom management access',
-      userCount: 45,
-      permissions: ['Student Management', 'Grade Management', 'Attendance', 'Assignment Management', 'Communication'],
-      color: 'bg-green-500'
-    },
-    {
-      id: 4,
-      name: 'Staff',
-      description: 'Non-teaching staff with specific operational access',
-      userCount: 23,
-      permissions: ['Library Management', 'Transport Management', 'Inventory Management'],
-      color: 'bg-indigo-500'
-    }
-    // {
-    //   id: 4,
-    //   name: 'Student',
-    //   description: 'Student access to academic resources and information',
-    //   userCount: 1247,
-    //   permissions: ['View Profile', 'View Grades', 'Submit Assignments', 'View Schedule', 'Communication'],
-    //   color: 'bg-purple-500'
-    // },
-    // {
-    //   id: 5,
-    //   name: 'Parent',
-    //   description: 'Parent access to monitor child progress',
-    //   userCount: 892,
-    //   permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
-    //   color: 'bg-yellow-500'
-    // },
-  ];
+  // {
+  //   id: 1,
+  //   name: 'Super Admin',
+  //   description: 'Full system access with all permissions',
+  //   userCount: 2,
+  //   permissions: ['Full Access', 'User Management', 'System Settings', 'Reports', 'Financial Management'],
+  //   color: 'bg-red-500'
+  // },
+  {
+    id: 2,
+    name: 'Admin',
+    description: 'Administrative access with limited system settings',
+    userCount: 5,
+    permissions: ['User Management', 'Student Management', 'Teacher Management', 'Reports', 'Fee Management'],
+    color: 'bg-blue-500'
+  },
+  {
+    id: 3,
+    name: 'Teacher',
+    description: 'Teaching staff with classroom management access',
+    userCount: 45,
+    permissions: ['Student Management', 'Grade Management', 'Attendance', 'Assignment Management', 'Communication'],
+    color: 'bg-green-500'
+  },
+  {
+    id: 4,
+    name: 'Staff',
+    description: 'Non-teaching staff with specific operational access',
+    userCount: 23,
+    permissions: ['Library Management', 'Transport Management', 'Inventory Management'],
+    color: 'bg-indigo-500'
+  }
+  // {
+  //   id: 4,
+  //   name: 'Student',
+  //   description: 'Student access to academic resources and information',
+  //   userCount: 1247,
+  //   permissions: ['View Profile', 'View Grades', 'Submit Assignments', 'View Schedule', 'Communication'],
+  //   color: 'bg-purple-500'
+  // },
+  // {
+  //   id: 5,
+  //   name: 'Parent',
+  //   description: 'Parent access to monitor child progress',
+  //   userCount: 892,
+  //   permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
+  //   color: 'bg-yellow-500'
+  // },
+];

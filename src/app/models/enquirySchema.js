@@ -18,19 +18,22 @@ const enquirySchema = new Schema({
     required: true,
   },
   email: String,
+
   courseInterested: String,
+
   source: {
     type: String,
     enum: ['Website', 'Call', 'Walk-in', 'Campaign'],
   },
   status: {
     type: String,
-    enum: ['New', 'In Progress', 'Converted', 'Lost'],
+    enum: ['New', 'In Progress','Contacted','Converted', 'Lost'],
     default: 'New',
   },
   counsellorId: {
     type: Types.ObjectId,
     ref: 'User', // optional: reference to a User model
+    required:true
   },
   followUps: [
     {

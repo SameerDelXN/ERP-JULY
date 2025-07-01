@@ -10,8 +10,9 @@ import Unauthorized from "@/components/Unauthorized";
 import { useSession } from "@/context/SessionContext";
 import Loading from "@/components/Loading";
 
-const Layout = ({ children }) => {
-  const { user, loading } = useSession();
+
+
+const layout = ({ children }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(staffSidebarItems[0]?.id || "overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);

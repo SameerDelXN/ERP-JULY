@@ -1,4 +1,4 @@
-//POST route handler to create/fill admission form 
+
 import { connectToDatabase } from '../../lib/mongodb';
 import admissionSchema from '../../models/admissionSchema';
 //sample chnage2
@@ -9,6 +9,9 @@ export async function POST(req) {
     const body = await req.json();
 
     const {
+      enquiryId,        // ✅ Include enquiryId
+      counsellorId,     // ✅ Include counsellorId
+
       first,
       middle,
       last,
@@ -29,7 +32,7 @@ export async function POST(req) {
 
       currentSchoolName,
       currentClass,
-      applyingForClass,
+      applyingFor,
       academicYear,
       preferredMedium,
 
@@ -37,13 +40,13 @@ export async function POST(req) {
       consent,
       captchaVerified,
 
-      status // 👈 New field (optional)
+      status // optional
     } = body;
 
     // ✅ Validate required fields
     if (
-      !first || !last || !dateOfBirth || !gender || !nationality ||
-      !currentSchoolName || !currentClass || !applyingForClass ||
+      !enquiryId || !counsellorId || !first || !last || !dateOfBirth || !gender || !nationality ||
+      !currentSchoolName || !currentClass || !applyingFor ||
       !academicYear || !preferredMedium || consent !== true || captchaVerified !== true
     ) {
       return new Response(JSON.stringify({
@@ -53,12 +56,13 @@ export async function POST(req) {
       });
     }
 
-    // ✅ Validate status if provided
     const allowedStatus = ['pending', 'approved', 'rejected'];
     const finalStatus = allowedStatus.includes(status) ? status : 'pending';
 
-    // ✅ Create and save admission
     const newAdmission = new admissionSchema({
+      enquiryId,
+      counsellorId,
+
       first,
       middle,
       last,
@@ -79,14 +83,14 @@ export async function POST(req) {
 
       currentSchoolName,
       currentClass,
-      applyingForClass,
+      applyingFor,
       academicYear,
       preferredMedium,
 
       documents,
       consent,
       captchaVerified,
-      status: finalStatus // 👈 Include validated status
+      status: finalStatus
     });
 
     await newAdmission.save();
@@ -104,36 +108,6 @@ export async function POST(req) {
       error: error.message
     }), {
       status: 500
-    });
-  }
-}
-
-
-export async function GET() {
-  try {
-    await connectToDatabase();
-
-    const allAdmissions = await admissionSchema.find().sort({ createdAt: -1 }); // newest first
-
-    return new Response(JSON.stringify({
-      message: 'Admissions fetched successfully',
-      data: allAdmissions,
-    }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json' // 👈 Enables JSON syntax highlighting in Postman
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching admissions:', error);
-    return new Response(JSON.stringify({
-      message: 'Server error while fetching admissions',
-      error: error.message,
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json' // 👈 Always specify this for consistency
-      }
     });
   }
 }
