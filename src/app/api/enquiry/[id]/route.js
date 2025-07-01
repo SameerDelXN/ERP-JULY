@@ -16,7 +16,7 @@ export async function PUT(req, context) {
     const { status, counsellorId } = body;
 
     const updateFields = {};
-    const validStatuses = ['New', 'In Progress', 'Converted', 'Lost'];
+    const validStatuses = ['New', 'In Progress', "Contacted",'Converted', 'Lost'];
 
     // Validate status
     if (status) {

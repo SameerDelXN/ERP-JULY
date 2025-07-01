@@ -1,7 +1,11 @@
-//databse schema for academics 
+// database schema for academics 
 import mongoose from 'mongoose';
 
 const academicSchema = new mongoose.Schema({
+  department: {
+    type: String,
+    required: true, // e.g. "Computer Science", "Mechanical", etc.
+  },
   year: {
     type: String,
     required: true, // e.g. "2nd Year"
@@ -12,12 +16,21 @@ const academicSchema = new mongoose.Schema({
         type: String, // A, B, C
         required: true,
       },
+      students: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+        validate: {
+          validator: function (arr) {
+            return arr.length <= 50;
+          },
+          message: 'A division cannot have more than 50 students.',
+        },
+      },
       subjects: [
         {
           name: { type: String, required: true }, // e.g. OOPs, CNS
           teacher: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'teacher', 
+            ref: 'teacher',
             required: true,
           },
         },
@@ -51,7 +64,7 @@ const academicSchema = new mongoose.Schema({
           student: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User', // assuming student is stored in 'User' model
-            //required: true,
+            // required: true,
           },
           subject: { type: String, required: true },
           date: { type: Date, required: true },
