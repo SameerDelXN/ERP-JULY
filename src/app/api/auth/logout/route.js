@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
-import userSchema from '@/models/userSchema';
-import { connectToDatabase } from '@/lib/mongodb';
+import userSchema from '../../../models/userSchema';
+import { connectToDatabase } from '../../../lib/mongodb';
 
 export async function POST() {
   try {
