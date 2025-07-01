@@ -13,6 +13,7 @@ import Loading from "@/components/Loading";
 
 
 const layout = ({ children }) => {
+  const {user,loading} = useSession()
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(staffSidebarItems[0]?.id || "overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -118,4 +119,4 @@ const layout = ({ children }) => {
   );
 };
 
-export default Layout;
+export default layout;
