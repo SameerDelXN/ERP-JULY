@@ -38,11 +38,16 @@ const AdmissionApplications = () => {
         const res = await fetch("/api/admission");
         if (!res.ok) throw new Error("Failed to fetch Admissions");
         const admissionData = await res.json();
+
+        // Ensure the response is an array
+        if (!Array.isArray(admissionData)) {
+          throw new Error("Expected array but got " + typeof admissionData);
+        }
+
         setAdmission(admissionData);
       } catch (error) {
         setError(err.message);
         console.error("Failed to fetch admissions:", err);
-        console.log(error);
       } finally {
         setLoading(false);
       }

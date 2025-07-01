@@ -1,0 +1,97 @@
+|-- .gitignore
+|-- jsconfig.json
+|-- next.config.mjs
+|-- package-lock.json
+|-- package.json
+|-- postcss.config.mjs
+|-- public
+    |-- file.svg
+    |-- globe.svg
+    |-- loading.svg
+    |-- login1.jpeg
+    |-- login2.jpeg
+    |-- login3.jpeg
+    |-- login4.jpeg
+    |-- login5.jpg
+    |-- login6.jpg
+    |-- next.svg
+    |-- vercel.svg
+    |-- Welcome.svg
+    |-- window.svg
+|-- README.md
+|-- src
+    |-- app
+        |-- admin
+            |-- admission-applications
+                |-- page.jsx
+            |-- enquiry&leads
+                |-- page.jsx
+            |-- layout.jsx
+            |-- manage-users
+                |-- page.jsx
+            |-- page.jsx
+            |-- staff-directory
+                |-- page.jsx
+        |-- api
+            |-- academics
+                |-- route.js
+            |-- admission
+                |-- route.js
+                |-- [id]
+                    |-- route.js
+            |-- enquiry
+                |-- route.js
+                |-- [id]
+                    |-- route.js
+            |-- login
+                |-- route.js
+            |-- register
+                |-- route.js
+            |-- teachers
+                |-- route.js
+                |-- [id]
+                    |-- dashboard
+                        |-- route.js
+            |-- upload
+                |-- route.js
+            |-- userData
+                |-- route.js
+                |-- [id]
+                    |-- route.js
+        |-- docs
+            |-- sample birth cert.pdf
+            |-- sample id proof.pdf
+        |-- enquiry-form
+            |-- page.jsx
+        |-- favicon.ico
+        |-- globals.css
+        |-- layout.js
+        |-- lib
+            |-- googleDriveUpload.js
+            |-- mongodb.js
+        |-- login
+            |-- page.jsx
+        |-- models
+            |-- academicSchema.js
+            |-- admissionSchema.js
+            |-- enquirySchema.js
+            |-- teacherSchema.js
+            |-- userSchema.js
+        |-- page.js
+        |-- register
+            |-- page.jsx
+        |-- staff
+            |-- enquiry&leads
+                |-- page.jsx
+            |-- layout.jsx
+            |-- page.jsx
+    |-- components
+        |-- Avatar.jsx
+        |-- Card.jsx
+        |-- Container.jsx
+        |-- DashboardSidebar.jsx
+        |-- Header.jsx
+        |-- Loader.jsx
+        |-- TableData.jsx
+    |-- data
+        |-- data.js

@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { roles } from "@/data/data";
 import Image from "next/image";
-import Loader from "@/components/Loader";
 
 const UserManagementPage = () => {
   const [activeTab, setActiveTab] = useState("users");
