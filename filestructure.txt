@@ -40,6 +40,11 @@
                 |-- route.js
                 |-- [id]
                     |-- route.js
+            |-- auth
+                |-- logout
+                    |-- route.js
+                |-- session
+                    |-- route.js
             |-- enquiry
                 |-- route.js
                 |-- [id]
@@ -47,6 +52,8 @@
             |-- login
                 |-- route.js
             |-- register
+                |-- route.js
+            |-- students
                 |-- route.js
             |-- teachers
                 |-- route.js
@@ -66,6 +73,11 @@
             |-- page.jsx
         |-- favicon.ico
         |-- globals.css
+        |-- hod
+            |-- academic-management
+                |-- page.jsx
+            |-- layout.jsx
+            |-- page.jsx
         |-- layout.js
         |-- lib
             |-- googleDriveUpload.js
@@ -76,6 +88,7 @@
             |-- academicSchema.js
             |-- admissionSchema.js
             |-- enquirySchema.js
+            |-- studentSchema.js
             |-- teacherSchema.js
             |-- userSchema.js
         |-- page.js
@@ -86,6 +99,21 @@
                 |-- page.jsx
             |-- layout.jsx
             |-- page.jsx
+        |-- student
+            |-- assignments
+                |-- page.jsx
+            |-- attendance
+                |-- page.jsx
+            |-- certificates
+                |-- page.jsx
+            |-- grades
+                |-- page.jsx
+            |-- layout.jsx
+            |-- page.jsx
+            |-- profile
+                |-- page.jsx
+            |-- schedule
+                |-- page.jsx
     |-- components
         |-- Avatar.jsx
         |-- Card.jsx
@@ -93,6 +121,10 @@
         |-- DashboardSidebar.jsx
         |-- Header.jsx
         |-- Loader.jsx
+        |-- Loading.jsx
         |-- TableData.jsx
+        |-- Unauthorized.jsx
+    |-- context
+        |-- SessionContext.js
     |-- data
         |-- data.js

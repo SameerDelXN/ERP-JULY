@@ -59,10 +59,13 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       refPath: "role",
     },
+    sessionToken:{
+      type:String
+    }
   },
   { timestamps: true }
 );
-
+delete mongoose.models.user
 const user = mongoose.models.user || mongoose.model("user", userSchema);
 
 export default user;
