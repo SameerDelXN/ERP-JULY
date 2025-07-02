@@ -1,7 +1,6 @@
 
 import { connectToDatabase } from '../../lib/mongodb';
 import admissionSchema from '../../models/admissionSchema';
-//sample chnage2
 export async function POST(req) {
   try {
     await connectToDatabase();
@@ -109,5 +108,30 @@ export async function POST(req) {
     }), {
       status: 500
     });
+  }
+}
+
+
+export async function GET() {
+  try {
+    await connectDB();
+
+    // Fetch all admissions
+    const admissions = await admission.find({}).sort({ createdAt: -1 });
+
+    return Response.json({
+      success: true,
+      data: admissions
+    });
+
+  } catch (error) {
+    console.error('Error fetching admissions:', error);
+    return Response.json(
+      {
+        success: false,
+        message: 'Internal server error'
+      },
+      { status: 500 }
+    );
   }
 }
