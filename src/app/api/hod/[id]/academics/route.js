@@ -1,8 +1,8 @@
 //hod can view academics of his/her department only 
 
-import { connectToDatabase } from '../../../lib/mongodb';
-import teacherSchema from '../../../models/teacherSchema';
-import academicSchema from '../../../models/academicSchema';
+import { connectToDatabase } from '../../../../lib/mongodb';
+import teacherSchema from '../../../../models/teacherSchema';
+import academicSchema from '../../../../models/teacherSchema';
 import { NextResponse } from 'next/server';
 
 export async function GET(req, { params }) {

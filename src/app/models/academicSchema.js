@@ -8,7 +8,7 @@ const academicSchema = new mongoose.Schema({
   },
   year: {
     type: String,
-    required: true, // e.g. "2nd Year"
+    //required: true, // e.g. "2nd Year"
   },
   divisions: [
     {

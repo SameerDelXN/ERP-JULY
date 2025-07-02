@@ -14,6 +14,24 @@ import {
   Mail,
   Phone,
   MessageSquare,
+  Filter,
+  Download,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  MapPin,
+  Tag,
+  Users,
+  TrendingUp,
+  Activity,
+  UserPlus,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Zap,
+  Target,
+  Award,
+  Briefcase
 } from "lucide-react";
 import Image from "next/image";
 
@@ -29,109 +47,169 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 
   if (!enquiry) {
     return (
-      <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg relative">
+      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative border border-gray-100">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
           >
-            <XCircle className="w-6 h-6" />
+            <XCircle className="w-5 h-5" />
           </button>
-          <div className="text-center py-12 text-gray-500">
-            No enquiry found
+          <div className="text-center py-16 text-gray-500">
+            <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">No enquiry found</p>
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-        >
-          <XCircle className="w-6 h-6" />
-        </button>
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "New": return <Zap className="w-4 h-4" />;
+      case "In Progress": return <Clock className="w-4 h-4" />;
+      case "Contacted": return <Phone className="w-4 h-4" />;
+      case "Converted": return <Target className="w-4 h-4" />;
+      case "Lost": return <XCircle className="w-4 h-4" />;
+      default: return <Activity className="w-4 h-4" />;
+    }
+  };
 
-        <div>
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Enquiry Details
-          </h2>
-          <div className="space-y-4">
-            <DetailRow
-              icon={<User />}
-              label="Name"
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "New": return "bg-blue-50 text-blue-700 border-blue-200";
+      case "In Progress": return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Contacted": return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Converted": return "bg-green-50 text-green-700 border-green-200";
+      case "Lost": return "bg-red-50 text-red-700 border-red-200";
+      default: return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl relative border border-gray-100 max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Enquiry Details</h2>
+              <p className="text-sm text-gray-600">Complete information overview</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-white rounded-full"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+          {/* Status Banner */}
+          <div className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(enquiry.status)}`}>
+            {getStatusIcon(enquiry.status)}
+            <div>
+              <p className="font-semibold">Status: {enquiry.status || "Unknown"}</p>
+              <p className="text-sm opacity-80">Last updated: {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}</p>
+            </div>
+          </div>
+
+          {/* Main Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <DetailCard
+              icon={<User className="w-5 h-5" />}
+              label="Full Name"
               value={`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
+              bgColor="bg-blue-50"
+              iconColor="text-blue-600"
             />
-            <DetailRow
-              icon={<Mail />}
-              label="Email"
+            <DetailCard
+              icon={<Mail className="w-5 h-5" />}
+              label="Email Address"
               value={enquiry.email || "N/A"}
+              bgColor="bg-green-50"
+              iconColor="text-green-600"
             />
-            <DetailRow
-              icon={<Phone />}
-              label="Phone"
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="Phone Number"
               value={enquiry.phone || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
             />
-            <DetailRow
-              icon={<GraduationCap />}
-              label="Course"
+            <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Course Interested"
               value={enquiry.courseInterested || "N/A"}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
-            <DetailRow
-              icon={<Calendar />}
-              label="Date"
-              value={
-                enquiry.createdAt
-                  ? new Date(enquiry.createdAt).toLocaleDateString()
-                  : "N/A"
-              }
+            <DetailCard
+              icon={<Calendar className="w-5 h-5" />}
+              label="Enquiry Date"
+              value={enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}
+              bgColor="bg-teal-50"
+              iconColor="text-teal-600"
             />
-            <DetailRow
-              icon={<MessageSquare />}
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
               label="Source"
               value={enquiry.source || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
-            <DetailRow
-              icon={<MessageSquare />}
-              label="Status"
-              value={enquiry.status || "N/A"}
-            />
-            {enquiry?.followUps?.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">
-                  Follow Ups:
-                </p>
-                <ul className="space-y-1 list-disc list-inside text-sm text-gray-700">
-                  {enquiry.followUps.map((fup, index) => (
-                    <li key={index}>
-                      <span className="font-medium">
-                        {fup.date
-                          ? new Date(fup.date).toLocaleDateString()
-                          : "N/A"}
-                        :
-                      </span>{" "}
-                      {fup?.note || "N/A"}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
+
+          {/* Follow-ups Section */}
+          {enquiry?.followUps?.length > 0 && (
+            <div className="bg-gray-50 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Follow-up History</h3>
+              </div>
+              <div className="space-y-3">
+                {enquiry.followUps.map((fup, index) => (
+                  <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-gray-900">
+                            {fup.date ? new Date(fup.date).toLocaleDateString() : "N/A"}
+                          </span>
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                            Follow-up #{index + 1}
+                          </span>
+                        </div>
+                        <p className="text-gray-700">{fup?.note || "No notes available"}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-const DetailRow = ({ icon, label, value }) => (
-  <div className="flex items-center gap-3 text-gray-700">
-    <div className="bg-gray-100 p-2 rounded-lg text-blue-600">{icon}</div>
-    <div>
-      <p className="text-sm font-semibold">{label}</p>
-      <p className="text-sm">{value || "N/A"}</p>
+const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
+  <div className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all duration-200">
+    <div className="flex items-start gap-3">
+      <div className={`${bgColor} p-3 rounded-lg ${iconColor}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
+        <p className="text-base font-semibold text-gray-900 break-words">{value}</p>
+      </div>
     </div>
   </div>
 );
@@ -191,83 +269,101 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Assign Counselor
-          </h2>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative border border-gray-100">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <UserPlus className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Assign Counselor</h2>
+              <p className="text-sm text-gray-600">Set up follow-up and assignment</p>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-white rounded-full"
           >
-            <XCircle className="w-6 h-6" />
+            <XCircle className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
               Select Counselor *
             </label>
-            <select
-              value={formData.assignCounselor}
-              onChange={(e) =>
-                setFormData({ ...formData, assignCounselor: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Counselor</option>
-              {counselors.map((counselor) => (
-                <option key={counselor._id} value={counselor._id}>
-                  {counselor?.fullName || "Unknown Counselor"}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Set Follow-Up Date *
-            </label>
-            <input
-              type="date"
-              value={formData.followUpDate}
-              onChange={(e) =>
-                setFormData({ ...formData, followUpDate: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add Follow-Up Note *
-            </label>
-            <input
-              type="text"
-              value={formData.followUpNote}
-              onChange={(e) =>
-                setFormData({ ...formData, followUpNote: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <div className="relative">
+              <select
+                value={formData.assignCounselor}
+                onChange={(e) =>
+                  setFormData({ ...formData, assignCounselor: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 font-medium"
+                required
+              >
+                <option value="">Choose a counselor...</option>
+                {counselors.map((counselor) => (
+                  <option key={counselor._id} value={counselor._id}>
+                    {counselor?.fullName || "Unknown Counselor"}
+                  </option>
+                ))}
+              </select>
+              <Briefcase className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Follow-Up Date *
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={formData.followUpDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, followUpDate: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 font-medium"
+                required
+              />
+              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Follow-Up Note *
+            </label>
+            <div className="relative">
+              <textarea
+                value={formData.followUpNote}
+                onChange={(e) =>
+                  setFormData({ ...formData, followUpNote: e.target.value })
+                }
+                rows="3"
+                placeholder="Add a note about this follow-up..."
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 resize-none"
+                required
+              />
+              <MessageSquare className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-lg shadow-blue-500/25"
             >
-              Assign
+              Assign Counselor
             </button>
           </div>
         </form>
@@ -286,11 +382,12 @@ const EnquiriesLeads = () => {
   const [showAssignCounselorModal, setShowAssignCounselorModal] = useState(false);
   const [selectedEnquiryId, setSelectedEnquiryId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5);
+  const [itemsPerPage] = useState(8);
 
   const totalEnquiries = enquiries.length;
   const newLeads = enquiries.filter((e) => e.status === "New").length;
   const converted = enquiries.filter((e) => e.status === "Converted").length;
+  const inProgress = enquiries.filter((e) => e.status === "In Progress").length;
   const conversionRate = totalEnquiries
     ? Math.round((converted / totalEnquiries) * 100)
     : 0;
@@ -334,18 +431,23 @@ const EnquiriesLeads = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "New":
-        return "bg-blue-100 text-blue-800";
-      case "In Progress":
-        return "bg-indigo-100 text-indigo-800";
-      case "Contacted":
-        return "bg-yellow-100 text-yellow-800";
-      case "Converted":
-        return "bg-purple-100 text-purple-800";
-      case "Lost":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case "New": return "bg-blue-50 text-blue-700 border-blue-200";
+      case "In Progress": return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Contacted": return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Converted": return "bg-green-50 text-green-700 border-green-200";
+      case "Lost": return "bg-red-50 text-red-700 border-red-200";
+      default: return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "New": return <Zap className="w-3 h-3" />;
+      case "In Progress": return <Clock className="w-3 h-3" />;
+      case "Contacted": return <Phone className="w-3 h-3" />;
+      case "Converted": return <Target className="w-3 h-3" />;
+      case "Lost": return <XCircle className="w-3 h-3" />;
+      default: return <Activity className="w-3 h-3" />;
     }
   };
 
@@ -418,13 +520,12 @@ const EnquiriesLeads = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Image
-          src="/loading.svg"
-          alt="Loading..."
-          width={300}
-          height={300}
-          className="mb-4"
-        />
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto animate-pulse">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-gray-600 font-medium">Loading enquiries...</p>
+        </div>
       </div>
     );
   }
@@ -432,326 +533,354 @@ const EnquiriesLeads = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="p-6 text-red-600">Error: {error}</div>
+        <div className="text-center p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+            <XCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+          <p className="text-red-600">{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Enquiries & Leads
-        </h1>
-        <p className="text-gray-600">
-          Manage and track all student enquiries and leads
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        {/* Enhanced Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-sm text-gray-600">Total Enquiries</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {totalEnquiries}
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Enquiries & Leads
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Monitor and manage all student inquiries and conversion pipeline
               </p>
             </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <User className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">New Leads</p>
-              <p className="text-2xl font-bold text-gray-800">{newLeads}</p>
-            </div>
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Plus className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Converted</p>
-              <p className="text-2xl font-bold text-gray-800">{converted}</p>
-            </div>
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Conversion Rate</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {conversionRate}%
-              </p>
-            </div>
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Star className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters and Actions */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-          <div className="flex flex-wrap gap-2">
-            {[
-              "All",
-              "New",
-              "In Progress",
-              "Contacted",
-              "Converted",
-              "Lost",
-            ].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setCurrentPage(1); // Reset to first page when changing tabs
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+                <Filter className="w-4 h-4" />
+                Filter
               </button>
-            ))}
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
+                <ArrowUpRight className="w-3 h-3" />
+                +12%
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{totalEnquiries}</p>
+              <p className="text-sm text-gray-600 font-medium">Total Enquiries</p>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium">
+                <ArrowUpRight className="w-3 h-3" />
+                +8%
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{newLeads}</p>
+              <p className="text-sm text-gray-600 font-medium">New Leads</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium">
+                <ArrowUpRight className="w-3 h-3" />
+                +15%
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{converted}</p>
+              <p className="text-sm text-gray-600 font-medium">Converted</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 rounded-lg text-xs font-medium">
+                <ArrowUpRight className="w-3 h-3" />
+                +5%
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{conversionRate}%</p>
+              <p className="text-sm text-gray-600 font-medium">Conversion Rate</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Filters Section */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: "All", label: "All Enquiries", count: totalEnquiries },
+                { key: "New", label: "New", count: newLeads },
+                { key: "In Progress", label: "In Progress", count: inProgress },
+                { key: "Contacted", label: "Contacted", count: enquiries.filter(e => e.status === "Contacted").length },
+                { key: "Converted", label: "Converted", count: converted },
+              { key: "Lost", label: "Lost", count: enquiries.filter(e => e.status === "Lost").length }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === tab.key
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                    activeTab === tab.key
+                      ? "bg-white/20 text-white"
+                      : "bg-white text-gray-600"
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full lg:w-80">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search enquiries..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page when searching
+                  setCurrentPage(1);
                 }}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
               />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Enquiries Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Student
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Course
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Source
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Follow-up
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentItems.length > 0 ? (
-                currentItems.map((enquiry) => (
-                  <tr
-                    key={enquiry._id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {enquiry.email || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2">
-                        <GraduationCap className="w-4 h-4 text-gray-500" />
-                        <span className="text-gray-800">
-                          {enquiry.courseInterested || "N/A"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          enquiry.status
-                        )}`}
-                      >
-                        {enquiry.status
-                          ? enquiry.status.charAt(0).toUpperCase() +
-                            enquiry.status.slice(1)
-                          : "N/A"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-gray-700">
-                        {enquiry.source || "N/A"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        {(() => {
-                          const dateToShow =
-                            enquiry.status === "New"
-                              ? new Date(enquiry.createdAt)
-                              : enquiry.followUps?.length > 0
-                              ? new Date(enquiry.followUps[0].date)
-                              : new Date(enquiry.createdAt);
-
-                          const formattedDate = `${dateToShow
-                            .getDate()
-                            .toString()
-                            .padStart(2, "0")}/${(dateToShow.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0")}/${dateToShow.getFullYear()}`;
-
-                          return <span>{formattedDate}</span>;
-                        })()}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                          onClick={() => openDetailsModal(enquiry._id)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-1 text-amber-600 hover:bg-amber-50 rounded"
-                          onClick={() => openAssignModal(enquiry._id)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="py-8 text-center text-gray-500">
-                    No enquiries found matching your criteria
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {filteredEnquiries.length > 0 && (
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-gray-600">
-            Showing {indexOfFirstItem + 1} to{" "}
-            {Math.min(indexOfLastItem, filteredEnquiries.length)} of{" "}
-            {filteredEnquiries.length} results
-          </p>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => paginate(pageNum)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    currentPage === pageNum
-                      ? "bg-blue-600 text-white"
-                      : "border border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-
-            {totalPages > 5 && currentPage < totalPages - 2 && (
-              <span className="px-2">...</span>
-            )}
-
-            {totalPages > 5 && currentPage < totalPages - 2 && (
-              <button
-                onClick={() => paginate(totalPages)}
-                className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
-              >
-                {totalPages}
-              </button>
-            )}
-
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
+        {/* Enhanced Enquiries Table */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {activeTab} Enquiries
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Showing {currentItems.length} of {filteredEnquiries.length} results
+                </p>
+              </div>
+            </div>
           </div>
+
+          {currentItems.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No enquiries found</h3>
+              <p className="text-gray-600">
+                {searchTerm
+                  ? "Try adjusting your search criteria"
+                  : `No ${activeTab.toLowerCase()} enquiries available`}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Student Details
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Course & Contact
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {currentItems.map((enquiry) => (
+                    <tr key={enquiry._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {(enquiry.first?.[0] || enquiry.email?.[0] || "?").toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-600">{enquiry.email || "N/A"}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-medium text-gray-900 mb-1">
+                            {enquiry.courseInterested || "N/A"}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Phone className="w-3 h-3" />
+                            {enquiry.phone || "N/A"}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(enquiry.status)}`}>
+                          {getStatusIcon(enquiry.status)}
+                          {enquiry.status || "Unknown"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm">
+                          <p className="text-gray-900 font-medium">
+                            {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}
+                          </p>
+                          <p className="text-gray-600">
+                            {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openDetailsModal(enquiry._id)}
+                            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {enquiry.status === "New" && (
+                            <button
+                              onClick={() => openAssignModal(enquiry._id)}
+                              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Assign Counselor"
+                            >
+                              <UserPlus className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Enhanced Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredEnquiries.length)} of {filteredEnquiries.length} results
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => paginate(pageNumber)}
+                            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                              currentPage === pageNumber
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNumber} className="px-2 text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Modals */}
-      {showAssignCounselorModal && (
-        <AssignCounselorModal
-          onClose={() => {
-            setShowAssignCounselorModal(false);
-            setSelectedEnquiryId(null);
-          }}
-          onSubmit={handleAssignCounselor}
-          enquiryId={selectedEnquiryId}
-        />
-      )}
       {showDetailsModal && (
         <EnquiryDetailsModal
           enquiryId={selectedEnquiryId}
@@ -760,6 +889,17 @@ const EnquiriesLeads = () => {
             setShowDetailsModal(false);
             setSelectedEnquiryId(null);
           }}
+        />
+      )}
+
+      {showAssignCounselorModal && (
+        <AssignCounselorModal
+          enquiryId={selectedEnquiryId}
+          onClose={() => {
+            setShowAssignCounselorModal(false);
+            setSelectedEnquiryId(null);
+          }}
+          onSubmit={handleAssignCounselor}
         />
       )}
     </div>

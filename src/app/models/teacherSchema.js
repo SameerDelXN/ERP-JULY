@@ -24,7 +24,11 @@ const teacherSchema = new mongoose.Schema({
 
   department: {
     type: String,
-    required: true,
+    required: function() {
+      // Department is required only if role is not HOD
+      return this.role !== 'HOD';
+    },
+    default: null
   },
   teacherId: {
     type: String,
@@ -37,6 +41,7 @@ const teacherSchema = new mongoose.Schema({
   },
   role: {
     type: String,
+    enum: ['teacher', 'HOD'], // Added HOD to enum
     default: 'teacher'
   }
 });

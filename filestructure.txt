@@ -45,10 +45,20 @@
                     |-- route.js
                 |-- session
                     |-- route.js
+            |-- department
+                |-- route.js
             |-- enquiry
                 |-- route.js
                 |-- [id]
                     |-- route.js
+            |-- hod
+                |-- route.js
+                |-- [id]
+                    |-- academics
+                        |-- route.js
+                    |-- route.js
+                    |-- teacher
+                        |-- route.js
             |-- login
                 |-- route.js
             |-- register
@@ -60,6 +70,7 @@
                 |-- [id]
                     |-- dashboard
                         |-- route.js
+                    |-- route.js
             |-- upload
                 |-- route.js
             |-- userData
@@ -120,6 +131,16 @@
         |-- Container.jsx
         |-- DashboardSidebar.jsx
         |-- Header.jsx
+        |-- Landing
+            |-- Benefits.jsx
+            |-- Contact.jsx
+            |-- CTA.jsx
+            |-- Features.jsx
+            |-- Footer.jsx
+            |-- HeroSection.jsx
+            |-- Modules.jsx
+            |-- Navbar.jsx
+            |-- Testimonials.jsx
         |-- Loader.jsx
         |-- Loading.jsx
         |-- TableData.jsx
