@@ -27,8 +27,17 @@ export async function POST(req) {
   try {
     await connectToDatabase();
     const body = await req.json();
+    const {firstName,middleName,lastName,phone,email,course,source,notes}= body
+    const enquiry = new enquirySchema({
+      first : firstName,
+      middle : middleName,
+      last : lastName,
+      phone,
+      email,
+      courseInterested:course,
+      source,
 
-    const enquiry = new enquirySchema(body);
+    });
     await enquiry.save();
 
     return NextResponse.json({
