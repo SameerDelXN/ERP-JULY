@@ -45,6 +45,8 @@
                     |-- route.js
                 |-- session
                     |-- route.js
+            |-- department
+                |-- route.js
             |-- enquiry
                 |-- route.js
                 |-- [id]

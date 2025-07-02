@@ -26,8 +26,9 @@ import {
   MoreVertical,
 } from "lucide-react";
 import Image from "next/image";
-
+import { useSession } from "@/context/SessionContext";
 const EnquiriesLeads = () => {
+  const {user} = useSession()
   const [activeTab, setActiveTab] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [enquiries, setEnquiries] = useState([]);
@@ -36,7 +37,6 @@ const EnquiriesLeads = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filterSource, setFilterSource] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-
   const totalEnquiries = enquiries.length;
   const newLeads = enquiries.filter((e) => e.status === "New").length;
   const converted = enquiries.filter((e) => e.status === "Converted").length;
@@ -50,14 +50,16 @@ const EnquiriesLeads = () => {
         setLoading(true);
         // Fetch counselor ID if not already available
         // This is just an example - adjust based on how you store auth info
-        const counselorRes = await fetch("/api/userData");
-        const counselorData = await counselorRes.json();
-        setCounselorId(counselorData.id);
+ 
 
         const res = await fetch("/api/enquiry");
         if (!res.ok) throw new Error("Failed to fetch enquiries");
         const enquiriesData = await res.json();
-        setEnquiries(enquiriesData);
+        const counselorEnquiries = enquiriesData.filter(
+          enquiry => enquiry.counsellorId === user.id
+        );
+        
+        setEnquiries(counselorEnquiries);
       } catch (error) {
         setError(error.message);
         console.error("Failed to fetch enquiries:", error);
@@ -140,9 +142,9 @@ const EnquiriesLeads = () => {
       trend: 'up'
     }
   ];
-
+  console.log(enquiries)
   // Update your filteredEnquiries to use counselorEnquiries
-  const filteredEnquiries = counselorEnquiries.filter((enquiry) => {
+  const filteredEnquiries = enquiries.filter((enquiry) => {
     const matchesSearch =
       (enquiry.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       (enquiry.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
