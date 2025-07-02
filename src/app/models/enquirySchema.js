@@ -23,7 +23,6 @@ const enquirySchema = new Schema({
 
   source: {
     type: String,
-    enum: ['Website', 'Call', 'Walk-in', 'Campaign'],
   },
   status: {
     type: String,
@@ -33,7 +32,7 @@ const enquirySchema = new Schema({
   counsellorId: {
     type: Types.ObjectId,
     ref: 'User', // optional: reference to a User model
-    required:true
+  
   },
   followUps: [
     {
@@ -50,7 +49,7 @@ const enquirySchema = new Schema({
     default: Date.now,
   },
 });
-
+delete mongoose.models.enquiry
 const enquiry = mongoose.models.enquiry|| mongoose.model('enquiry', enquirySchema);
 
 export default enquiry;
