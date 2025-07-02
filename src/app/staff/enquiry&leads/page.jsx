@@ -18,6 +18,12 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Users,
+  UserCheck,
+  ArrowUpRight,
+  ArrowDownRight,
+  Download,
+  MoreVertical,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -27,11 +33,17 @@ const EnquiriesLeads = () => {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterSource, setFilterSource] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5);
 
-  // Add counselorId - you might get this from your auth context or session
-  const [counselorId, setCounselorId] = useState(null);
+  const totalEnquiries = enquiries.length;
+  const newLeads = enquiries.filter((e) => e.status === "New").length;
+  const converted = enquiries.filter((e) => e.status === "Converted").length;
+  const conversionRate = totalEnquiries
+    ? Math.round((converted / totalEnquiries) * 100)
+    : 0;
+
   useEffect(() => {
     const fetchEnquiries = async () => {
       try {
@@ -46,9 +58,9 @@ const EnquiriesLeads = () => {
         if (!res.ok) throw new Error("Failed to fetch enquiries");
         const enquiriesData = await res.json();
         setEnquiries(enquiriesData);
-      } catch (err) {
-        setError(err.message);
-        console.error("Error:", err);
+      } catch (error) {
+        setError(error.message);
+        console.error("Failed to fetch enquiries:", error);
       } finally {
         setLoading(false);
       }
@@ -57,72 +69,106 @@ const EnquiriesLeads = () => {
     fetchEnquiries();
   }, []);
 
-  console.log(enquiries);
-
   const getStatusColor = (status) => {
     switch (status) {
       case "New":
-        return "bg-blue-100 text-blue-800";
-      case "In Progress":
-        return "bg-indigo-100 text-indigo-800";
+        return "bg-blue-50 text-blue-700";
       case "Contacted":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-50 text-yellow-700";
       case "Converted":
-        return "bg-purple-100 text-purple-800";
+        return "bg-green-50 text-green-700";
       case "Lost":
-        return "bg-red-100 text-red-800";
+        return "bg-red-50 text-red-700";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-50 text-gray-700";
     }
   };
 
-  // Filter enquiries to only show those assigned to the current counselor
-  const counselorEnquiries = enquiries.filter(
-    (enquiry) => enquiry.counselorId === counselorId
+  const StatCard = ({ title, value, icon: Icon, change, trend }) => (
+    <div className="bg-white rounded-lg p-6 border border-gray-100 hover:shadow-sm transition-all duration-200">
+      <div className="flex items-center justify-between mb-4">
+        <div className="p-2 bg-gray-100 rounded-lg">
+          <Icon className="w-5 h-5 text-gray-600" />
+        </div>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+          trend === 'up' 
+            ? 'bg-green-50 text-green-700' 
+            : trend === 'down'
+            ? 'bg-red-50 text-red-700'
+            : 'bg-blue-50 text-blue-700'
+        }`}>
+          {trend === 'up' && <ArrowUpRight className="w-3 h-3" />}
+          {trend === 'down' && <ArrowDownRight className="w-3 h-3" />}
+          {change}
+        </div>
+      </div>
+      
+      <div className="space-y-3">
+        <h3 className="text-gray-600 text-sm font-medium">{title}</h3>
+        <div className="text-2xl font-semibold text-gray-900">{value}</div>
+      </div>
+    </div>
   );
+
+  const stats = [
+    { 
+      title: 'Total Enquiries', 
+      value: totalEnquiries, 
+      icon: Users, 
+      change: '+12 this month',
+      trend: 'up'
+    },
+    { 
+      title: 'New Leads', 
+      value: newLeads, 
+      icon: Plus, 
+      change: '+5 this week',
+      trend: 'up'
+    },
+    { 
+      title: 'Converted', 
+      value: converted, 
+      icon: CheckCircle, 
+      change: `${conversionRate}% rate`,
+      trend: 'neutral'
+    },
+    { 
+      title: 'Conversion Rate', 
+      value: `${conversionRate}%`, 
+      icon: Star, 
+      change: '+2% from last month',
+      trend: 'up'
+    }
+  ];
 
   // Update your filteredEnquiries to use counselorEnquiries
   const filteredEnquiries = counselorEnquiries.filter((enquiry) => {
     const matchesSearch =
       (enquiry.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       (enquiry.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (enquiry.course?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+      (enquiry.courseInterested?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
-    if (activeTab === "All") return matchesSearch;
-    return matchesSearch && enquiry.status === activeTab;
+    const matchesSource = filterSource === 'all' || enquiry.source === filterSource;
+
+    if (activeTab === "All") return matchesSearch && matchesSource;
+    return matchesSearch && matchesSource && enquiry.status === activeTab;
   });
 
-  // Update your stats calculations to use counselorEnquiries instead of enquiries
-  const totalEnquiries = counselorEnquiries.length;
-  const newLeads = counselorEnquiries.filter((e) => e.status === "New").length;
-  const converted = counselorEnquiries.filter(
-    (e) => e.status === "Converted"
-  ).length;
-  const conversionRate = totalEnquiries
-    ? Math.round((converted / totalEnquiries) * 100)
-    : 0;
+  const totalPages = Math.ceil(filteredEnquiries.length / 10);
+  const paginatedEnquiries = filteredEnquiries.slice((currentPage - 1) * 10, currentPage * 10);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredEnquiries.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
-  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const sources = ['Website', 'Social Media', 'Referral', 'Advertisement', 'Walk-in'];
 
   if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Image
-          src="/loading.svg"
+        <Image 
+          src="/loading.svg" 
           alt="Loading..."
-          width={300}
+          width={300} 
           height={300}
           className="mb-4"
         />
-        {/* <Loader/> */}
       </div>
     );
 
@@ -134,308 +180,276 @@ const EnquiriesLeads = () => {
     );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Enquiries & Leads
-        </h1>
-        <p className="text-gray-600">
-          Manage and track all student enquiries and leads
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">Enquiries & Leads</h2>
+            <p className="text-gray-600 text-sm mt-1">Manage and track all student enquiries and leads</p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+              <Plus className="w-4 h-4" />
+              Add Enquiry
+            </button>
+          </div>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Enquiries</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {totalEnquiries}
-              </p>
-            </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <User className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {stats.map((stat, index) => (
+            <StatCard key={index} {...stat} />
+          ))}
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">New Leads</p>
-              <p className="text-2xl font-bold text-gray-800">{newLeads}</p>
-            </div>
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Plus className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Converted</p>
-              <p className="text-2xl font-bold text-gray-800">{converted}</p>
-            </div>
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Conversion Rate</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {conversionRate}%
-              </p>
-            </div>
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Star className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Filters and Actions */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-          <div className="flex flex-wrap gap-2">
-            {[
-              "All",
-              "New",
-              "In Progress",
-              "Contacted",
-              "Converted",
-              "Lost",
-            ].map((tab) => (
+        {/* Filters and Search */}
+        <div className="bg-white rounded-lg p-6 border border-gray-100 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search enquiries..."
+                  className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-80 text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
               <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setCurrentPage(1); // Reset to first page when changing tabs
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                <Filter className="w-4 h-4" />
+                Filters
               </button>
-            ))}
-          </div>
+            </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search enquiries..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page when searching
-                }}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="text-sm text-gray-600">
+              Showing {paginatedEnquiries.length} of {filteredEnquiries.length} enquiries
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Enquiries Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Student
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Course
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Source
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Follow-up
-                </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentItems.length > 0 ? (
-                currentItems.map((enquiry) => (
+          {/* Status Tabs */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {["All", "New", "Contacted", "Converted", "Lost"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === tab
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {showFilters && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                  <select
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    value={filterSource}
+                    onChange={(e) => setFilterSource(e.target.value)}
+                  >
+                    <option value="all">All Sources</option>
+                    {sources.map(source => (
+                      <option key={source} value={source}>{source}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setFilterSource('all');
+                      setSearchTerm('');
+                      setActiveTab('All');
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Enquiries Table */}
+        <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input type="checkbox" className="rounded border-gray-300" />
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Course
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Source
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Follow-up
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedEnquiries.map((enquiry) => (
                   <tr
                     key={enquiry._id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
+                    className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                           <User className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800">
-                            {`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {enquiry.email || "N/A"}
-                          </p>
+                          <div className="text-sm font-medium text-gray-900">
+                            {enquiry.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            ID: {enquiry._id?.slice(-6) || 'N/A'}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2">
-                        <GraduationCap className="w-4 h-4 text-gray-500" />
-                        <span className="text-gray-800">
-                          {enquiry.courseInterested || "N/A"}
-                        </span>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 flex items-center gap-2">
+                        <Mail className="w-3 h-3 text-gray-400" />
+                        {enquiry.email}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                        <Phone className="w-3 h-3 text-gray-400" />
+                        {enquiry.phone || 'N/A'}
                       </div>
                     </td>
-                    <td className="py-4 px-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm text-gray-900">{enquiry.courseInterested}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded ${getStatusColor(
                           enquiry.status
                         )}`}
                       >
-                        {enquiry.status
-                          ? enquiry.status.charAt(0).toUpperCase() +
-                            enquiry.status.slice(1)
-                          : "N/A"}
+                        {enquiry.status}
                       </span>
                     </td>
-                    <td className="py-4 px-4">
-                      <span className="text-gray-700">
-                        {enquiry.source || "N/A"}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {enquiry.source}
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        {(() => {
-                          const dateToShow =
-                            enquiry.status === "New"
-                              ? new Date(enquiry.createdAt)
-                              : enquiry.followUps?.length > 0
-                              ? new Date(enquiry.followUps[0].date)
-                              : new Date(enquiry.createdAt);
-
-                          const formattedDate = `${dateToShow
-                            .getDate()
-                            .toString()
-                            .padStart(2, "0")}/${(dateToShow.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0")}/${dateToShow.getFullYear()}`;
-
-                          return <span>{formattedDate}</span>;
-                        })()}
+                        <span>{enquiry.followUps?.date || 'Not scheduled'}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                          onClick={() => openDetailsModal(enquiry._id)}
-                        >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-1">
+                        <button className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          className="p-1 text-amber-600 hover:bg-amber-50 rounded"
-                          onClick={() => openAssignModal(enquiry._id)}
-                        >
+                        <button className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
                           <Edit className="w-4 h-4" />
+                        </button>
+                        <button className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <button className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors">
+                          <MoreVertical className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="py-8 text-center text-gray-500">
-                    No enquiries found matching your criteria
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                    <span className="font-medium">{totalPages}</span>
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px">
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
+                          currentPage === i + 1
+                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                        } ${i === 0 ? 'rounded-l-lg' : ''} ${i === totalPages - 1 ? 'rounded-r-lg' : ''}`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Pagination */}
-      {filteredEnquiries.length > 0 && (
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-gray-600">
-            Showing {indexOfFirstItem + 1} to{" "}
-            {Math.min(indexOfLastItem, filteredEnquiries.length)} of{" "}
-            {filteredEnquiries.length} results
-          </p>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => paginate(pageNum)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    currentPage === pageNum
-                      ? "bg-blue-600 text-white"
-                      : "border border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-
-            {totalPages > 5 && currentPage < totalPages - 2 && (
-              <span className="px-2">...</span>
-            )}
-
-            {totalPages > 5 && currentPage < totalPages - 2 && (
-              <button
-                onClick={() => paginate(totalPages)}
-                className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
-              >
-                {totalPages}
-              </button>
-            )}
-
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
