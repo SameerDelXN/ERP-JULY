@@ -1,19 +1,38 @@
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import React, { useState, useEffect } from "react";
-import { adminSidebarItems } from "@/data/data";
 import { Bell, ChevronDown } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
-import Unauthorized from "@/components/Unauthorized"; // Create this component
-import { useSession } from "@/context/SessionContext"; // Assuming you're using NextAuth
-import Loading from "@/components/Loading"; // Create a loading component
+import Unauthorized from "@/components/Unauthorized";
+import { useSession } from "@/context/SessionContext";
+import Loading from "@/components/Loading";
 
-const Layout = ({ children }) => {
+// HOD specific sidebar items
+const hodSidebarItems = [
+  {
+    id: "overview",
+    label: "Overview",
+    icon: "LayoutDashboard", // You'll need to import or define this icon
+  },
+  {
+    id: "academic-management",
+    label: "Academic Management",
+    icon: "BookOpen", // You'll need to import or define this icon
+    subItems: [
+      { id: "courses", label: "Courses" },
+      { id: "timetable", label: "Timetable" },
+      { id: "faculty", label: "Faculty" },
+      { id: "students", label: "Students" },
+    ],
+  },
+];
+
+const HodLayout = ({ children }) => {
   const { user, loading } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(adminSidebarItems[0]?.id || "overview");
+  const [activeTab, setActiveTab] = useState(hodSidebarItems[0]?.id || "overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +45,8 @@ const Layout = ({ children }) => {
       return;
     }
 
-    if (user.role === "admin") {
+    // Check if user is HOD
+    if (user.role === "hod") {
       setIsAuthorized(true);
     } else {
       setIsAuthorized(false);
@@ -38,17 +58,17 @@ const Layout = ({ children }) => {
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
-      router.push('/admin');
+      router.push('/hod');
     } else {
-      router.push(`/admin/${newTab}`);
+      router.push(`/hod/${newTab}`);
     }
   };
 
-  const activeTabItem = adminSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = hodSidebarItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "overview") {
-      return activeTabItem?.label || "Dashboard Overview";
+      return activeTabItem?.label || "HOD Dashboard";
     }
     return (
       activeTabItem?.label ||
@@ -68,7 +88,7 @@ const Layout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={adminSidebarItems}
+        items={hodSidebarItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
@@ -91,16 +111,16 @@ const Layout = ({ children }) => {
             <div className="flex items-center space-x-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer group">
               {/* Avatar */}
               <div className="relative">
-                <Avatar name={user?.name || "Admin User"} />
+                <Avatar name={user?.name || "HOD"} />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
 
               {/* User Info */}
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
-                  {user?.name || "Admin User"}
+                  {user?.name || "HOD"}
                 </p>
-                <p className="text-xs text-gray-500">Super Administrator</p>
+                <p className="text-xs text-gray-500">Head of Department</p>
               </div>
 
               {/* Dropdown Arrow */}
@@ -116,4 +136,4 @@ const Layout = ({ children }) => {
   );
 };
 
-export default Layout;
+export default HodLayout;
