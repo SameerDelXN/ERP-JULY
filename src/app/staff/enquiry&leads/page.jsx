@@ -26,6 +26,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import Image from "next/image";
+import { useSession } from "@/context/SessionContext";
 
 const EnquiriesLeads = () => {
   const [activeTab, setActiveTab] = useState("All");
@@ -34,8 +35,40 @@ const EnquiriesLeads = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [filterSource, setFilterSource] = useState('all');
+  const [filterSource, setFilterSource] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const { user } = useSession(); // Add counselorId - you might get this from your auth context or session
+
+  useEffect(() => {
+    const fetchEnquiries = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/enquiry");
+
+        if (!res.ok) throw new Error("Failed to fetch enquiries");
+        const enquiriesData = await res.json();
+        console.log(enquiriesData);
+
+        // Filter enquiries to only show those assigned to the current counselor
+        const filteredEnquiries = enquiriesData.filter(
+          (enquiry) => enquiry.counsellorId === user?.id
+        );
+        console.log(filteredEnquiries);
+        setEnquiries(filteredEnquiries);
+      } catch (err) {
+        setError(err.message);
+        console.error("Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchEnquiries();
+    }
+  }, [user?.id]); // Refetch when staffId changes
+
+  // console.log();
 
   const totalEnquiries = enquiries.length;
   const newLeads = enquiries.filter((e) => e.status === "New").length;
@@ -44,35 +77,22 @@ const EnquiriesLeads = () => {
     ? Math.round((converted / totalEnquiries) * 100)
     : 0;
 
-  useEffect(() => {
-    const fetchEnquiries = async () => {
-      try {
-        setLoading(true);
-        // Fetch counselor ID if not already available
-        // This is just an example - adjust based on how you store auth info
-        const counselorRes = await fetch("/api/userData");
-        const counselorData = await counselorRes.json();
-        setCounselorId(counselorData.id);
+  const filteredEnquiries = enquiries.filter((enquiry) => {
+    const matchesSearch =
+      (enquiry.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (enquiry.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (enquiry.course?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
-        const res = await fetch("/api/enquiry");
-        if (!res.ok) throw new Error("Failed to fetch enquiries");
-        const enquiriesData = await res.json();
-        setEnquiries(enquiriesData);
-      } catch (error) {
-        setError(error.message);
-        console.error("Failed to fetch enquiries:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEnquiries();
-  }, []);
+    if (activeTab === "All") return matchesSearch;
+    return matchesSearch && enquiry.status === activeTab;
+  });
 
   const getStatusColor = (status) => {
     switch (status) {
       case "New":
         return "bg-blue-50 text-blue-700";
+      case "In Progress":
+        return "bg-indigo-100 text-indigo-800";
       case "Contacted":
         return "bg-yellow-50 text-yellow-700";
       case "Converted":
@@ -90,19 +110,21 @@ const EnquiriesLeads = () => {
         <div className="p-2 bg-gray-100 rounded-lg">
           <Icon className="w-5 h-5 text-gray-600" />
         </div>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-          trend === 'up' 
-            ? 'bg-green-50 text-green-700' 
-            : trend === 'down'
-            ? 'bg-red-50 text-red-700'
-            : 'bg-blue-50 text-blue-700'
-        }`}>
-          {trend === 'up' && <ArrowUpRight className="w-3 h-3" />}
-          {trend === 'down' && <ArrowDownRight className="w-3 h-3" />}
+        <div
+          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+            trend === "up"
+              ? "bg-green-50 text-green-700"
+              : trend === "down"
+              ? "bg-red-50 text-red-700"
+              : "bg-blue-50 text-blue-700"
+          }`}
+        >
+          {trend === "up" && <ArrowUpRight className="w-3 h-3" />}
+          {trend === "down" && <ArrowDownRight className="w-3 h-3" />}
           {change}
         </div>
       </div>
-      
+
       <div className="space-y-3">
         <h3 className="text-gray-600 text-sm font-medium">{title}</h3>
         <div className="text-2xl font-semibold text-gray-900">{value}</div>
@@ -111,61 +133,57 @@ const EnquiriesLeads = () => {
   );
 
   const stats = [
-    { 
-      title: 'Total Enquiries', 
-      value: totalEnquiries, 
-      icon: Users, 
-      change: '+12 this month',
-      trend: 'up'
+    {
+      title: "Total Enquiries",
+      value: totalEnquiries,
+      icon: Users,
+      change: "+12 this month",
+      trend: "up",
     },
-    { 
-      title: 'New Leads', 
-      value: newLeads, 
-      icon: Plus, 
-      change: '+5 this week',
-      trend: 'up'
+    {
+      title: "New Leads",
+      value: newLeads,
+      icon: Plus,
+      change: "+5 this week",
+      trend: "up",
     },
-    { 
-      title: 'Converted', 
-      value: converted, 
-      icon: CheckCircle, 
+    {
+      title: "Converted",
+      value: converted,
+      icon: CheckCircle,
       change: `${conversionRate}% rate`,
-      trend: 'neutral'
+      trend: "neutral",
     },
-    { 
-      title: 'Conversion Rate', 
-      value: `${conversionRate}%`, 
-      icon: Star, 
-      change: '+2% from last month',
-      trend: 'up'
-    }
+    {
+      title: "Conversion Rate",
+      value: `${conversionRate}%`,
+      icon: Star,
+      change: "+2% from last month",
+      trend: "up",
+    },
   ];
 
-  // Update your filteredEnquiries to use counselorEnquiries
-  const filteredEnquiries = counselorEnquiries.filter((enquiry) => {
-    const matchesSearch =
-      (enquiry.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (enquiry.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (enquiry.courseInterested?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-
-    const matchesSource = filterSource === 'all' || enquiry.source === filterSource;
-
-    if (activeTab === "All") return matchesSearch && matchesSource;
-    return matchesSearch && matchesSource && enquiry.status === activeTab;
-  });
-
   const totalPages = Math.ceil(filteredEnquiries.length / 10);
-  const paginatedEnquiries = filteredEnquiries.slice((currentPage - 1) * 10, currentPage * 10);
+  const paginatedEnquiries = filteredEnquiries.slice(
+    (currentPage - 1) * 10,
+    currentPage * 10
+  );
 
-  const sources = ['Website', 'Social Media', 'Referral', 'Advertisement', 'Walk-in'];
+  const sources = [
+    "Website",
+    "Social Media",
+    "Referral",
+    "Advertisement",
+    "Walk-in",
+  ];
 
   if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Image 
-          src="/loading.svg" 
+        <Image
+          src="/loading.svg"
           alt="Loading..."
-          width={300} 
+          width={300}
           height={300}
           className="mb-4"
         />
@@ -185,10 +203,14 @@ const EnquiriesLeads = () => {
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Enquiries & Leads</h2>
-            <p className="text-gray-600 text-sm mt-1">Manage and track all student enquiries and leads</p>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Enquiries & Leads
+            </h2>
+            <p className="text-gray-600 text-sm mt-1">
+              Manage and track all student enquiries and leads
+            </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
               <Download className="w-4 h-4" />
@@ -222,7 +244,7 @@ const EnquiriesLeads = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
@@ -233,14 +255,22 @@ const EnquiriesLeads = () => {
             </div>
 
             <div className="text-sm text-gray-600">
-              Showing {paginatedEnquiries.length} of {filteredEnquiries.length} enquiries
+              Showing {paginatedEnquiries.length} of {filteredEnquiries.length}{" "}
+              enquiries
             </div>
           </div>
 
           {/* Status Tabs */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap gap-2 mb-4">
-              {["All", "New", "Contacted", "Converted", "Lost"].map((tab) => (
+              {[
+                "All",
+                "New",
+                "In Progress",
+                "Contacted",
+                "Converted",
+                "Lost",
+              ].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -260,15 +290,19 @@ const EnquiriesLeads = () => {
             <div className="pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Source
+                  </label>
                   <select
                     className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     value={filterSource}
                     onChange={(e) => setFilterSource(e.target.value)}
                   >
                     <option value="all">All Sources</option>
-                    {sources.map(source => (
-                      <option key={source} value={source}>{source}</option>
+                    {sources.map((source) => (
+                      <option key={source} value={source}>
+                        {source}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -276,9 +310,9 @@ const EnquiriesLeads = () => {
                 <div className="flex items-end">
                   <button
                     onClick={() => {
-                      setFilterSource('all');
-                      setSearchTerm('');
-                      setActiveTab('All');
+                      setFilterSource("all");
+                      setSearchTerm("");
+                      setActiveTab("All");
                     }}
                     className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
                   >
@@ -297,7 +331,10 @@ const EnquiriesLeads = () => {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <input type="checkbox" className="rounded border-gray-300" />
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                    />
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Student
@@ -329,7 +366,10 @@ const EnquiriesLeads = () => {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <input type="checkbox" className="rounded border-gray-300" />
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -338,10 +378,10 @@ const EnquiriesLeads = () => {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {enquiry.name}
+                             {`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
                           </div>
                           <div className="text-xs text-gray-500">
-                            ID: {enquiry._id?.slice(-6) || 'N/A'}
+                            ID: {enquiry._id?.slice(-6) || "N/A"}
                           </div>
                         </div>
                       </div>
@@ -353,13 +393,15 @@ const EnquiriesLeads = () => {
                       </div>
                       <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                         <Phone className="w-3 h-3 text-gray-400" />
-                        {enquiry.phone || 'N/A'}
+                        {enquiry.phone || "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <GraduationCap className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-900">{enquiry.courseInterested}</span>
+                        <span className="text-sm text-gray-900">
+                          {enquiry.courseInterested}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -374,10 +416,26 @@ const EnquiriesLeads = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {enquiry.source}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        <span>{enquiry.followUps?.date || 'Not scheduled'}</span>
+                        {(() => {
+                          const dateToShow =
+                            enquiry.status === "New"
+                              ? new Date(enquiry.createdAt)
+                              : enquiry.followUps?.length > 0
+                              ? new Date(enquiry.followUps[0].date)
+                              : new Date(enquiry.createdAt);
+
+                          const formattedDate = `${dateToShow
+                            .getDate()
+                            .toString()
+                            .padStart(2, "0")}/${(dateToShow.getMonth() + 1)
+                            .toString()
+                            .padStart(2, "0")}/${dateToShow.getFullYear()}`;
+
+                          return <span>{formattedDate}</span>;
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -387,12 +445,6 @@ const EnquiriesLeads = () => {
                         </button>
                         <button className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
                           <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors">
-                          <MoreVertical className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -414,7 +466,9 @@ const EnquiriesLeads = () => {
                   Previous
                 </button>
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
                 >
@@ -424,7 +478,8 @@ const EnquiriesLeads = () => {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                    Showing page{" "}
+                    <span className="font-medium">{currentPage}</span> of{" "}
                     <span className="font-medium">{totalPages}</span>
                   </p>
                 </div>
@@ -436,9 +491,11 @@ const EnquiriesLeads = () => {
                         onClick={() => setCurrentPage(i + 1)}
                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
                           currentPage === i + 1
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                        } ${i === 0 ? 'rounded-l-lg' : ''} ${i === totalPages - 1 ? 'rounded-r-lg' : ''}`}
+                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                        } ${i === 0 ? "rounded-l-lg" : ""} ${
+                          i === totalPages - 1 ? "rounded-r-lg" : ""
+                        }`}
                       >
                         {i + 1}
                       </button>

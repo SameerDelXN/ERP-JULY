@@ -34,20 +34,18 @@ const AdmissionApplications = () => {
   useEffect(() => {
     const fetchAdmission = async () => {
       try {
-        setLoading(true);
+        setLoading(true);        
         const res = await fetch("/api/admission");
+        console.log(res);
+        
         if (!res.ok) throw new Error("Failed to fetch Admissions");
         const admissionData = await res.json();
-
-        // Ensure the response is an array
-        if (!Array.isArray(admissionData)) {
-          throw new Error("Expected array but got " + typeof admissionData);
-        }
-
-        setAdmission(admissionData);
+        console.log(admissionData);
+        
+        setAdmission(admissionData.data);
       } catch (error) {
-        setError(err.message);
-        console.error("Failed to fetch admissions:", err);
+        setError(error.message);
+        console.error("Failed to fetch admissions:", error);
       } finally {
         setLoading(false);
       }
@@ -99,9 +97,9 @@ const AdmissionApplications = () => {
     },
   };
 
-  const filteredApplications = admission.filter((app) => {
+  const filteredApplications = admission?.filter((app) => {
     const matchesSearch =
-      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.first.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
@@ -646,16 +644,10 @@ const AdmissionApplications = () => {
                     Applicant
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Program
+                    Applying For
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    GPA
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Test Score
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Submitted
@@ -669,7 +661,7 @@ const AdmissionApplications = () => {
                 {filteredApplications.map((application) => {
                   const StatusIcon = statusConfig[application.status].icon;
                   return (
-                    <tr key={application.id} className="hover:bg-gray-50">
+                    <tr key={application._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -679,20 +671,20 @@ const AdmissionApplications = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {application.name}
+                            {`${application.first || ''} ${application.middle || ''} ${application.last || ''}`.trim() || "N/A"}
                             </div>
                             <div className="text-sm text-gray-500">
                               {application.email}
                             </div>
                             <div className="text-xs text-gray-400">
-                              {application.id}
+                              ID: {application._id?.slice(-6) || "N/A"}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {application.program}
+                          {application.applyingFor}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -705,16 +697,18 @@ const AdmissionApplications = () => {
                           {statusConfig[application.status].label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {application.gpa}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {application.testScore}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(
-                          application.submittedDate
-                        ).toLocaleDateString()}
+                        {(() => {
+                          const dateToShow = new Date(application.createdAt)
+                          const formattedDate = `${dateToShow
+                            .getDate()
+                            .toString()
+                            .padStart(2, "0")}/${(dateToShow.getMonth() + 1)
+                            .toString()
+                            .padStart(2, "0")}/${dateToShow.getFullYear()}`;
+
+                          return <span>{formattedDate}</span>;
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
@@ -723,12 +717,6 @@ const AdmissionApplications = () => {
                           </button>
                           <button className="text-gray-600 hover:text-gray-900">
                             <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button className="text-red-600 hover:text-red-900">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-600 hover:text-gray-900">
-                            <MoreVertical className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

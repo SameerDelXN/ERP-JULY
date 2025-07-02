@@ -64,6 +64,7 @@ export async function POST(req) {
       first,
       middle,
       last,
+      email,
       dateOfBirth,
       gender,
       nationality,
@@ -113,10 +114,10 @@ export async function POST(req) {
 
 export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
 
     // Fetch all admissions
-    const admissions = await admission.find({}).sort({ createdAt: -1 });
+    const admissions = await admissionSchema.find({}).sort({ createdAt: -1 });
 
     return Response.json({
       success: true,
