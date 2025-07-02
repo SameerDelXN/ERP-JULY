@@ -14,7 +14,7 @@ async function connectDB() {
 export async function POST(request) {
   try {
     await connectDB();
-    const { departmentName, hodId } = await request.json();
+    const { departmentName, hodId, year } = await request.json();
 
     if (!departmentName || !hodId) {
       return NextResponse.json(
@@ -54,10 +54,11 @@ export async function POST(request) {
     session.startTransaction();
 
     try {
-      // Create new department
+      // Create new department (year can be undefined or null)
       const newDepartment = new academicSchema({
         department: departmentName,
-        divisions: []
+        year: year || null,
+        divisions: [],
       });
 
       await newDepartment.save({ session });
@@ -75,6 +76,7 @@ export async function POST(request) {
         department: {
           id: newDepartment._id,
           name: departmentName,
+          year: newDepartment.year,
           hod: {
             id: teacher._id,
             name: teacher.fullName,
@@ -92,6 +94,45 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error creating department:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+
+export async function GET() {
+  try {
+    await connectDB();
+
+    // Fetch all departments
+    const departments = await academicSchema.find({});
+
+    // Enrich each department with HOD info and include `year`
+    const enrichedDepartments = await Promise.all(
+      departments.map(async (dept) => {
+        const hod = await teacherSchema.findOne({ department: dept.department, role: 'HOD' });
+        return {
+          id: dept._id,
+          department: dept.department,
+          year: dept.year || null, // Include year, even if null
+          divisions: dept.divisions || [],
+          hod: hod
+            ? {
+                id: hod._id,
+                fullName: hod.fullName,
+                email: hod.email,
+                teacherId: hod.teacherId,
+              }
+            : null,
+        };
+      })
+    );
+
+    return NextResponse.json({ departments: enrichedDepartments }, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching departments:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

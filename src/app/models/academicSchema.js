@@ -8,7 +8,8 @@ const academicSchema = new mongoose.Schema({
   },
   year: {
     type: String,
-    //required: true, // e.g. "2nd Year"
+    required: false, // make optional
+    default: null,
   },
   divisions: [
     {
@@ -79,6 +80,8 @@ const academicSchema = new mongoose.Schema({
     },
   ],
 });
+delete mongoose.models.academic;
 
-export default mongoose.models.Academic ||
-  mongoose.model('Academic', academicSchema);
+  const academic = mongoose.models.academic || mongoose.model('academic', academicSchema);
+  
+  export default academic;

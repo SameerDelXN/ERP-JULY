@@ -36,3 +36,7 @@ export async function GET(req, { params }) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+
+//DELETE 
+
