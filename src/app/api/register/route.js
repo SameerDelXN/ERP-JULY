@@ -1,4 +1,5 @@
 //POST handler to register user
+
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb';
 import User from '../../models/userSchema';
@@ -56,6 +57,39 @@ export async function POST(req) {
       });
 
       return NextResponse.json({ message: 'Teacher registered successfully' }, { status: 201 });
+    }
+
+    // ✅ If role is HOD, register in Teacher model with null department
+    if (role === 'HOD') {
+      if (!fullName || !email || !phone || !teacherId || !password || !confirmPassword) {
+        return NextResponse.json({ error: 'All HOD fields are required (department not required)' }, { status: 400 });
+      }
+
+      if (password !== confirmPassword) {
+        return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+      }
+
+      const existing = await teacherSchema.findOne({
+        $or: [{ email }, { teacherId }]
+      });
+
+      if (existing) {
+        return NextResponse.json({ error: 'HOD already exists' }, { status: 409 });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10); // 🔐 Hashing password
+
+      const newHOD = await teacherSchema.create({
+        fullName,
+        email,
+        phone,
+        department: null, // Set department to null for HOD
+        teacherId,
+        role,
+        password: hashedPassword,
+      });
+
+      return NextResponse.json({ message: 'HOD registered successfully' }, { status: 201 });
     }
 
     // ✅ Handle normal User registration for other roles
