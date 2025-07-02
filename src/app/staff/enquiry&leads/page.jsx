@@ -27,27 +27,29 @@ const EnquiriesLeads = () => {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
-  const totalEnquiries = enquiries.length;
-  const newLeads = enquiries.filter((e) => e.status === "New").length;
-  const converted = enquiries.filter((e) => e.status === "Converted").length;
-  const conversionRate = totalEnquiries
-    ? Math.round((converted / totalEnquiries) * 100)
-    : 0;
-
+  // Add counselorId - you might get this from your auth context or session
+  const [counselorId, setCounselorId] = useState(null);
   useEffect(() => {
     const fetchEnquiries = async () => {
       try {
         setLoading(true);
+        // Fetch counselor ID if not already available
+        // This is just an example - adjust based on how you store auth info
+        const counselorRes = await fetch("/api/userData");
+        const counselorData = await counselorRes.json();
+        setCounselorId(counselorData.id);
+
         const res = await fetch("/api/enquiry");
         if (!res.ok) throw new Error("Failed to fetch enquiries");
         const enquiriesData = await res.json();
         setEnquiries(enquiriesData);
-      } catch (error) {
-          setError(err.message);
-        console.error("Failed to fetch users:", err);
-        console.log(error);
-      }finally {
+      } catch (err) {
+        setError(err.message);
+        console.error("Error:", err);
+      } finally {
         setLoading(false);
       }
     };
@@ -61,6 +63,8 @@ const EnquiriesLeads = () => {
     switch (status) {
       case "New":
         return "bg-blue-100 text-blue-800";
+      case "In Progress":
+        return "bg-indigo-100 text-indigo-800";
       case "Contacted":
         return "bg-yellow-100 text-yellow-800";
       case "Converted":
@@ -72,8 +76,13 @@ const EnquiriesLeads = () => {
     }
   };
 
+  // Filter enquiries to only show those assigned to the current counselor
+  const counselorEnquiries = enquiries.filter(
+    (enquiry) => enquiry.counselorId === counselorId
+  );
 
-  const filteredEnquiries = enquiries.filter((enquiry) => {
+  // Update your filteredEnquiries to use counselorEnquiries
+  const filteredEnquiries = counselorEnquiries.filter((enquiry) => {
     const matchesSearch =
       (enquiry.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       (enquiry.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
@@ -83,27 +92,47 @@ const EnquiriesLeads = () => {
     return matchesSearch && enquiry.status === activeTab;
   });
 
-   if (loading)
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-           <Image 
-            src="/loading.svg" 
-            alt="Loading..."
-            width={300} 
-            height={300}
-            className="mb-4"
-          />
-          {/* <Loader/> */}
-        </div>
-      );
-  
-    if (error)
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="p-6 text-red-600">Error: {error}</div>
-        </div>
-      );
-  
+  // Update your stats calculations to use counselorEnquiries instead of enquiries
+  const totalEnquiries = counselorEnquiries.length;
+  const newLeads = counselorEnquiries.filter((e) => e.status === "New").length;
+  const converted = counselorEnquiries.filter(
+    (e) => e.status === "Converted"
+  ).length;
+  const conversionRate = totalEnquiries
+    ? Math.round((converted / totalEnquiries) * 100)
+    : 0;
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredEnquiries.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  if (loading)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Image
+          src="/loading.svg"
+          alt="Loading..."
+          width={300}
+          height={300}
+          className="mb-4"
+        />
+        {/* <Loader/> */}
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-6 text-red-600">Error: {error}</div>
+      </div>
+    );
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -172,10 +201,20 @@ const EnquiriesLeads = () => {
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
           <div className="flex flex-wrap gap-2">
-            {["All", "New", "Contacted", "Converted", "Lost"].map((tab) => (
+            {[
+              "All",
+              "New",
+              "In Progress",
+              "Contacted",
+              "Converted",
+              "Lost",
+            ].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setCurrentPage(1); // Reset to first page when changing tabs
+                }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === tab
                     ? "bg-blue-600 text-white"
@@ -194,13 +233,13 @@ const EnquiriesLeads = () => {
                 type="text"
                 placeholder="Search enquiries..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-5 h-5 text-gray-600" />
-            </button>
           </div>
         </div>
       </div>
@@ -224,7 +263,7 @@ const EnquiriesLeads = () => {
                   Source
                 </th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">
-                 Follow-up
+                  Follow-up
                 </th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">
                   Actions
@@ -232,96 +271,171 @@ const EnquiriesLeads = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredEnquiries.map((enquiry) => (
-                <tr
-                  key={enquiry._id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-blue-600" />
+              {currentItems.length > 0 ? (
+                currentItems.map((enquiry) => (
+                  <tr
+                    key={enquiry._id}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">
+                            {`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {enquiry.email || "N/A"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-800">
-                          {enquiry.name}
-                        </p>
-                        <p className="text-sm text-gray-600">{enquiry.email}</p>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-2">
+                        <GraduationCap className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-800">
+                          {enquiry.courseInterested || "N/A"}
+                        </span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-2">
-                      <GraduationCap className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-800">{enquiry.courseInterested}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        enquiry.status
-                      )}`}
-                    >
-                      {enquiry.status.charAt(0).toUpperCase() +
-                        enquiry.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-gray-700">{enquiry.source}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{enquiry.followUps.date}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-2">
-                      <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      {/* <button className="p-1 text-green-600 hover:bg-green-50 rounded">
-                        <Phone className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-gray-600 hover:bg-gray-50 rounded">
-                        <Mail className="w-4 h-4" />
-                      </button> */}
-                      <button className="p-1 text-amber-600 hover:bg-amber-50 rounded">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-red-600 hover:bg-red-50 rounded">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          enquiry.status
+                        )}`}
+                      >
+                        {enquiry.status
+                          ? enquiry.status.charAt(0).toUpperCase() +
+                            enquiry.status.slice(1)
+                          : "N/A"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="text-gray-700">
+                        {enquiry.source || "N/A"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        {(() => {
+                          const dateToShow =
+                            enquiry.status === "New"
+                              ? new Date(enquiry.createdAt)
+                              : enquiry.followUps?.length > 0
+                              ? new Date(enquiry.followUps[0].date)
+                              : new Date(enquiry.createdAt);
+
+                          const formattedDate = `${dateToShow
+                            .getDate()
+                            .toString()
+                            .padStart(2, "0")}/${(dateToShow.getMonth() + 1)
+                            .toString()
+                            .padStart(2, "0")}/${dateToShow.getFullYear()}`;
+
+                          return <span>{formattedDate}</span>;
+                        })()}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          onClick={() => openDetailsModal(enquiry._id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="p-1 text-amber-600 hover:bg-amber-50 rounded"
+                          onClick={() => openAssignModal(enquiry._id)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center text-gray-500">
+                    No enquiries found matching your criteria
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-6">
-        <p className="text-sm text-gray-600">Showing 1 to 3 of 3 results</p>
-        <div className="flex items-center space-x-2">
-          <button
-            className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
-            disabled
-          >
-            Previous
-          </button>
-          <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-            1
-          </button>
-          <button
-            className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
-            disabled
-          >
-            Next
-          </button>
+      {filteredEnquiries.length > 0 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-gray-600">
+            Showing {indexOfFirstItem + 1} to{" "}
+            {Math.min(indexOfLastItem, filteredEnquiries.length)} of{" "}
+            {filteredEnquiries.length} results
+          </p>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => paginate(pageNum)}
+                  className={`px-3 py-1 rounded text-sm ${
+                    currentPage === pageNum
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            {totalPages > 5 && currentPage < totalPages - 2 && (
+              <span className="px-2">...</span>
+            )}
+
+            {totalPages > 5 && currentPage < totalPages - 2 && (
+              <button
+                onClick={() => paginate(totalPages)}
+                className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+              >
+                {totalPages}
+              </button>
+            )}
+
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

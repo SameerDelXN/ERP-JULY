@@ -13,7 +13,7 @@ export async function PUT(req, context) {
     const { params } = context;
     const { id } = params;
     const body = await req.json();
-    const { status, counsellorId } = body;
+    const { status, counsellorId,followUps } = body;
 
     const updateFields = {};
     const validStatuses = ['New', 'In Progress', "Contacted",'Converted', 'Lost'];
@@ -39,6 +39,19 @@ export async function PUT(req, context) {
       }
       updateFields.counsellorId = counsellorId;
     }
+
+   if (followUps && Array.isArray(followUps)) {
+  const existingEnquiry = await enquirySchema.findById(id);
+
+  if (!existingEnquiry) {
+    return NextResponse.json({ message: 'Enquiry not found' }, { status: 404 });
+  }
+
+  // Merge existing followUps with new ones
+  const mergedFollowUps = [...(existingEnquiry.followUps || []), ...followUps];
+  updateFields.followUps = mergedFollowUps;
+}
+
 
     if (Object.keys(updateFields).length === 0) {
       return NextResponse.json(

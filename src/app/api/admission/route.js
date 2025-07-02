@@ -1,4 +1,3 @@
-
 import { connectToDatabase } from '../../lib/mongodb';
 import admissionSchema from '../../models/admissionSchema';
 //sample chnage2
