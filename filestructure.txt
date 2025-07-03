@@ -34,8 +34,6 @@
             |-- staff-directory
                 |-- page.jsx
         |-- api
-            |-- academics
-                |-- route.js
             |-- admission
                 |-- route.js
                 |-- [id]
@@ -57,8 +55,6 @@
                     |-- academics
                         |-- route.js
                     |-- route.js
-                    |-- teacher
-                        |-- route.js
             |-- login
                 |-- route.js
             |-- register
@@ -106,6 +102,10 @@
         |-- register
             |-- page.jsx
         |-- staff
+            |-- application-management
+                |-- admission-form
+                    |-- page.jsx
+                |-- page.jsx
             |-- enquiry&leads
                 |-- page.jsx
             |-- layout.jsx
