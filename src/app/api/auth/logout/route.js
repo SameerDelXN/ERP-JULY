@@ -10,8 +10,14 @@ export async function POST() {
     if (sessionToken) {
       await connectToDatabase();
       await userSchema.findOneAndUpdate(
-        { sessionToken },
-        { $unset: { sessionToken: 1 } }
+        {
+          sessionToken
+        },
+        {
+          $unset: {
+            sessionToken: 1
+          }
+        }
       );
     }
 
@@ -20,12 +26,16 @@ export async function POST() {
 
     return new Response(JSON.stringify({
       message: 'Logout successful'
-    }), { status: 200 });
+    }), {
+      status: 200
+    });
 
   } catch (error) {
     console.error('Logout error:', error);
     return new Response(JSON.stringify({
       message: 'Logout failed'
-    }), { status: 500 });
+    }), {
+      status: 500
+    });
   }
 }

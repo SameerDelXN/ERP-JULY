@@ -15,19 +15,29 @@ export async function POST(req) {
 
     if (!admissionId || !department || !divisionName) {
       return NextResponse.json(
-        { error: 'admissionId, department, and divisionName are required' },
-        { status: 400 }
+        {
+          error: 'admissionId, department, and divisionName are required'
+        },
+        {
+          status: 400
+        }
       );
     }
 
     // 1. Fetch approved admission
     const admission = await admissionSchema.findOne({ _id: admissionId, status: 'approved' });
     if (!admission) {
-      return NextResponse.json({ error: 'Approved admission not found' }, { status: 404 });
+      return NextResponse.json({
+        error: 'Approved admission not found'
+      }, {
+        status: 404
+      });
     }
 
     // 2. Check if student already exists
-    let student = await studentSchema.findOne({ admissionId: admission._id });
+    let student = await studentSchema.findOne({
+      admissionId: admission._id
+    });
 
     // 3. If not, create a new student
     if (!student) {
@@ -50,13 +60,21 @@ export async function POST(req) {
     });
 
     if (!academic) {
-      return NextResponse.json({ error: 'Academic record not found for department and year' }, { status: 404 });
+      return NextResponse.json({
+        error: 'Academic record not found for department and year'
+      }, {
+        status: 404
+      });
     }
 
     // 5. Find division
     const division = academic.divisions.find(div => div.name === divisionName);
     if (!division) {
-      return NextResponse.json({ error: `Division ${divisionName} not found` }, { status: 404 });
+      return NextResponse.json({
+        error: `Division ${divisionName} not found`
+      }, {
+        status: 404
+      });
     }
 
     // 6. Check if already added
@@ -67,12 +85,18 @@ export async function POST(req) {
           studentId: student.studentId,
           admissionId: student.admissionId,
         },
-      }, { status: 200 });
+      }, {
+        status: 200
+      });
     }
 
     // 7. Check capacity
     if (division.students.length >= 50) {
-      return NextResponse.json({ error: 'Division has reached the 50 student limit' }, { status: 400 });
+      return NextResponse.json({
+        error: 'Division has reached the 50 student limit'
+      }, {
+        status: 400
+      });
     }
 
     // 8. Add student to division
@@ -85,10 +109,16 @@ export async function POST(req) {
         studentId: student.studentId,
         admissionId: student.admissionId,
       },
-    }, { status: 201 });
+    }, {
+      status: 201
+    });
 
   } catch (err) {
     console.error('Error adding student:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Internal Server Error'
+    }, {
+      status: 500
+    });
   }
 }

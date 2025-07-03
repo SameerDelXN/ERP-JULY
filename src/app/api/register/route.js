@@ -29,11 +29,19 @@ export async function POST(req) {
     // ✅ If role is Teacher, register in Teacher model
     if (role === 'teacher') {
       if (!fullName || !email || !phone || !department || !teacherId || !password || !confirmPassword) {
-        return NextResponse.json({ error: 'All teacher fields are required' }, { status: 400 });
+        return NextResponse.json({
+          error: 'All teacher fields are required'
+        }, {
+          status: 400
+        });
       }
 
       if (password !== confirmPassword) {
-        return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+        return NextResponse.json({
+          error: 'Passwords do not match'
+        }, {
+          status: 400
+        });
       }
 
       const existing = await teacherSchema.findOne({
@@ -41,7 +49,11 @@ export async function POST(req) {
       });
 
       if (existing) {
-        return NextResponse.json({ error: 'Teacher already exists' }, { status: 409 });
+        return NextResponse.json({
+          error: 'Teacher already exists'
+        }, {
+          status: 409
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10); // 🔐 Hashing password
@@ -56,7 +68,11 @@ export async function POST(req) {
         password: hashedPassword,
       });
 
-      return NextResponse.json({ message: 'Teacher registered successfully' }, { status: 201 });
+      return NextResponse.json({
+        message: 'Teacher registered successfully'
+      }, {
+        status: 201
+      });
     }
 
     // ✅ If role is HOD, register in Teacher model with null department
@@ -66,7 +82,11 @@ export async function POST(req) {
       }
 
       if (password !== confirmPassword) {
-        return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+        return NextResponse.json({
+          error: 'Passwords do not match'
+        }, {
+          status: 400
+        });
       }
 
       const existing = await teacherSchema.findOne({
@@ -74,7 +94,11 @@ export async function POST(req) {
       });
 
       if (existing) {
-        return NextResponse.json({ error: 'HOD already exists' }, { status: 409 });
+        return NextResponse.json({
+          error: 'HOD already exists'
+        }, {
+          status: 409
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10); // 🔐 Hashing password
@@ -94,16 +118,28 @@ export async function POST(req) {
 
     // ✅ Handle normal User registration for other roles
     if (!fullName || !email || !phone || !password || !confirmPassword) {
-      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+      return NextResponse.json({
+        error: 'All fields are required'
+      }, {
+        status: 400
+      });
     }
 
     if (password !== confirmPassword) {
-      return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+      return NextResponse.json({
+        error: 'Passwords do not match'
+      }, {
+        status: 400
+      });
     }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
+      return NextResponse.json({
+        error: 'User already exists'
+      }, {
+        status: 409
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -116,9 +152,17 @@ export async function POST(req) {
       role,
     });
 
-    return NextResponse.json({ message: 'User registered successfully' }, { status: 201 });
+    return NextResponse.json({
+      message: 'User registered successfully'
+    }, {
+      status: 201
+    });
   } catch (error) {
     console.error('Register Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Internal Server Error'
+    }, {
+      status: 500
+    });
   }
 }

@@ -9,18 +9,23 @@ export async function GET(req) {
         await connectToDatabase();
 
         // Fetch all users, exclude password and sensitive tokens
-        const users = await userSchema.find({}, '-password -resetPasswordToken -resetPasswordExpires -otpCode -otpExpires');
+        const users = await userSchema.find({}, 
+            '-password -resetPasswordToken -resetPasswordExpires -otpCode -otpExpires');
 
         return NextResponse.json({
             success: true,
             users
-        }, { status: 200 });
+        }, { 
+            status: 200 
+        });
 
     } catch (error) {
         console.error('Error fetching users:', error);
         return NextResponse.json({
             success: false,
             message: 'Server error while fetching users'
-        }, { status: 500 });
+        }, { 
+            status: 500 
+        });
     }
 }

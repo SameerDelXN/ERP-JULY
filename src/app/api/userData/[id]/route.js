@@ -17,7 +17,9 @@ export async function PUT(req, { params }) {
       return NextResponse.json({
         success: false,
         message: "Password update not allowed in this route."
-      }, { status: 400 });
+      }, {
+        status: 400
+      });
     }
 
     const updatedUser = await userSchema.findByIdAndUpdate(id, data, {
@@ -27,17 +29,27 @@ export async function PUT(req, { params }) {
     });
 
     if (!updatedUser) {
-      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
+      return NextResponse.json({
+        success: false, message: 'User not found'
+      }, {
+        status: 404
+      });
     }
 
-    return NextResponse.json({ success: true, user: updatedUser }, { status: 200 });
+    return NextResponse.json({
+      success: true, user: updatedUser
+    }, {
+      status: 200
+    });
 
   } catch (error) {
     console.error('Error updating user:', error);
     return NextResponse.json({
       success: false,
       message: 'Server error while updating user',
-    }, { status: 500 });
+    }, {
+      status: 500
+    });
   }
 }
 
@@ -51,19 +63,27 @@ export async function DELETE(req, { params }) {
     const deletedUser = await userSchema.findByIdAndDelete(id);
 
     if (!deletedUser) {
-      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
+      return NextResponse.json({
+        success: false, message: 'User not found'
+      }, {
+        status: 404
+      });
     }
 
     return NextResponse.json({
       success: true,
       message: 'User deleted successfully',
-    }, { status: 200 });
+    }, {
+      status: 200
+    });
 
   } catch (error) {
     console.error('Error deleting user:', error);
     return NextResponse.json({
       success: false,
       message: 'Server error while deleting user',
-    }, { status: 500 });
+    }, {
+      status: 500
+    });
   }
 }
