@@ -19,8 +19,316 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Zap,
+  Target,
+  Activity,
+  MessageSquare,
+  File,
+  FileTextIcon,
 } from "lucide-react";
 import Image from "next/image";
+
+const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
+  <div className="flex items-start gap-3">
+    <div className={`p-2 rounded-lg ${bgColor} ${iconColor}`}>{icon}</div>
+    <div>
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <p className="font-medium text-gray-900">{value}</p>
+    </div>
+  </div>
+);
+
+const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
+  const [application, setApplication] = useState(null);
+
+  useEffect(() => {
+    if (admissionId && admission) {
+      const foundEnquiry = admission.find((e) => e._id === admissionId);
+      setApplication(foundEnquiry || null);
+    }
+  }, [admissionId, admission]);
+
+  if (!application) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative border border-gray-100">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div className="text-center py-16 text-gray-500">
+            <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">No admission found</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "New":
+        return <Zap className="w-4 h-4" />;
+      case "In Progress":
+        return <Clock className="w-4 h-4" />;
+      case "Contacted":
+        return <Phone className="w-4 h-4" />;
+      case "Converted":
+        return <Target className="w-4 h-4" />;
+      case "Lost":
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
+    }
+  };
+
+  console.log(application.documents);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "New":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "In Progress":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Contacted":
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Converted":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "Lost":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl relative border border-gray-100 max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Admission Details
+              </h2>
+              <p className="text-sm text-gray-600">
+                Complete information overview
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-white rounded-full"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+          {/* Status Banner */}
+          <div
+            className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(
+              application.status
+            )}`}
+          >
+            {getStatusIcon(application.status)}
+            <div>
+              <p className="font-semibold">
+                Status: {application.status || "Unknown"}
+              </p>
+              <p className="text-sm opacity-80">
+                Last updated:{" "}
+                {application.createdAt
+                  ? new Date(application.createdAt).toLocaleDateString()
+                  : "N/A"}
+              </p>
+            </div>
+          </div>
+
+          {/* Main Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 px-5">
+            <DetailCard
+              icon={<User className="w-5 h-5" />}
+              label="Full Name"
+              value={
+                `${application.first || ""} ${application.middle || ""} ${
+                  application.last || ""
+                }`.trim() || "N/A"
+              }
+              bgColor="bg-blue-50"
+              iconColor="text-blue-600"
+            />
+            <DetailCard
+              icon={<Mail className="w-5 h-5" />}
+              label="Email Address"
+              value={application.email || "N/A"}
+              bgColor="bg-green-50"
+              iconColor="text-green-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="Phone Number"
+              value={application.phone || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Course Interested"
+              value={application.applyingFor || "N/A"}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
+              icon={<Calendar className="w-5 h-5" />}
+              label="Date of Birth"
+              value={
+                application.dateOfBirth
+                  ? new Date(application.dateOfBirth).toLocaleDateString()
+                  : "N/A"
+              }
+              bgColor="bg-teal-50"
+              iconColor="text-teal-600"
+            />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Nationality"
+              value={application.nationality || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Gender"
+              value={application.gender || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Father Name"
+              value={application.fatherName || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Mother Name"
+              value={application.motherName || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="Parent Number"
+              value={application.parentMobile || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="Parent Email"
+              value={application.parentEmail || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="Address"
+              value={application.addressLine || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="city"
+              value={application.city || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="state"
+              value={application.state || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="pincode"
+              value={application.pincode || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="country"
+              value={application.country || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="currentSchoolName"
+              value={application.currentSchoolName || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="currentClass"
+              value={application.currentClass || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="academicYear"
+              value={application.academicYear || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <DetailCard
+              icon={<Phone className="w-5 h-5" />}
+              label="preferredMedium"
+              value={application.preferredMedium || "N/A"}
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+          </div>
+          <div className="bg-gray-50 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <File className="w-4 h-4 text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
+            </div>
+            {!application.documents && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {Object?.entries(application.documents[0])
+                  .filter(([key]) => key !== "_id")
+                  .map(([key, doc]) => (
+                    <DetailCard
+                      key={key}
+                      icon={<FileTextIcon className="w-5 h-5" />}
+                      label={key}
+                      value={doc.fileName || "N/A"}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdmissionApplications = () => {
   const [selectedTab, setSelectedTab] = useState("all");
@@ -31,17 +339,20 @@ const AdmissionApplications = () => {
   const [error, setError] = useState(null);
   const [admission, setAdmission] = useState([]);
 
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
+
   useEffect(() => {
     const fetchAdmission = async () => {
       try {
-        setLoading(true);        
+        setLoading(true);
         const res = await fetch("/api/admission");
         console.log(res);
-        
+
         if (!res.ok) throw new Error("Failed to fetch Admissions");
         const admissionData = await res.json();
         console.log(admissionData);
-        
+
         setAdmission(admissionData.data);
       } catch (error) {
         setError(error.message);
@@ -53,32 +364,12 @@ const AdmissionApplications = () => {
 
     fetchAdmission();
   }, []);
-  // const [formData, setFormData] = useState({
-  //   firstName: "",
-  //   lastName: "",
-  //   email: "",
-  //   phone: "",
-  //   dateOfBirth: "",
-  //   gender: "",
-  //   address: "",
-  //   city: "",
-  //   state: "",
-  //   zipCode: "",
-  //   country: "",
-  //   program: "",
-  //   previousEducation: "",
-  //   gpa: "",
-  //   testScore: "",
-  //   testType: "",
-  //   personalStatement: "",
-  //   documents: [],
-  // });
 
   const statusConfig = {
-    pending: {
+    inProcess: {
       color: "bg-yellow-100 text-yellow-800",
       icon: Clock,
-      label: "Pending",
+      label: "In Process",
     },
     approved: {
       color: "bg-green-100 text-green-800",
@@ -90,435 +381,27 @@ const AdmissionApplications = () => {
       icon: XCircle,
       label: "Rejected",
     },
-    under_review: {
-      color: "bg-blue-100 text-blue-800",
-      icon: Clock,
-      label: "Under Review",
-    },
   };
 
   const filteredApplications = admission?.filter((app) => {
     const matchesSearch =
-      app.first.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.id.toLowerCase().includes(searchTerm.toLowerCase());
+      app.first?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app._id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
       selectedFilter === "all" || app.status === selectedFilter;
     return matchesSearch && matchesFilter;
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const openDetailsModal = (admissionId) => {
+    setSelectedAdmissionId(admissionId);
+    setShowDetailsModal(true);
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
-    setShowNewApplication(false);
-    // Reset form
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      dateOfBirth: "",
-      gender: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "",
-      program: "",
-      previousEducation: "",
-      gpa: "",
-      testScore: "",
-      testType: "",
-      personalStatement: "",
-      documents: [],
-    });
-  };
-
-  // if (showNewApplication) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 p-6">
-  //       <div className="max-w-4xl mx-auto">
-  //         {/* Header */}
-  //         <div className="flex items-center justify-between mb-6">
-  //           <div>
-  //             <h1 className="text-2xl font-bold text-gray-900">
-  //               New Admission Application
-  //             </h1>
-  //             <p className="text-gray-600">
-  //               Fill out the application form below
-  //             </p>
-  //           </div>
-  //           <button
-  //             onClick={() => setShowNewApplication(false)}
-  //             className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-  //           >
-  //             ← Back to Applications
-  //           </button>
-  //         </div>
-
-  //         {/* Application Form */}
-  //         <div className="bg-white rounded-xl shadow-sm border">
-  //           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-  //             {/* Personal Information */}
-  //             <div>
-  //               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-  //                 <User className="w-5 h-5 mr-2 text-blue-600" />
-  //                 Personal Information
-  //               </h3>
-  //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     First Name *
-  //                   </label>
-  //                   <input
-  //                     type="text"
-  //                     name="firstName"
-  //                     value={formData.firstName}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Last Name *
-  //                   </label>
-  //                   <input
-  //                     type="text"
-  //                     name="lastName"
-  //                     value={formData.lastName}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Email *
-  //                   </label>
-  //                   <input
-  //                     type="email"
-  //                     name="email"
-  //                     value={formData.email}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Phone Number *
-  //                   </label>
-  //                   <input
-  //                     type="tel"
-  //                     name="phone"
-  //                     value={formData.phone}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Date of Birth *
-  //                   </label>
-  //                   <input
-  //                     type="date"
-  //                     name="dateOfBirth"
-  //                     value={formData.dateOfBirth}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Gender
-  //                   </label>
-  //                   <select
-  //                     name="gender"
-  //                     value={formData.gender}
-  //                     onChange={handleInputChange}
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   >
-  //                     <option value="">Select Gender</option>
-  //                     <option value="male">Male</option>
-  //                     <option value="female">Female</option>
-  //                     <option value="other">Other</option>
-  //                     <option value="prefer_not_to_say">
-  //                       Prefer not to say
-  //                     </option>
-  //                   </select>
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             {/* Address Information */}
-  //             <div>
-  //               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-  //                 <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-  //                 Address Information
-  //               </h3>
-  //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  //                 <div className="md:col-span-2">
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Street Address *
-  //                   </label>
-  //                   <input
-  //                     type="text"
-  //                     name="address"
-  //                     value={formData.address}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     City *
-  //                   </label>
-  //                   <input
-  //                     type="text"
-  //                     name="city"
-  //                     value={formData.city}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     State/Province *
-  //                   </label>
-  //                   <input
-  //                     type="text"
-  //                     name="state"
-  //                     value={formData.state}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     ZIP/Postal Code *
-  //                   </label>
-  //                   <input
-  //                     type="text"
-  //                     name="zipCode"
-  //                     value={formData.zipCode}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Country *
-  //                   </label>
-  //                   <select
-  //                     name="country"
-  //                     value={formData.country}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   >
-  //                     <option value="">Select Country</option>
-  //                     <option value="us">United States</option>
-  //                     <option value="ca">Canada</option>
-  //                     <option value="uk">United Kingdom</option>
-  //                     <option value="au">Australia</option>
-  //                     <option value="in">India</option>
-  //                     <option value="other">Other</option>
-  //                   </select>
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             {/* Academic Information */}
-  //             <div>
-  //               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-  //                 <GraduationCap className="w-5 h-5 mr-2 text-blue-600" />
-  //                 Academic Information
-  //               </h3>
-  //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Program of Interest *
-  //                   </label>
-  //                   <select
-  //                     name="program"
-  //                     value={formData.program}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   >
-  //                     <option value="">Select Program</option>
-  //                     <option value="computer_science">Computer Science</option>
-  //                     <option value="business_administration">
-  //                       Business Administration
-  //                     </option>
-  //                     <option value="engineering">Engineering</option>
-  //                     <option value="psychology">Psychology</option>
-  //                     <option value="medicine">Medicine</option>
-  //                     <option value="law">Law</option>
-  //                     <option value="arts">Liberal Arts</option>
-  //                   </select>
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Previous Education Level *
-  //                   </label>
-  //                   <select
-  //                     name="previousEducation"
-  //                     value={formData.previousEducation}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   >
-  //                     <option value="">Select Education Level</option>
-  //                     <option value="high_school">High School</option>
-  //                     <option value="bachelors">Bachelor's Degree</option>
-  //                     <option value="masters">Master's Degree</option>
-  //                     <option value="doctorate">Doctorate</option>
-  //                   </select>
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     GPA *
-  //                   </label>
-  //                   <input
-  //                     type="number"
-  //                     step="0.01"
-  //                     min="0"
-  //                     max="4"
-  //                     name="gpa"
-  //                     value={formData.gpa}
-  //                     onChange={handleInputChange}
-  //                     required
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Test Type
-  //                   </label>
-  //                   <select
-  //                     name="testType"
-  //                     value={formData.testType}
-  //                     onChange={handleInputChange}
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   >
-  //                     <option value="">Select Test Type</option>
-  //                     <option value="sat">SAT</option>
-  //                     <option value="act">ACT</option>
-  //                     <option value="gre">GRE</option>
-  //                     <option value="gmat">GMAT</option>
-  //                     <option value="toefl">TOEFL</option>
-  //                     <option value="ielts">IELTS</option>
-  //                   </select>
-  //                 </div>
-  //                 <div>
-  //                   <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                     Test Score
-  //                   </label>
-  //                   <input
-  //                     type="number"
-  //                     name="testScore"
-  //                     value={formData.testScore}
-  //                     onChange={handleInputChange}
-  //                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   />
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             {/* Personal Statement */}
-  //             <div>
-  //               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-  //                 <FileText className="w-5 h-5 mr-2 text-blue-600" />
-  //                 Personal Statement
-  //               </h3>
-  //               <div>
-  //                 <label className="block text-sm font-medium text-gray-700 mb-2">
-  //                   Personal Statement (500-1000 words) *
-  //                 </label>
-  //                 <textarea
-  //                   name="personalStatement"
-  //                   value={formData.personalStatement}
-  //                   onChange={handleInputChange}
-  //                   required
-  //                   rows="6"
-  //                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  //                   placeholder="Tell us about yourself, your goals, and why you want to join our institution..."
-  //                 />
-  //               </div>
-  //             </div>
-
-  //             {/* Document Upload */}
-  //             <div>
-  //               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-  //                 Required Documents
-  //               </h3>
-  //               <div className="space-y-3">
-  //                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-  //                   <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-  //                   <p className="text-sm text-gray-600">
-  //                     Upload transcripts, certificates, and other required
-  //                     documents
-  //                   </p>
-  //                   <input
-  //                     type="file"
-  //                     multiple
-  //                     accept=".pdf,.doc,.docx,.jpg,.png"
-  //                     className="mt-2"
-  //                   />
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             {/* Submit Button */}
-  //             <div className="flex justify-end space-x-4 pt-6 border-t">
-  //               <button
-  //                 type="button"
-  //                 onClick={() => setShowNewApplication(false)}
-  //                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-  //               >
-  //                 Cancel
-  //               </button>
-  //               <button
-  //                 type="submit"
-  //                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-  //               >
-  //                 Submit Application
-  //               </button>
-  //             </div>
-  //           </form>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Image
-          src="/loading.svg"
-          alt="Loading..."
-          width={300}
-          height={300}
-          className="mb-4"
-        />
-        {/* <Loader/> */}
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
 
@@ -528,6 +411,7 @@ const AdmissionApplications = () => {
         <div className="p-6 text-red-600">Error: {error}</div>
       </div>
     );
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -551,7 +435,9 @@ const AdmissionApplications = () => {
                 <p className="text-sm font-medium text-gray-600">
                   Total Applications
                 </p>
-                <p className="text-2xl font-bold text-gray-900">156</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {admission.length}
+                </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
                 <FileText className="w-6 h-6 text-blue-600" />
@@ -562,9 +448,11 @@ const AdmissionApplications = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Pending Review
+                  In Process Review
                 </p>
-                <p className="text-2xl font-bold text-yellow-600">42</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {admission.filter((a) => a.status === "In Process").length}
+                </p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg">
                 <Clock className="w-6 h-6 text-yellow-600" />
@@ -575,7 +463,9 @@ const AdmissionApplications = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">89</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {admission.filter((a) => a.status === "approved").length}
+                </p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <CheckCircle className="w-6 h-6 text-green-600" />
@@ -586,7 +476,9 @@ const AdmissionApplications = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">25</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {admission.filter((a) => a.status === "rejected").length}
+                </p>
               </div>
               <div className="p-3 bg-red-100 rounded-lg">
                 <XCircle className="w-6 h-6 text-red-600" />
@@ -616,8 +508,7 @@ const AdmissionApplications = () => {
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="under_review">Under Review</option>
+                  <option value="inProcess">In Process</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
@@ -659,7 +550,8 @@ const AdmissionApplications = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredApplications.map((application) => {
-                  const StatusIcon = statusConfig[application.status].icon;
+                  const status = application.status || "In Process";
+                  const config = statusConfig[status] || statusConfig.inProcess;
                   return (
                     <tr key={application._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -671,7 +563,9 @@ const AdmissionApplications = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                            {`${application.first || ''} ${application.middle || ''} ${application.last || ''}`.trim() || "N/A"}
+                              {`${application.first || ""} ${
+                                application.middle || ""
+                              } ${application.last || ""}`.trim() || "N/A"}
                             </div>
                             <div className="text-sm text-gray-500">
                               {application.email}
@@ -684,40 +578,33 @@ const AdmissionApplications = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {application.applyingFor}
+                          {application.applyingFor || "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            statusConfig[application.status].color
-                          }`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
                         >
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusConfig[application.status].label}
+                          <config.icon className="w-3 h-3 mr-1" />
+                          {config.label}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {(() => {
-                          const dateToShow = new Date(application.createdAt)
-                          const formattedDate = `${dateToShow
-                            .getDate()
-                            .toString()
-                            .padStart(2, "0")}/${(dateToShow.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0")}/${dateToShow.getFullYear()}`;
-
-                          return <span>{formattedDate}</span>;
-                        })()}
+                        {application.createdAt
+                          ? new Date(application.createdAt).toLocaleDateString()
+                          : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
-                          <button className="text-blue-600 hover:text-blue-900">
+                          <button
+                            className="text-blue-600 hover:text-blue-900"
+                            onClick={() => openDetailsModal(application._id)}
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="text-gray-600 hover:text-gray-900">
+                          {/* <button className="text-gray-600 hover:text-gray-900">
                             <Edit2 className="w-4 h-4" />
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>
@@ -741,7 +628,10 @@ const AdmissionApplications = () => {
               <div>
                 <p className="text-sm text-gray-700">
                   Showing <span className="font-medium">1</span> to{" "}
-                  <span className="font-medium">4</span> of{" "}
+                  <span className="font-medium">
+                    {Math.min(4, filteredApplications.length)}
+                  </span>{" "}
+                  of{" "}
                   <span className="font-medium">
                     {filteredApplications.length}
                   </span>{" "}
@@ -771,6 +661,17 @@ const AdmissionApplications = () => {
           </div>
         </div>
       </div>
+
+      {showDetailsModal && (
+        <AdmissionDetailsModal
+          admissionId={selectedAdmissionId}
+          admission={admission}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedAdmissionId(null);
+          }}
+        />
+      )}
     </div>
   );
 };

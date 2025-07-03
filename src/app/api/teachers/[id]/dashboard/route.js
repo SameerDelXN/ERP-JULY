@@ -12,13 +12,21 @@ export async function GET(req, { params }) {
     const { id } = params;
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid or missing teacher ID' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'Invalid or missing teacher ID' 
+      }, { 
+        status: 400 
+      });
     }
 
     // Fetch teacher details
     const teacher = await teacherSchema.findById(id).select('-password');
     if (!teacher) {
-      return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
+      return NextResponse.json({ 
+        error: 'Teacher not found' 
+      }, { 
+        status: 404 
+      });
     }
 
     // Fetch all academic records where this teacher is assigned
@@ -49,11 +57,17 @@ export async function GET(req, { params }) {
         teacher,
         assignments,
       },
-      { status: 200 }
+      { 
+        status: 200 
+      }
     );
 
   } catch (error) {
     console.error('Error fetching teacher dashboard:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal Server Error' 
+    }, { 
+      status: 500 
+    });
   }
 }

@@ -15,11 +15,17 @@ export async function GET() {
         message: 'List of HODs fetched successfully',
         hods,
       },
-      { status: 200 }
+      {
+        status: 200
+      }
     );
 
   } catch (error) {
     console.error('Error fetching HODs:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Internal Server Error'
+    }, {
+      status: 500
+    });
   }
 }

@@ -15,7 +15,11 @@ export async function GET(req, { params }) {
     // ✅ Find the HOD by ID
     const hod = await teacherSchema.findById(hodId);
     if (!hod || hod.role !== 'HOD') {
-      return NextResponse.json({ error: 'HOD not found or invalid role' }, { status: 404 });
+      return NextResponse.json({
+        error: 'HOD not found or invalid role'
+      }, {
+        status: 404
+      });
     }
 
     const department = hod.department;
@@ -36,10 +40,16 @@ export async function GET(req, { params }) {
       department: department,
       teachers,
       academics,
-    }, { status: 200 });
+    }, {
+      status: 200
+    });
 
   } catch (error) {
     console.error('Error fetching HOD dashboard data:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Internal Server Error'
+    }, {
+      status: 500
+    });
   }
 }

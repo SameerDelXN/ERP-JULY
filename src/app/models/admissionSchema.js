@@ -15,25 +15,25 @@ const admissionSchema = new mongoose.Schema({
   },
 
   //personal details
-  fullName: { type: String, required: true }, // As per last mark sheet (CAPITAL)
-  dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
-  nationality: { type: String, required: true },
+  fullName: { type: String, }, // As per last mark sheet (CAPITAL)
+  dateOfBirth: { type: Date, },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+  nationality: { type: String, },
   category: {
     type: String,
     enum: ['Open', 'SC', 'ST', 'OBC', 'EWS', 'NT', 'SBC', 'VJ', 'Other'],
-    required: true
+    default:null
   },
   mobileNumber: { type: String, required: true },
   email: { type: String, required: true, lowercase: true },
 
   //parent details
-  fatherName: { type: String },
-  motherName: { type: String },
-  guardianName: { type: String },
-  parentContact: { type: String },
-  parentEmail: { type: String },
-  familyIncome: { type: Number },
+  fatherName: { type: String,default:null },
+  motherName: { type: String,default:null },
+  guardianName: { type: String,default:null },
+  parentMobile: { type: String,default:null },
+  parentEmail: { type: String,default:null },
+  familyIncome: { type: Number,default:null },
 
   // 3. Address Details permanent and present
   addressLine: String,
@@ -47,35 +47,35 @@ const admissionSchema = new mongoose.Schema({
   programType: {
     type: String,
     enum: ["Diploma", "UG", "PG"],
-    required: true
+    default:null
   },
   courseName: { type: String, required: true }, // Name of the course admitted
   yearOfAdmission: {
     type: String,
     enum: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
-    required: true
+    default:null
   },
   round: {
     type: String,
     enum: ["CAP1", "CAP2", "CAP3", "Institute Level"],
-    required: true
+    default:null
   },
 
   seatType: {
     type: String,
     enum: ["GOV", "MIN", "Management", "TFWS"],
-    required: true
+    default:null
   },
   admissionCategoryDTE: {
     type: String,
     enum: ["CAP", "Institute Level", "Against CAP"],
-    required: true
+    default:null
   },
 
-  casteAsPerLC: { type: String, required: true },
-  subCasteAsPerLC: { type: String },
-  domicile: { type: String, required: true },
-  religionAsPerLC: { type: String },
+  casteAsPerLC: { type: String,default:null},
+  subCasteAsPerLC: { type: String,default:null },
+  domicile: { type: String,default:null },
+  religionAsPerLC: { type: String,default:null },
 
   // 4. Academic Interest
   // currentSchoolName: String,
@@ -84,12 +84,12 @@ const admissionSchema = new mongoose.Schema({
   // academicYear: String,
 
 
-  qualifyingExam: { type: String, required: true }, // e.g., HSC, Graduation
-  marksObtained: { type: Number, required: true },
-  totalMarks: { type: Number, required: true },
-  percentage: { type: Number, required: true },
-  grade: { type: String },
-  monthYearOfPassing: { type: String }, // e.g., "Mar 2023"
+  qualifyingExam: { type: String,default:null }, // e.g., HSC, Graduation
+  marksObtained: { type: Number,default:null },
+  totalMarks: { type: Number, default:null },
+  percentage: { type: Number, default:null },
+  grade: { type: String,default:null },
+  monthYearOfPassing: { type: String,default:null }, // e.g., "Mar 2023"
 
 
   // Documents (URLs or file names)
@@ -106,19 +106,15 @@ const admissionSchema = new mongoose.Schema({
     {
       type: {
         type: String, // e.g., "birthCertificate", "parentIdProof"
-        required: true,
       },
       fileName: {
         type: String,
-        required: true,
       },
       fileUrl: {
         type: String,
-        required: true,
       },
       mimeType: {
         type: String,
-        required: true,
       }
     }
   ],
@@ -134,8 +130,8 @@ const admissionSchema = new mongoose.Schema({
   // 7. Status Field
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',
+    enum: ['inProcess', 'approved', 'rejected'],
+    default: 'inProcess',
   }
 
 }, { timestamps: true });

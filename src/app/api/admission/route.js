@@ -9,24 +9,27 @@ export async function POST(req) {
     const {
       enquiryId,        // ✅ Include enquiryId
       counsellorId,     // ✅ Include counsellorId
-
-      first,
-      middle,
-      last,
+      fullName,
       dateOfBirth,
       gender,
       nationality,
+      category,
+      mobileNumber,
+      email,
 
       fatherName,
       motherName,
       parentMobile,
       parentEmail,
+      familyIncome,
 
       addressLine,
       city,
       state,
       pincode,
       country,
+
+      courseName,
 
       currentSchoolName,
       currentClass,
@@ -43,9 +46,8 @@ export async function POST(req) {
 
     // ✅ Validate required fields
     if (
-      !enquiryId || !counsellorId || !first || !last || !dateOfBirth || !gender || !nationality ||
-      !currentSchoolName || !currentClass || !applyingFor ||
-      !academicYear || !preferredMedium || consent !== true || captchaVerified !== true
+      !enquiryId || !counsellorId || !fullName || !dateOfBirth || !gender || !nationality ||
+      !mobileNumber || !courseName || consent !== true || captchaVerified !== true
     ) {
       return new Response(JSON.stringify({
         message: 'Missing or invalid required fields'
@@ -54,31 +56,34 @@ export async function POST(req) {
       });
     }
 
-    const allowedStatus = ['pending', 'approved', 'rejected'];
-    const finalStatus = allowedStatus.includes(status) ? status : 'pending';
+    const allowedStatus = ['inProcess', 'approved', 'rejected'];
+    const finalStatus = allowedStatus.includes(status) ? status : 'inProcess';
 
     const newAdmission = new admissionSchema({
       enquiryId,
       counsellorId,
 
-      first,
-      middle,
-      last,
-      email,
+     fullName,
       dateOfBirth,
       gender,
       nationality,
+      category,
+      mobileNumber,
+      email,
 
       fatherName,
       motherName,
       parentMobile,
       parentEmail,
+      familyIncome,
 
       addressLine,
       city,
       state,
       pincode,
       country,
+
+      courseName,
 
       currentSchoolName,
       currentClass,
@@ -89,6 +94,7 @@ export async function POST(req) {
       documents,
       consent,
       captchaVerified,
+
       status: finalStatus
     });
 
