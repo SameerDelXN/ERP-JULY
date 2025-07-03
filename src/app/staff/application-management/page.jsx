@@ -1668,6 +1668,9 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
     }
   }, [admissionId, admission]);
 
+  console.log(application);
+  
+
   if (!application) {
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1772,8 +1775,7 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<User className="w-5 h-5" />}
               label="Full Name"
-              value={
-                `${application.first || ""} ${application.middle || ""} ${
+              value={application.fullName || `${application.first || ""} ${application.middle || ""} ${
                   application.last || ""
                 }`.trim() || "N/A"
               }
@@ -1790,14 +1792,14 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<Phone className="w-5 h-5" />}
               label="Phone Number"
-              value={application.phone || "N/A"}
+              value={application.mobileNumber || "N/A"}
               bgColor="bg-purple-50"
               iconColor="text-purple-600"
             />
             <DetailCard
               icon={<GraduationCap className="w-5 h-5" />}
               label="Course Interested"
-              value={application.applyingFor || "N/A"}
+              value={application.courseName || "N/A"}
               bgColor="bg-orange-50"
               iconColor="text-orange-600"
             />
@@ -2940,7 +2942,7 @@ const AdmissionApplications = () => {
                   In Process Review
                 </p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {admission.filter((a) => a.status === "In Process").length}
+                  {admission.filter((a) => a.status === "inProcess").length}
                 </p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg">
@@ -3052,7 +3054,7 @@ const AdmissionApplications = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {`${application.first || ""} ${
+                              {application.fullName || `${application.first || ""} ${
                                 application.middle || ""
                               } ${application.last || ""}`.trim() || "N/A"}
                             </div>
@@ -3067,7 +3069,7 @@ const AdmissionApplications = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {application.applyingFor || "N/A"}
+                          {application.courseName || "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
