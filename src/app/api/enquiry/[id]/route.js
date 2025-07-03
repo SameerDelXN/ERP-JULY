@@ -13,17 +13,21 @@ export async function PUT(req, context) {
     const { params } = context;
     const { id } = params;
     const body = await req.json();
-    const { status, counsellorId,followUps } = body;
+    const { status, counsellorId, followUps } = body;
 
     const updateFields = {};
-    const validStatuses = ['New', 'In Progress', "Contacted",'Converted', 'Lost'];
+    const validStatuses = ['New', 'In Progress', "Contacted", 'Converted', 'Lost'];
 
     // Validate status
     if (status) {
       if (!validStatuses.includes(status)) {
         return NextResponse.json(
-          { message: 'Invalid status value' },
-          { status: 400 }
+          {
+            message: 'Invalid status value'
+          },
+          {
+            status: 400
+          }
         );
       }
       updateFields.status = status;
@@ -33,37 +37,53 @@ export async function PUT(req, context) {
     if (counsellorId) {
       if (!mongoose.Types.ObjectId.isValid(counsellorId)) {
         return NextResponse.json(
-          { message: 'Invalid counsellorId' },
-          { status: 400 }
+          {
+            message: 'Invalid counsellorId'
+          },
+          {
+            status: 400
+          }
         );
       }
       updateFields.counsellorId = counsellorId;
     }
 
-   if (followUps && Array.isArray(followUps)) {
-  const existingEnquiry = await enquirySchema.findById(id);
+    if (followUps && Array.isArray(followUps)) {
+      const existingEnquiry = await enquirySchema.findById(id);
 
-  if (!existingEnquiry) {
-    return NextResponse.json({ message: 'Enquiry not found' }, { status: 404 });
-  }
+      if (!existingEnquiry) {
+        return NextResponse.json({
+          message: 'Enquiry not found'
+        }, {
+          status: 404
+        });
+      }
 
-  // Merge existing followUps with new ones
-  const mergedFollowUps = [...(existingEnquiry.followUps || []), ...followUps];
-  updateFields.followUps = mergedFollowUps;
-}
+      // Merge existing followUps with new ones
+      const mergedFollowUps = [...(existingEnquiry.followUps || []), ...followUps];
+      updateFields.followUps = mergedFollowUps;
+    }
 
 
     if (Object.keys(updateFields).length === 0) {
       return NextResponse.json(
-        { message: 'No valid fields to update' },
-        { status: 400 }
+        {
+          message: 'No valid fields to update'
+        },
+        {
+          status: 400
+        }
       );
     }
 
     const updatedEnquiry = await enquirySchema.findByIdAndUpdate(id, updateFields, { new: true });
     console.log(updatedEnquiry)
     if (!updatedEnquiry) {
-      return NextResponse.json({ message: 'Enquiry not found' }, { status: 404 });
+      return NextResponse.json({
+        message: 'Enquiry not found'
+      }, {
+        status: 404
+      });
     }
 
     // If status is converted, create a partially filled admission form
@@ -91,11 +111,18 @@ export async function PUT(req, context) {
     return NextResponse.json({
       message: 'Enquiry updated successfully',
       enquiry: updatedEnquiry
-    }, { status: 200 });
+    }, {
+      status: 200
+    });
 
   } catch (error) {
     console.error('Error updating enquiry:', error);
-    return NextResponse.json({ message: 'Server error', error: error.message }, { status: 500 });
+    return NextResponse.json({
+      message: 'Server error',
+      error: error.message
+    }, {
+      status: 500
+    });
   }
 }
 

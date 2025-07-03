@@ -71,7 +71,9 @@ export async function POST(req) {
         email: userFromDB.email,
         role: userFromDB.role,
       },
-    }), { status: 200 });
+    }), { 
+      status: 200 
+    });
 
   } catch (err) {
     console.error('Login error:', err);
