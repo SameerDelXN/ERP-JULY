@@ -271,7 +271,7 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative border border-gray-100">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between rounded-2xl p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
               <UserPlus className="w-5 h-5 text-white" />
@@ -310,7 +310,7 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
                   </option>
                 ))}
               </select>
-              <Briefcase className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              {/* <Briefcase className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" /> */}
             </div>
           </div>
 
@@ -328,10 +328,9 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 font-medium"
                 required
               />
-              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              {/* <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" /> */}
             </div>
           </div>
-
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">
               Follow-Up Note *
@@ -803,9 +802,6 @@ const EnquiriesLeads = () => {
                               <UserPlus className="w-4 h-4" />
                             </button>
                           )}
-                          <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
                         </div>
                       </td>
                     </tr>

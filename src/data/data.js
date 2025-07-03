@@ -32,7 +32,7 @@ export const staffSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
   // { id: "followup-tracker", label: "Follow-up Tracker", icon: FileTextIcon },
-  // { id: "application-management", label: "Application Management", icon: BookImage },
+  { id: "application-management", label: "Application Management", icon: BookImage },
   // { id: "admission-test-scheduling", label: "Admission Test Scheduling", icon: BookImage },
   // { id: "communication-logs", label: "Communication Logs (Email/SMS)", icon: BookImage },
 ];
