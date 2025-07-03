@@ -14,111 +14,233 @@ import {
   Users,
   Clipboard
 } from 'lucide-react';
+import { useSession } from '@/context/SessionContext';
 
 const AcademicManagement = () => {
+  const { user } = useSession();
   const [activeTab, setActiveTab] = useState('courses');
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [divisions, setDivisions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState(null);
 
+  // Fetch academic data from API
   useEffect(() => {
-    // Simulate API call to fetch academic data
     const fetchAcademicData = async () => {
-      setLoading(true);
       try {
-        // Mock data with years
-        const mockData = [
-          {
-            yearNumber: 1,
-            yearLabel: "1st Year",
-            divisions: [
-              {
-                name: "A",
-                students: 60,
-                subjects: [
-                  { name: "Mathematics I", teacher: "Dr. Smith" },
-                  { name: "Physics", teacher: "Prof. Johnson" },
-                ],
-                timetable: [
-                  { day: "Monday", period: "1", subject: "Mathematics", teacher: "Dr. Smith", time: { start: "09:00", end: "10:00" } },
-                ],
-                exams: [
-                  { type: "Unit Test", subject: "Mathematics", totalMarks: 50, date: "2023-10-15" },
-                ]
-              },
-              {
-                name: "B",
-                students: 55,
-                subjects: [
-                  { name: "Chemistry", teacher: "Prof. Davis" }
-                ],
-                timetable: [
-                  { day: "Wednesday", period: "1", subject: "Chemistry", teacher: "Prof. Davis", time: { start: "09:00", end: "10:00" } }
-                ],
-                exams: [
-                  { type: "Practical Exam", subject: "Chemistry", totalMarks: 30, date: "2023-10-18" }
-                ]
-              }
-            ]
-          },
-          {
-            yearNumber: 2,
-            yearLabel: "2nd Year",
-            divisions: [
-              {
-                name: "A",
-                students: 50,
-                subjects: [
-                  { name: "Data Structures", teacher: "Dr. Wilson" },
-                  { name: "Algorithms", teacher: "Prof. Brown" }
-                ],
-                timetable: [
-                  { day: "Tuesday", period: "2", subject: "Data Structures", teacher: "Dr. Wilson", time: { start: "10:00", end: "11:00" } }
-                ],
-                exams: [
-                  { type: "Mid Term", subject: "Algorithms", totalMarks: 100, date: "2023-11-20" }
-                ]
-              }
-            ]
-          },
-          {
-            yearNumber: 3,
-            yearLabel: "3rd Year",
-            divisions: [
-              {
-                name: "A",
-                students: 45,
-                subjects: [
-                  { name: "Database Systems", teacher: "Dr. Lee" },
-                  { name: "Operating Systems", teacher: "Prof. Taylor" }
-                ],
-                timetable: [
-                  { day: "Thursday", period: "3", subject: "Database Systems", teacher: "Dr. Lee", time: { start: "11:00", end: "12:00" } }
-                ],
-                exams: [
-                  { type: "Project Evaluation", subject: "Database Systems", totalMarks: 150, date: "2023-12-15" }
-                ]
-              }
-            ]
-          }
-        ];
+        setLoading(true);
+        setError(null);
         
-        setYears(mockData);
-      } catch (error) {
-        console.error("Failed to fetch academic data:", error);
+        if (!user?.id) return;
+
+        // Fetch academic data for HOD's department
+        const response = await fetch(`/api/hod/${user.id}/academics`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch academic data');
+        }
+
+        const data = await response.json();
+        
+        // Transform API data to match our frontend structure
+        const transformedYears = data.academics.map(academic => ({
+          academicId: academic._id,
+          yearNumber: parseInt(academic.year) || 1,
+          yearLabel: `${academic.year} Year`,
+          divisions: academic.divisions.map(division => ({
+            name: division.name,
+            students: division.students.length,
+            subjects: division.subjects.map(subject => ({
+              name: subject.name,
+              teacher: subject.teacher
+            })),
+            timetable: division.timetable,
+            exams: division.exams
+          }))
+        }));
+
+        setYears(transformedYears);
+      } catch (err) {
+        console.error("Failed to fetch academic data:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAcademicData();
-  }, []);
+  }, [user?.id]);
 
   const handleSelectYear = (year) => {
     setSelectedYear(year);
     setDivisions(year.divisions);
+  };
+
+  // Add a new division to the selected year
+  const handleAddDivision = async () => {
+    try {
+      if (!selectedYear) return;
+      
+      const newDivision = {
+        name: `Division ${String.fromCharCode(65 + divisions.length)}`, // A, B, C, etc.
+        students: 0,
+        subjects: [],
+        timetable: [],
+        exams: []
+      };
+
+      // Prepare the update payload
+      const updatePayload = {
+        academicId: selectedYear.academicId,
+        divisionUpdates: [
+          ...divisions.map(div => ({
+            name: div.name,
+            subjects: div.subjects,
+            timetable: div.timetable,
+            exams: div.exams,
+            students: div.students
+          })),
+          newDivision
+        ]
+      };
+
+      // Send PUT request to update academic record
+      const response = await fetch(`/api/hod/${user.id}/academics`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add division');
+      }
+
+      // Refresh the data
+      const updatedYear = {
+        ...selectedYear,
+        divisions: [...selectedYear.divisions, newDivision]
+      };
+      
+      setSelectedYear(updatedYear);
+      setDivisions(updatedYear.divisions);
+      
+    } catch (err) {
+      console.error("Failed to add division:", err);
+      setError(err.message);
+    }
+  };
+
+  // Add a new subject to a division
+  const handleAddSubject = async (divisionName) => {
+    try {
+      if (!selectedYear) return;
+      
+      const newSubject = {
+        name: "New Subject",
+        teacher: "" // You'll need to implement teacher selection
+      };
+
+      // Find the division and add the subject
+      const updatedDivisions = divisions.map(division => {
+        if (division.name === divisionName) {
+          return {
+            ...division,
+            subjects: [...division.subjects, newSubject]
+          };
+        }
+        return division;
+      });
+
+      // Prepare the update payload
+      const updatePayload = {
+        academicId: selectedYear.academicId,
+        divisionUpdates: updatedDivisions.map(div => ({
+          name: div.name,
+          subjects: div.subjects,
+          timetable: div.timetable,
+          exams: div.exams,
+          students: div.students
+        }))
+      };
+
+      // Send PUT request to update academic record
+      const response = await fetch(`/api/hod/${user.id}/academics`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add subject');
+      }
+
+      // Update local state
+      const updatedYear = {
+        ...selectedYear,
+        divisions: updatedDivisions
+      };
+      
+      setSelectedYear(updatedYear);
+      setDivisions(updatedDivisions);
+      
+    } catch (err) {
+      console.error("Failed to add subject:", err);
+      setError(err.message);
+    }
+  };
+
+  // Delete a division
+  const handleDeleteDivision = async (divisionName) => {
+    try {
+      if (!selectedYear) return;
+      
+      // Filter out the division to be deleted
+      const updatedDivisions = divisions.filter(div => div.name !== divisionName);
+
+      // Prepare the update payload
+      const updatePayload = {
+        academicId: selectedYear.academicId,
+        divisionUpdates: updatedDivisions.map(div => ({
+          name: div.name,
+          subjects: div.subjects,
+          timetable: div.timetable,
+          exams: div.exams,
+          students: div.students
+        }))
+      };
+
+      // Send PUT request to update academic record
+      const response = await fetch(`/api/hod/${user.id}/academics`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete division');
+      }
+
+      // Update local state
+      const updatedYear = {
+        ...selectedYear,
+        divisions: updatedDivisions
+      };
+      
+      setSelectedYear(updatedYear);
+      setDivisions(updatedDivisions);
+      
+    } catch (err) {
+      console.error("Failed to delete division:", err);
+      setError(err.message);
+    }
   };
 
   const filteredDivisions = divisions.filter(division => 
@@ -132,13 +254,26 @@ const AcademicManagement = () => {
       case 'courses':
         return (
           <div className="space-y-6">
+            <button 
+              onClick={handleAddDivision}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Add New Division
+            </button>
+
             {filteredDivisions.map((division, index) => (
               <div key={index} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                   <h3 className="font-medium text-black">Division {division.name}</h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     <span className="text-sm text-black">{division.students} students</span>
-                    <ChevronDown className="w-4 h-4 text-black" />
+                    <button 
+                      onClick={() => handleDeleteDivision(division.name)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
                 <div className="p-4">
@@ -161,7 +296,10 @@ const AcademicManagement = () => {
                       </div>
                     ))}
                   </div>
-                  <button className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700">
+                  <button 
+                    onClick={() => handleAddSubject(division.name)}
+                    className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                  >
                     <Plus className="w-4 h-4" />
                     Add Subject
                   </button>
@@ -291,6 +429,12 @@ const AcademicManagement = () => {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Select Academic Year</h3>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {years.map((year) => (
