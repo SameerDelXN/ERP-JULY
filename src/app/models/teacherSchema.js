@@ -43,9 +43,12 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     enum: ['teacher', 'HOD'], // Added HOD to enum
     default: 'teacher'
-  }
+  },
+   sessionToken:{
+      type:String
+    }
 });
-
+delete mongoose.models.teacher
 const teacher = mongoose.models.teacher || mongoose.model('teacher', teacherSchema);
 
 export default teacher;

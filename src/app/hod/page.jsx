@@ -25,45 +25,34 @@ const HodDashboard = () => {
   const { user, refreshSession } = useSession();
   const [timeframe, setTimeframe] = useState('monthly');
   const [departmentData, setDepartmentData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     refreshSession();
-    // Simulate fetching department data - replace with actual API call
     const fetchDepartmentData = async () => {
-      // In a real app, you would fetch this data from your API
-      const mockData = {
-        department: "Computer Science",
-        year: "2023-2024",
-        divisions: [
-          {
-            name: "A",
-            students: 48,
-            subjects: 6,
-            teachers: 8
-          },
-          {
-            name: "B",
-            students: 45,
-            subjects: 6,
-            teachers: 8
-          }
-        ],
-        totalStudents: 93,
-        totalTeachers: 8,
-        attendanceRate: 92.5,
-        upcomingExams: 3,
-        recentActivities: [
-          { id: 1, type: 'attendance', message: 'Submitted attendance for OOPs - Div A', time: '1 hour ago' },
-          { id: 2, type: 'exam', message: 'Mid-term exam scheduled for DBMS', time: '3 hours ago' },
-          { id: 3, type: 'timetable', message: 'Updated timetable for Div B', time: '5 hours ago' },
-          { id: 4, type: 'meeting', message: 'Department meeting scheduled', time: '1 day ago' }
-        ]
-      };
-      setDepartmentData(mockData);
+      try {
+        if (!user?.id) return;
+        
+        setLoading(true);
+        const response = await fetch(`/api/hod/${user.id}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch department data');
+        }
+        
+        const data = await response.json();
+        setDepartmentData(data);
+      } catch (err) {
+        console.error('Error fetching department data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
     
     fetchDepartmentData();
-  }, []);
+  }, [user?.id]);
 
   const quickActions = [
     { icon: Plus, label: 'Add Student' },
@@ -99,7 +88,7 @@ const HodDashboard = () => {
     </div>
   );
 
-  if (!departmentData) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-pulse text-gray-500">Loading department data...</div>
@@ -107,6 +96,48 @@ const HodDashboard = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
+
+  if (!departmentData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">No department data available</div>
+      </div>
+    );
+  }
+
+  // Transform the API data to match your component's expected structure
+  const transformedData = {
+    department: departmentData.department,
+    year: "2023-2024", // You might want to get this from your API too
+    divisions: departmentData.teachers.reduce((acc, teacher) => {
+      // This is a simplified transformation - adjust according to your actual data structure
+      const division = {
+        name: teacher.classAssigned || 'A', // Assuming teachers have classAssigned field
+        students: 0, // You'll need to get this from your data
+        subjects: teacher.subjects?.length || 0,
+        teachers: 1 // Each teacher represents one
+      };
+      return [...acc, division];
+    }, []),
+    totalStudents: 0, // You'll need to calculate this from your data
+    totalTeachers: departmentData.teachers.length,
+    attendanceRate: 92.5, // You'll need to calculate this from your data
+    upcomingExams: departmentData.academics.filter(a => a.type === 'exam').length,
+    recentActivities: departmentData.academics.slice(0, 4).map((academic, index) => ({
+      id: index,
+      type: academic.type || 'activity',
+      message: academic.title || `Academic activity for ${academic.subject}`,
+      time: 'recent' // You might want to format the actual date
+    }))
+  };
+  console.log("tD = ",transformedData)
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
@@ -115,7 +146,7 @@ const HodDashboard = () => {
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">Department Overview</h2>
             <p className="text-gray-600 text-sm mt-1">
-              {departmentData.department} Department • Academic Year: {departmentData.year}
+              {transformedData.department} Department • Academic Year: {transformedData.year}
             </p>
           </div>
           
@@ -143,26 +174,26 @@ const HodDashboard = () => {
           <StatCard 
             title="Total Students" 
             icon={Users} 
-            value={departmentData.totalStudents}
+            value={transformedData.totalStudents}
             change={2.5}
             trend="up"
           />
           <StatCard 
             title="Total Teachers" 
             icon={GraduationCap} 
-            value={departmentData.totalTeachers}
+            value={transformedData.totalTeachers}
           />
           <StatCard 
             title="Attendance Rate" 
             icon={UserCheck} 
-            value={`${departmentData.attendanceRate}%`}
+            value={`${transformedData.attendanceRate}%`}
             change={1.2}
             trend="up"
           />
           <StatCard 
             title="Upcoming Exams" 
             icon={Bookmark} 
-            value={departmentData.upcomingExams}
+            value={transformedData.upcomingExams}
           />
         </div>
 
@@ -193,7 +224,7 @@ const HodDashboard = () => {
             </div>
             
             <div className="space-y-3">
-              {departmentData.recentActivities.map((activity) => (
+              {transformedData.recentActivities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="p-2 bg-gray-100 rounded-lg mt-0.5">
                     {activity.type === 'attendance' ? <Clipboard className="w-4 h-4 text-gray-600" /> :
@@ -218,7 +249,7 @@ const HodDashboard = () => {
         <div className="mt-6 bg-white rounded-lg p-6 border border-gray-100">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Divisions Overview</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {departmentData.divisions.map((division, index) => (
+            {transformedData.divisions.map((division, index) => (
               <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-900">Division {division.name}</h4>
@@ -263,19 +294,21 @@ const HodDashboard = () => {
               <span className="text-sm font-medium text-gray-600">Subject Performance</span>
             </div>
             <div className="space-y-4">
-              {['OOPs', 'DBMS', 'Algorithms', 'Networks'].map((subject, i) => (
-                <div key={i}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700">{subject}</span>
-                    <span className="font-medium">78%</span>
+              {departmentData.teachers.flatMap(t => t.subjects || [])
+                .slice(0, 4)
+                .map((subject, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-700">{subject}</span>
+                      <span className="font-medium">78%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div 
+                        className="h-1.5 rounded-full bg-blue-600" 
+                        style={{ width: `${78}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5">
-                    <div 
-                      className="h-1.5 rounded-full bg-blue-600" 
-                      style={{ width: `${78}%` }}
-                    ></div>
-                  </div>
-                </div>
               ))}
             </div>
           </div>
@@ -312,21 +345,19 @@ const HodDashboard = () => {
               <span className="text-sm font-medium text-gray-600">Upcoming Events</span>
             </div>
             <div className="space-y-3">
-              {[
-                { title: 'Mid-term Exams', date: 'Jun 15-20', type: 'exam' },
-                { title: 'Faculty Meeting', date: 'Jun 18', type: 'meeting' },
-                { title: 'Project Submission', date: 'Jun 25', type: 'deadline' },
-                { title: 'Guest Lecture', date: 'Jun 28', type: 'event' }
-              ].map((event, i) => (
-                <div key={i} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded">
-                  <div className="p-1.5 bg-gray-100 rounded mt-0.5">
-                    <Calendar className="w-3.5 h-3.5 text-gray-500" />
+              {departmentData.academics
+                .filter(a => a.type === 'exam' || a.type === 'event')
+                .slice(0, 4)
+                .map((event, i) => (
+                  <div key={i} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded">
+                    <div className="p-1.5 bg-gray-100 rounded mt-0.5">
+                      <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{event.title}</p>
+                      <p className="text-xs text-gray-500">{event.date || 'Coming soon'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">{event.title}</p>
-                    <p className="text-xs text-gray-500">{event.date}</p>
-                  </div>
-                </div>
               ))}
             </div>
           </div>

@@ -14,7 +14,6 @@ export const SessionProvider = ({ children }) => {
     try {
       const response = await fetch('/api/auth/session');
       const data = await response.json();
-      console.log("data ===",data)
       if (response.ok && data.user) {
         setUser(data.user);
       } else {
@@ -41,10 +40,11 @@ export const SessionProvider = ({ children }) => {
       });
       
       const data = await response.json();
-      
       if (response.ok) {
         await fetchSession(); // Refresh session after login
-        router.push(`/${data.user.role}`);
+        // Redirect based on role
+        const redirectPath = data.user.role === 'HOD' ? '/hod' : `/${data.user.role}`;
+        router.push(redirectPath);
         return { success: true };
       } else {
         return { success: false, message: data.message };

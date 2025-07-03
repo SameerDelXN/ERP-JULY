@@ -39,7 +39,7 @@ const Login = () => {
 
   // Validate password (minimum 8 characters, at least one letter and one number)
   const validatePassword = (password) => {
-    const re = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+   const re = /^(?=.*[a-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
     return re.test(password);
   };
 
@@ -190,34 +190,40 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Access Level
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  {
-                    role: "admin",
-                    label: "Administrator",
-                    icon: Settings,
-                  },
-                  {
-                    role: "staff",
-                    label: "Staff Member",
-                    icon: UserCheck,
-                  },
-                ].map(({ role, label, icon: Icon }) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => setSelectedRole(role)}
-                    className={`p-3 rounded-lg border-2 transition-all duration-200 text-center ${
-                      selectedRole === role
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mx-auto mb-1" />
-                    <span className="font-medium text-xs">{label}</span>
-                  </button>
-                ))}
-              </div>
+             
+<div className="grid grid-cols-3 gap-2">
+  {[
+    {
+      role: "admin",
+      label: "Administrator",
+      icon: Settings,
+    },
+    {
+      role: "hod",
+      label: "HOD",
+      icon: UserCheck,
+    },
+    {
+      role: "staff",
+      label: "Staff Member",
+      icon: UserCheck,
+    },
+  ].map(({ role, label, icon: Icon }) => (
+    <button
+      key={role}
+      type="button"
+      onClick={() => setSelectedRole(role)}
+      className={`p-3 rounded-lg border-2 transition-all duration-200 text-center ${
+        selectedRole === role
+          ? "border-blue-500 bg-blue-50 text-blue-700"
+          : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+      }`}
+    >
+      <Icon className="w-4 h-4 mx-auto mb-1" />
+      <span className="font-medium text-xs">{label}</span>
+    </button>
+  ))}
+</div>
             </div>
 
             {/* Email Field */}
