@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import userSchema from '../../../models/userSchema';
 import teacherSchema from '../../../models/teacherSchema';
 import { connectToDatabase } from '../../../lib/mongodb';
-
+//sample
 export async function GET() {
   try {
     await connectToDatabase();
