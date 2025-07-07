@@ -11,6 +11,10 @@ const academicSchema = new mongoose.Schema({
         type: String, // e.g. "1st", "2nd"
         required: true,
       },
+      semester: {
+        type: String, // e.g. "Sem 1", "Sem 2"
+        required: true,
+      },
       divisions: [
         {
           name: {
