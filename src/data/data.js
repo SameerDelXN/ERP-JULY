@@ -61,35 +61,35 @@ export const roles = [
   {
     id: 2,
     name: 'Admin',
-    description: 'Administrative access with limited system settings',
-    userCount: 5,
-    permissions: ['User Management', 'Student Management', 'Teacher Management', 'Reports', 'Fee Management'],
+    // description: 'Administrative access with limited system settings',
+    // userCount: 5,
+    // permissions: ['User Management', 'Student Management', 'Teacher Management', 'Reports', 'Fee Management'],
     color: 'bg-blue-500'
   },
   {
     id: 3,
     name: 'Teacher',
-    description: 'Teaching staff with classroom management access',
-    userCount: 45,
-    permissions: ['Student Management', 'Grade Management', 'Attendance', 'Assignment Management', 'Communication'],
+    // description: 'Teaching staff with classroom management access',
+    // userCount: 45,
+    // permissions: ['Student Management', 'Grade Management', 'Attendance', 'Assignment Management', 'Communication'],
     color: 'bg-green-500'
   },
   {
     id: 4,
     name: 'Staff',
-    description: 'Non-teaching staff with specific operational access',
-    userCount: 23,
-    permissions: ['Library Management', 'Transport Management', 'Inventory Management'],
+    // description: 'Non-teaching staff with specific operational access',
+    // userCount: 23,
+    // permissions: ['Library Management', 'Transport Management', 'Inventory Management'],
     color: 'bg-indigo-500'
-  }
-  // {
-  //   id: 4,
-  //   name: 'Student',
-  //   description: 'Student access to academic resources and information',
-  //   userCount: 1247,
-  //   permissions: ['View Profile', 'View Grades', 'Submit Assignments', 'View Schedule', 'Communication'],
-  //   color: 'bg-purple-500'
-  // },
+  },
+  {
+    id: 5,
+    name: 'HOD',
+    // description: 'HOD access to academic resources and information',
+    // userCount: 1247,
+    // permissions: ['View Profile', 'View Grades', 'Submit Assignments', 'View Schedule', 'Communication'],
+    color: 'bg-purple-500'
+  },
   // {
   //   id: 5,
   //   name: 'Parent',

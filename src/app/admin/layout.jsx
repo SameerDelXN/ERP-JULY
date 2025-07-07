@@ -98,7 +98,7 @@ const Layout = ({ children }) => {
               {/* User Info */}
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
-                  {user?.name || "Admin User"}
+                  {user?.username || "Admin User"}
                 </p>
                 <p className="text-xs text-gray-500">Super Administrator</p>
               </div>

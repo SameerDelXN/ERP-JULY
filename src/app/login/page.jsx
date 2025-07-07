@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/context/SessionContext";
 
 const Login = () => {
-  const router = useRouter()
+  const router = useRouter();
   const { login } = useSession();
   const [focusedField, setFocusedField] = useState("");
   const [selectedRole, setSelectedRole] = useState("admin");
@@ -39,7 +39,8 @@ const Login = () => {
 
   // Validate password (minimum 8 characters, at least one letter and one number)
   const validatePassword = (password) => {
-   const re = /^(?=.*[a-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+    const re =
+      /^(?=.*[a-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
     return re.test(password);
   };
 
@@ -52,33 +53,34 @@ const Login = () => {
     }
 
     if (password && !validatePassword(password)) {
-      setPasswordError("Password must be at least 8 characters with at least one letter and one number");
+      setPasswordError(
+        "Password must be at least 8 characters"
+      );
     } else {
       setPasswordError("");
     }
 
     setFormValid(
       validateEmail(email) &&
-      validatePassword(password) &&
-      email.trim() !== "" &&
-      password.trim() !== ""
+        validatePassword(password) &&
+        email.trim() !== "" &&
+        password.trim() !== ""
     );
   }, [email, password]);
 
-    const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-    const result = await login(email, password, selectedRole);
-    console.log(result)
-     
+      const result = await login(email, password, selectedRole);
+      console.log(result);
+
       if (!result.success) {
-      setError(result.message || "Login failed.");
-      setLoading(false);
-    }
-      
+        setError(result.message || "Login failed.");
+        setLoading(false);
+      }
     } catch (err) {
       console.error("Login Error:", err);
       setError("Something went wrong.");
@@ -86,7 +88,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -105,11 +106,12 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100 items-center justify-center relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 left-0 w-full h-full" 
-               style={{
-                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-               }}>
-          </div>
+          <div
+            className="absolute top-0 left-0 w-full h-full"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          ></div>
         </div>
 
         <div className="relative z-10 max-w-sm text-center px-8">
@@ -120,15 +122,21 @@ const Login = () => {
               <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4 border border-gray-100">
                 <Building2 className="w-10 h-10 text-blue-600" />
               </div>
-              
+
               {/* Floating Icons */}
               <div className="absolute -top-2 -right-4 w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg animate-bounce">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
-              <div className="absolute -bottom-2 -left-4 w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg animate-bounce" style={{animationDelay: '0.5s'}}>
+              <div
+                className="absolute -bottom-2 -left-4 w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg animate-bounce"
+                style={{ animationDelay: "0.5s" }}
+              >
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <div className="absolute top-8 -left-8 w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center shadow-lg animate-bounce" style={{animationDelay: '1s'}}>
+              <div
+                className="absolute top-8 -left-8 w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center shadow-lg animate-bounce"
+                style={{ animationDelay: "1s" }}
+              >
                 <Database className="w-5 h-5 text-white" />
               </div>
             </div>
@@ -138,17 +146,18 @@ const Login = () => {
             Enterprise Resource Planning
           </h1>
           <p className="text-gray-600 leading-relaxed text-sm">
-            Streamline your business operations with our comprehensive ERP solution. 
-            Manage everything from inventory to finance in one integrated platform.
+            Streamline your business operations with our comprehensive ERP
+            solution. Manage everything from inventory to finance in one
+            integrated platform.
           </p>
 
           {/* Feature Points */}
           <div className="mt-6 space-y-2 text-left">
             {[
               "Real-time business insights",
-              "Integrated workflow management", 
+              "Integrated workflow management",
               "Advanced security & compliance",
-              "24/7 technical support"
+              "24/7 technical support",
             ].map((feature, index) => (
               <div key={index} className="flex items-center text-gray-700">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
@@ -190,40 +199,40 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Access Level
               </label>
-             
-<div className="grid grid-cols-3 gap-2">
-  {[
-    {
-      role: "admin",
-      label: "Administrator",
-      icon: Settings,
-    },
-    {
-      role: "hod",
-      label: "HOD",
-      icon: UserCheck,
-    },
-    {
-      role: "staff",
-      label: "Staff Member",
-      icon: UserCheck,
-    },
-  ].map(({ role, label, icon: Icon }) => (
-    <button
-      key={role}
-      type="button"
-      onClick={() => setSelectedRole(role)}
-      className={`p-3 rounded-lg border-2 transition-all duration-200 text-center ${
-        selectedRole === role
-          ? "border-blue-500 bg-blue-50 text-blue-700"
-          : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-      }`}
-    >
-      <Icon className="w-4 h-4 mx-auto mb-1" />
-      <span className="font-medium text-xs">{label}</span>
-    </button>
-  ))}
-</div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {
+                    role: "admin",
+                    label: "Administrator",
+                    icon: Settings,
+                  },
+                  {
+                    role: "hod",
+                    label: "HOD",
+                    icon: UserCheck,
+                  },
+                  {
+                    role: "staff",
+                    label: "Staff Member",
+                    icon: UserCheck,
+                  },
+                ].map(({ role, label, icon: Icon }) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setSelectedRole(role)}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 text-center ${
+                      selectedRole === role
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 mx-auto mb-1" />
+                    <span className="font-medium text-xs">{label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Email Field */}
@@ -232,9 +241,11 @@ const Login = () => {
                 Email Address
               </label>
               <div className="relative">
-                <User className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                  focusedField === "email" ? "text-blue-500" : "text-gray-400"
-                }`} />
+                <User
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                    focusedField === "email" ? "text-blue-500" : "text-gray-400"
+                  }`}
+                />
                 <input
                   type="email"
                   value={email}
@@ -257,9 +268,13 @@ const Login = () => {
                 Password
               </label>
               <div className="relative">
-                <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                  focusedField === "password" ? "text-blue-500" : "text-gray-400"
-                }`} />
+                <Lock
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                    focusedField === "password"
+                      ? "text-blue-500"
+                      : "text-gray-400"
+                  }`}
+                />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -275,7 +290,11 @@ const Login = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-200"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
               {passwordError && (

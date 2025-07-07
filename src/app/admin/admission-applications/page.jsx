@@ -27,6 +27,7 @@ import {
   FileTextIcon,
 } from "lucide-react";
 import Image from "next/image";
+import LoadingComponent from "@/components/Loading";
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
   <div className="flex items-start gap-3">
@@ -154,10 +155,24 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<User className="w-5 h-5" />}
               label="Full Name"
-              value={application.fullName ||
-                `${application.first || ""} ${application.middle || ""} ${
-                  application.last || ""
-                }`.trim() || "N/A"
+              value={
+                <span className="group relative inline-block">
+                  {application.fullName ? (
+                    <>
+                      {application.fullName.substring(0, 25)}
+                      {application.fullName.length > 25 && (
+                        <>
+                          <span>...</span>
+                          <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                            {application.fullName}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    "N/A"
+                  )}
+                </span>
               }
               bgColor="bg-blue-50"
               iconColor="text-blue-600"
@@ -398,12 +413,7 @@ const AdmissionApplications = () => {
     setShowDetailsModal(true);
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+  if (loading) return <LoadingComponent />;
 
   if (error)
     return (
@@ -563,9 +573,23 @@ const AdmissionApplications = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {application.fullName || `${application.first || ""} ${
-                                application.middle || ""
-                              } ${application.last || ""}`.trim() || "N/A"}
+                              <span className="group relative inline-block">
+                                {application.fullName ? (
+                                  <>
+                                    {application.fullName.substring(0, 25)}
+                                    {application.fullName.length > 25 && (
+                                      <>
+                                        <span>...</span>
+                                        <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                                          {application.fullName}
+                                        </span>
+                                      </>
+                                    )}
+                                  </>
+                                ) : (
+                                  "N/A"
+                                )}
+                              </span>
                             </div>
                             <div className="text-sm text-gray-500">
                               {application.email}

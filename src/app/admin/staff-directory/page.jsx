@@ -1,18 +1,41 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, MoreVertical, Eye, Edit, Trash2, Download, Upload, Users, UserCheck, UserX, Calendar, Mail, Phone, MapPin, Award, BookOpen, Clock, TrendingUp } from 'lucide-react';
+import { 
+  Search, 
+  Filter, 
+  Download, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  MoreVertical, 
+  Users, 
+  UserCheck, 
+  Calendar, 
+  BookOpen, 
+  Mail, 
+  Phone, 
+  ArrowUpRight,
+  ArrowDownRight
+} from 'lucide-react';
+import Image from 'next/image';
+import { useSession } from '@/context/SessionContext';
 
 const StaffOverview = () => {
+  const { user } = useSession();
+  console.log(user);
+  
   const [staffData, setStaffData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedStaff, setSelectedStaff] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Sample staff data
   useEffect(() => {
+    setLoading(true);
     const sampleData = [
       {
         id: 1,
@@ -92,13 +115,14 @@ const StaffOverview = () => {
       }
     ];
     setStaffData(sampleData);
+    setLoading(false);
   }, []);
 
   const departments = ['Computer Science', 'Mathematics', 'Physics', 'English', 'Chemistry', 'Biology'];
   const statusOptions = [
-    { value: 'active', label: 'Active', color: 'bg-green-100 text-green-800' },
-    { value: 'on_leave', label: 'On Leave', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'inactive', label: 'Inactive', color: 'bg-red-100 text-red-800' }
+    { value: 'active', label: 'Active', color: 'bg-green-50 text-green-700' },
+    { value: 'on_leave', label: 'On Leave', color: 'bg-yellow-50 text-yellow-700' },
+    { value: 'inactive', label: 'Inactive', color: 'bg-red-50 text-red-700' }
   ];
 
   // Filter and search logic
@@ -114,95 +138,115 @@ const StaffOverview = () => {
   const totalPages = Math.ceil(filteredStaff.length / 10);
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * 10, currentPage * 10);
 
+  const StatCard = ({ title, value, icon: Icon, change, trend }) => (
+    <div className="bg-white rounded-lg p-6 border border-gray-100 hover:shadow-sm transition-all duration-200">
+      <div className="flex items-center justify-between mb-4">
+        <div className="p-2 bg-gray-100 rounded-lg">
+          <Icon className="w-5 h-5 text-gray-600" />
+        </div>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+          trend === 'up' 
+            ? 'bg-green-50 text-green-700' 
+            : 'bg-blue-50 text-blue-700'
+        }`}>
+          {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+          {change}
+        </div>
+      </div>
+      
+      <div className="space-y-3">
+        <h3 className="text-gray-600 text-sm font-medium">{title}</h3>
+        <div className="text-2xl font-semibold text-gray-900">{value}</div>
+      </div>
+    </div>
+  );
+
   const stats = [
     { 
       title: 'Total Staff', 
       value: staffData.length, 
       icon: Users, 
-      color: 'bg-blue-500',
-      change: '+5 this month'
+      change: '+5 this month',
+      trend: 'up'
     },
     { 
       title: 'Active Staff', 
       value: staffData.filter(s => s.status === 'active').length, 
       icon: UserCheck, 
-      color: 'bg-green-500',
-      change: '+2 this week'
+      change: '+2 this week',
+      trend: 'up'
     },
     { 
       title: 'On Leave', 
       value: staffData.filter(s => s.status === 'on_leave').length, 
       icon: Calendar, 
-      color: 'bg-yellow-500',
-      change: '3 returning soon'
+      change: '3 returning soon',
+      trend: 'neutral'
     },
     { 
       title: 'Departments', 
       value: departments.length, 
       icon: BookOpen, 
-      color: 'bg-purple-500',
-      change: 'All active'
+      change: 'All active',
+      trend: 'neutral'
     }
   ];
 
+  if (loading)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Image 
+          src="/loading.svg" 
+          alt="Loading..."
+          width={300} 
+          height={300}
+          className="mb-4"
+        />
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-6 text-red-600">Error: {error}</div>
+      </div>
+    );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="p-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Staff Overview</h1>
-            <p className="text-gray-600 mt-1">Manage and monitor your educational staff</p>
+            <h2 className="text-2xl font-semibold text-gray-900">Staff Overview</h2>
+            <p className="text-gray-600 text-sm mt-1">Manage and monitor your educational staff</p>
           </div>
-          <div className="flex items-center space-x-3">
-            <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+          
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
               <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
-            <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
-              <Upload className="w-4 h-4" />
-              <span>Import</span>
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Add Staff</span>
+              Export
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                  <p className="text-green-600 text-sm mt-1 flex items-center">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    {stat.change}
-                  </p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
+            <StatCard key={index} {...stat} />
           ))}
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="bg-white rounded-lg p-6 border border-gray-100 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search staff..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-80"
+                  className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-80 text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -210,15 +254,15 @@ const StaffOverview = () => {
               
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               >
                 <Filter className="w-4 h-4" />
-                <span>Filters</span>
+                Filters
               </button>
             </div>
 
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <span>Showing {paginatedStaff.length} of {filteredStaff.length} staff</span>
+            <div className="text-sm text-gray-600">
+              Showing {paginatedStaff.length} of {filteredStaff.length} staff
             </div>
           </div>
 
@@ -228,7 +272,7 @@ const StaffOverview = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     value={filterDepartment}
                     onChange={(e) => setFilterDepartment(e.target.value)}
                   >
@@ -242,7 +286,7 @@ const StaffOverview = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -260,7 +304,7 @@ const StaffOverview = () => {
                       setFilterStatus('all');
                       setSearchTerm('');
                     }}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
                   >
                     Clear Filters
                   </button>
@@ -271,7 +315,7 @@ const StaffOverview = () => {
         </div>
 
         {/* Staff Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -295,58 +339,58 @@ const StaffOverview = () => {
                       <input type="checkbox" className="rounded border-gray-300" />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-3">
                         <img
-                          className="h-12 w-12 rounded-full object-cover"
+                          className="h-10 w-10 rounded-lg object-cover"
                           src={staff.profileImage}
                           alt={staff.name}
                         />
-                        <div className="ml-4">
+                        <div>
                           <div className="text-sm font-medium text-gray-900">{staff.name}</div>
-                          <div className="text-sm text-gray-500">{staff.employeeId}</div>
+                          <div className="text-xs text-gray-500">{staff.employeeId}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 flex items-center">
-                        <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                      <div className="text-sm text-gray-900 flex items-center gap-2">
+                        <Mail className="w-3 h-3 text-gray-400" />
                         {staff.email}
                       </div>
-                      <div className="text-sm text-gray-500 flex items-center mt-1">
-                        <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                      <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                        <Phone className="w-3 h-3 text-gray-400" />
                         {staff.phone}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{staff.department}</div>
-                      <div className="text-sm text-gray-500">{staff.qualification}</div>
+                      <div className="text-xs text-gray-500">{staff.qualification}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{staff.position}</div>
-                      <div className="text-sm text-gray-500">{staff.subjects.join(', ')}</div>
+                      <div className="text-xs text-gray-500">{staff.subjects.join(', ')}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {staff.experience}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
                         statusOptions.find(s => s.value === staff.status)?.color
                       }`}>
                         {statusOptions.find(s => s.value === staff.status)?.label}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900 p-1 rounded">
+                      <div className="flex items-center gap-1">
+                        <button className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="text-green-600 hover:text-green-900 p-1 rounded">
+                        <button className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="text-red-600 hover:text-red-900 p-1 rounded">
+                        <button className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
-                        <button className="text-gray-400 hover:text-gray-600 p-1 rounded">
+                        <button className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors">
                           <MoreVertical className="w-4 h-4" />
                         </button>
                       </div>
@@ -364,19 +408,19 @@ const StaffOverview = () => {
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
                 >
                   Next
                 </button>
               </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
                     Showing page <span className="font-medium">{currentPage}</span> of{' '}
@@ -384,16 +428,16 @@ const StaffOverview = () => {
                   </p>
                 </div>
                 <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                  <nav className="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px">
                     {[...Array(totalPages)].map((_, i) => (
                       <button
                         key={i + 1}
                         onClick={() => setCurrentPage(i + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
                           currentPage === i + 1
                             ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
+                            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                        } ${i === 0 ? 'rounded-l-lg' : ''} ${i === totalPages - 1 ? 'rounded-r-lg' : ''}`}
                       >
                         {i + 1}
                       </button>
