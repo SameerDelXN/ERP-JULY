@@ -55,7 +55,7 @@ export async function POST(request, { params }) {
 
     const { id } = params;
     const { academicId, years } = await request.json();
-
+    console.log(academicId,years)
     // Validate input
     if (!academicId || !Array.isArray(years) || years.length === 0) {
       return NextResponse.json(
@@ -249,7 +249,7 @@ export async function PUT(request) {
     await connectToDatabase();
 
     const { academicId, years } = await request.json();
-
+    console.log(academicId,years)
     if (!academicId || !Array.isArray(years)) {
       return NextResponse.json(
         {
