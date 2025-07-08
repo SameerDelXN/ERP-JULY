@@ -38,7 +38,7 @@ const academicSchema = new mongoose.Schema({
                 ref: 'teacher',
                 required: true,
               },
-            },
+             },
           ],
           timetable: [
             {
