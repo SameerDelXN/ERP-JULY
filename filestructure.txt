@@ -103,8 +103,6 @@
             |-- page.jsx
         |-- staff
             |-- application-management
-                |-- admission-form
-                    |-- page.jsx
                 |-- page.jsx
             |-- enquiry&leads
                 |-- page.jsx

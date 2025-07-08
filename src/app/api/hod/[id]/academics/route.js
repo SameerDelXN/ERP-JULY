@@ -55,8 +55,8 @@ export async function POST(request, { params }) {
 
     const { id } = params;
     const { academicId, years } = await request.json();
-
-    // Basic validation
+    console.log(academicId,years)
+    // Validate input
     if (!academicId || !Array.isArray(years) || years.length === 0) {
       return NextResponse.json(
         { error: 'academicId and at least one year object are required' },
@@ -180,94 +180,146 @@ export async function POST(request, { params }) {
 
 //PUT route handler for HOD to update academics details 
 
+// export async function PUT(request) {
+//   try {
+//     await connectToDatabase();
+
+//     const { academicId, years } = await request.json();
+
+//     // Basic input validation
+//     if (!academicId || !Array.isArray(years)) {
+//       return NextResponse.json(
+//         { error: 'academicId and years array are required' },
+//         { status: 400 }
+//       );
+//     }
+
+//     const academic = await academicSchema.findById(academicId);
+//     if (!academic) {
+//       return NextResponse.json(
+//         { error: 'Academic record not found' },
+//         { status: 404 }
+//       );
+//     }
+
+//     // Validate each year object
+//     for (const yearObj of years) {
+//       if (!yearObj.year || !yearObj.semester || !Array.isArray(yearObj.divisions)) {
+//         return NextResponse.json(
+//           {
+//             error: 'Each year must include year, semester, and divisions array'
+//           },
+//           {
+//             status: 400
+//           }
+//         );
+//       }
+
+//       for (const division of yearObj.divisions) {
+//         if (!division.name || !division.subjects || !division.timetable || !division.exams) {
+//           return NextResponse.json(
+//             {
+//               error: 'Each division must include name, subjects, timetable, and exams'
+//             },
+//             {
+//               status: 400
+//             }
+//           );
+//         }
+
+//         // Validate subjects
+//         for (const subject of division.subjects) {
+//           if (!subject.name || !subject.teacher) {
+//             return NextResponse.json(
+//               { error: 'Each subject must include name and teacher' },
+//               { status: 400 }
+//             );
+//           }
+//         }
+
+//         // Validate timetable
+//         for (const slot of division.timetable) {
+//           if (!slot.day || !slot.period || !slot.subject || !slot.teacher || !slot.time?.start || !slot.time?.end) {
+//             return NextResponse.json(
+//               { error: 'Each timetable slot must have day, period, subject, teacher, and time range' },
+//               { status: 400 }
+//             );
+//           }
+//         }
+
+//         // Validate exams
+//         for (const exam of division.exams) {
+//           if (!exam.type || !exam.subject || !exam.totalMarks || !exam.date) {
+//             return NextResponse.json(
+//               { error: 'Each exam must include type, subject, totalMarks, and date' },
+//               { status: 400 }
+//             );
+//           }
+//         }
+
+//         // Optional: Validate students
+//         if (division.students && division.students.length > 50) {
+//           return NextResponse.json(
+//             { error: 'A division cannot have more than 50 students' },
+//             { status: 400 }
+//           );
+//         }
+//       }
+//     }
+
+//     await academic.save();
+
+//     return NextResponse.json(
+//       {
+//         message: 'Years and divisions added successfully', academic
+//       },
+//       {
+//         status: 200
+//       }
+//     );
+
+//   } catch (error) {
+//     console.error('Error in POST /api/hod/[id]/academics:', error);
+//     return NextResponse.json({
+//       error: 'Internal server error'
+//     }, {
+//       status: 500
+//     });
+//   }
+// }
+
+//PUT route handler for HOD to update academics details 
+
 export async function PUT(request) {
   try {
     await connectToDatabase();
 
     const { academicId, years } = await request.json();
-
-    // Basic input validation
+    console.log(academicId,years)
     if (!academicId || !Array.isArray(years)) {
       return NextResponse.json(
-        { error: 'academicId and years array are required' },
-        { status: 400 }
+        {
+          error: 'academicId and years array are required'
+        },
+        {
+          status: 400
+        }
       );
     }
 
     const academic = await academicSchema.findById(academicId);
     if (!academic) {
       return NextResponse.json(
-        { error: 'Academic record not found' },
-        { status: 404 }
+        {
+          error: 'Academic record not found'
+        },
+        {
+          status: 404
+        }
       );
     }
 
-    // Validate each year object
-    for (const yearObj of years) {
-      if (!yearObj.year || !yearObj.semester || !Array.isArray(yearObj.divisions)) {
-        return NextResponse.json(
-          {
-            error: 'Each year must include year, semester, and divisions array'
-          },
-          {
-            status: 400
-          }
-        );
-      }
-
-      for (const division of yearObj.divisions) {
-        if (!division.name || !division.subjects || !division.timetable || !division.exams) {
-          return NextResponse.json(
-            {
-              error: 'Each division must include name, subjects, timetable, and exams'
-            },
-            {
-              status: 400
-            }
-          );
-        }
-
-        // Validate subjects
-        for (const subject of division.subjects) {
-          if (!subject.name || !subject.teacher) {
-            return NextResponse.json(
-              { error: 'Each subject must include name and teacher' },
-              { status: 400 }
-            );
-          }
-        }
-
-        // Validate timetable
-        for (const slot of division.timetable) {
-          if (!slot.day || !slot.period || !slot.subject || !slot.teacher || !slot.time?.start || !slot.time?.end) {
-            return NextResponse.json(
-              { error: 'Each timetable slot must have day, period, subject, teacher, and time range' },
-              { status: 400 }
-            );
-          }
-        }
-
-        // Validate exams
-        for (const exam of division.exams) {
-          if (!exam.type || !exam.subject || !exam.totalMarks || !exam.date) {
-            return NextResponse.json(
-              { error: 'Each exam must include type, subject, totalMarks, and date' },
-              { status: 400 }
-            );
-          }
-        }
-
-        // Optional: Validate students
-        if (division.students && division.students.length > 50) {
-          return NextResponse.json(
-            { error: 'A division cannot have more than 50 students' },
-            { status: 400 }
-          );
-        }
-      }
-    }
-
-    // Replace the years array
+    // Replace the entire years array
     academic.years = years;
 
     await academic.save();
