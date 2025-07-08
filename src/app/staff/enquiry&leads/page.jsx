@@ -30,6 +30,7 @@ import {
   Zap,
   Target,
   Activity,
+  TrendingUp,
 } from "lucide-react";
 import Image from "next/image";
 import { useSession } from "@/context/SessionContext";
@@ -531,7 +532,6 @@ const EnquiriesLeads = () => {
   }, []);
 
   const totalEnquiries = enquiries.length;
-  const newLeads = enquiries.filter((e) => e.status === "New").length;
   const contacted = enquiries.filter((e) => e.status === "Contacted").length;
   const converted = enquiries.filter((e) => e.status === "Converted").length;
   const conversionRate = totalEnquiries
@@ -682,64 +682,6 @@ const EnquiriesLeads = () => {
       throw error;
     }
   };
-  const StatCard = ({ title, value, icon: Icon, change, trend }) => (
-    <div className="bg-white rounded-lg p-6 border border-gray-100 hover:shadow-sm transition-all duration-200">
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2 bg-gray-100 rounded-lg">
-          <Icon className="w-5 h-5 text-gray-600" />
-        </div>
-        <div
-          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-            trend === "up"
-              ? "bg-green-50 text-green-700"
-              : trend === "down"
-              ? "bg-red-50 text-red-700"
-              : "bg-blue-50 text-blue-700"
-          }`}
-        >
-          {trend === "up" && <ArrowUpRight className="w-3 h-3" />}
-          {trend === "down" && <ArrowDownRight className="w-3 h-3" />}
-          {change}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="text-gray-600 text-sm font-medium">{title}</h3>
-        <div className="text-2xl font-semibold text-gray-900">{value}</div>
-      </div>
-    </div>
-  );
-
-  const stats = [
-    {
-      title: "Total Enquiries",
-      value: totalEnquiries,
-      icon: Users,
-      change: "+12 this month",
-      trend: "up",
-    },
-    {
-      title: "New Leads",
-      value: newLeads,
-      icon: Plus,
-      change: "+5 this week",
-      trend: "up",
-    },
-    {
-      title: "Contacted",
-      value: contacted,
-      icon: UserCheck,
-      change: "+3 today",
-      trend: "up",
-    },
-    {
-      title: "Converted",
-      value: converted,
-      icon: CheckCircle,
-      change: `${conversionRate}% rate`,
-      trend: "neutral",
-    },
-  ];
 
   const totalPages = Math.ceil(filteredEnquiries.length / 10);
   const paginatedEnquiries = filteredEnquiries.slice(
@@ -773,34 +715,67 @@ const EnquiriesLeads = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Enquiries & Leads
-            </h2>
-            <p className="text-gray-600 text-sm mt-1">
-              Manage and track all student enquiries and leads
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-            {/* <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-              <Plus className="w-4 h-4" />
-              Add Enquiry
-            </button> */}
-          </div>
-        </div>
-
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {stats.map((stat, index) => (
-            <StatCard key={index} {...stat} />
-          ))}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 ">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Enquiries
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalEnquiries}
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className=" bg-gradient-to-br from-green-100 to-green-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Contacted</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {contacted}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Converted</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {converted}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">
+                  Conversion Rate
+                </p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {conversionRate}%
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filters and Search */}

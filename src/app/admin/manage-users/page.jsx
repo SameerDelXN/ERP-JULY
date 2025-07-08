@@ -5,14 +5,12 @@ import {
   UserPlus,
   Search,
   Filter,
-  MoreVertical,
   Edit,
   Trash2,
   Phone,
   Download,
   Upload,
   Save,
-  ArrowUpDown,
   ChevronDown,
   ChevronUp,
   X,
@@ -32,7 +30,7 @@ const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedRoles, setExpandedRoles] = useState({});
 
   const toggleRoleExpansion = (role) => {
@@ -90,13 +88,7 @@ const UserManagementPage = () => {
         : teachersData.teachers || [];
 
       // Combine and normalize data
-      const combinedUsers = [
-        ...regularUsers,
-        ...teachers.map((teacher) => ({
-          ...teacher,
-          role: "teacher",
-        })),
-      ];
+      const combinedUsers = [...regularUsers, ...teachers];
 
       setUsers(combinedUsers);
     } catch (err) {
@@ -106,11 +98,11 @@ const UserManagementPage = () => {
       setLoading(false);
     }
   };
-
+  console.log(users);
   const handleEditUser = (user) => {
     setCurrentUser({
       ...user,
-      role: user.role.toLowerCase() === "teacher" ? "teacher" : user.role,
+      role: user.role.toLowerCase(),
     });
     setShowEditUserModal(true);
   };
@@ -122,7 +114,7 @@ const UserManagementPage = () => {
       setLoading(true);
 
       const endpoint =
-        userRole === "teacher"
+        userRole === "teacher" || userRole === "hod"
           ? `/api/teachers/${userId}`
           : `/api/userData/${userId}`;
 
@@ -192,109 +184,172 @@ const UserManagementPage = () => {
     );
 
   const AddUserModal = () => {
-   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    role: "",
-    password: "",
-    confirmPassword: "",
-    department: "",
-    teacherId: "",
-  });
-  const [formErrors, setFormErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+      fullName: "",
+      email: "",
+      phone: "",
+      role: "",
+      password: "",
+      confirmPassword: "",
+      department: "",
+      teacherId: "",
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.fullName.trim()) errors.fullName = "Full name is required";
-    if (!formData.email.trim()) errors.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email))
-      errors.email = "Email is invalid";
-    if (!formData.phone.trim()) errors.phone = "Phone is required";
-    if (!formData.role) errors.role = "Role is required";
-    if (!formData.password) errors.password = "Password is required";
-    else if (formData.password.length < 6)
-      errors.password = "Password must be at least 6 characters";
+    const handleChange = (e) => {
+      const { name, value } = e.target;
 
-    // Teacher/HOD-specific validation
-    if (formData.role.toLowerCase() === "teacher" || formData.role.toLowerCase() === "hod") {
-      if (!formData.teacherId.trim())
-        errors.teacherId = "Teacher ID is required";
-      // Only require department for teachers, not HODs
-      if (formData.role.toLowerCase() === "teacher" && !formData.department.trim())
-        errors.department = "Department is required";
-    }
+      // Clear any existing error for this field
+      setErrors((prev) => ({ ...prev, [name]: "" }));
 
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
-    }
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+      // Special validation for fullName (only letters and spaces)
+      if (name === "fullName" && value && !/^[a-zA-Z\s]*$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Only alphabetic characters are allowed",
+        }));
+        return;
+      }
+      // Special validation for Department (only letters and spaces)
+      if (name === "department" && value && !/^[a-zA-Z\s]*$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Only alphabetic characters are allowed",
+        }));
+        return;
+      }
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) {
-    console.log("Form validation failed:", formErrors);
-    return;
-  }
+      // Special handling for phone (only numbers, max 10 digits)
+      if (name === "phone") {
+        const numericValue = value.replace(/\D/g, "").slice(0, 10);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: numericValue,
+        }));
+        return;
+      }
 
-  setIsSubmitting(true);
-
-  try {
-    const requestData = {
-      fullName: formData.fullName,
-      email: formData.email,
-      phone: formData.phone,
-      password: formData.password,
-      confirmPassword: formData.confirmPassword,
-      role: formData.role.toLowerCase(),
+      // Handle all other fields
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     };
 
-    // Add teacher/HOD-specific fields
-    if (formData.role.toLowerCase() === "teacher" || formData.role.toLowerCase() === "hod") {
-      requestData.teacherId = formData.teacherId;
-      if (formData.role.toLowerCase() === "teacher") {
-        requestData.department = formData.department;
+    const validateForm = () => {
+      const newErrors = {};
+
+      // Full name validation
+      if (!formData.fullName.trim()) {
+        newErrors.fullName = "Full name is required";
+      } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName)) {
+        newErrors.fullName = "Name should contain only letters";
       }
-    }
 
-    const endpoint = (formData.role.toLowerCase() === "teacher" || formData.role.toLowerCase() === "hod") 
-      ? "/api/teachers" 
-      : "/api/register";
+      // Email validation
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+        newErrors.email = "Email is invalid";
+      }
 
-    console.log("Sending request to:", endpoint);
-    console.log("Request data:", requestData);
+      // Phone validation
+      if (!formData.phone.trim()) {
+        newErrors.phone = "Phone is required";
+      } else if (!/^\d{10}$/.test(formData.phone)) {
+        newErrors.phone = "Phone must be 10 digits";
+      }
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
+      // Role validation
+      if (!formData.role) {
+        newErrors.role = "Role is required";
+      }
 
-    const data = await res.json();
-    console.log("Response:", data);
+      // Password validation
+      if (!formData.password) {
+        newErrors.password = "Password is required";
+      } else if (formData.password.length < 8) {
+        newErrors.password = "Password must be at least 8 characters";
+      }
 
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to add user");
-    }
+      // Teacher/HOD-specific validation
+      if (
+        formData.role.toLowerCase() === "teacher" ||
+        formData.role.toLowerCase() === "hod"
+      ) {
+        if (!formData.teacherId.trim()) {
+          newErrors.teacherId = "Teacher ID is required";
+        }
+        if (
+          formData.role.toLowerCase() === "teacher" &&
+          !formData.department.trim()
+        ) {
+          newErrors.department = "Department is required";
+        }
+      }
 
-    alert("User Added successfully!");
-    setShowAddUserModal(false)
-  } catch (err) {
-    console.error("Detailed error:", {
-      message: err.message,
-      stack: err.stack,
-      response: err.response,
-    });
-    alert(`Error: ${err.message}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      // Confirm password validation
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match";
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      if (!validateForm()) return;
+
+      setIsSubmitting(true);
+
+      try {
+        const requestData = {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          role: formData.role.toLowerCase(),
+        };
+
+        // Add teacher/HOD-specific fields
+        if (
+          formData.role.toLowerCase() === "teacher" ||
+          formData.role.toLowerCase() === "hod"
+        ) {
+          requestData.teacherId = formData.teacherId;
+          if (formData.role.toLowerCase() === "teacher") {
+            requestData.department = formData.department;
+          }
+        }
+        console.log(requestData);
+
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Registration failed");
+        }
+
+        alert("User registered successfully!");
+        setShowAddUserModal(false);
+        fetchAllUsers();
+      } catch (err) {
+        alert(err.message);
+        console.error("Registration error:", err);
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -317,19 +372,17 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="text"
+                  name="fullName"
                   value={formData.fullName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
-                  }
+                  onChange={handleChange}
+                  maxLength={25}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.fullName ? "border-red-500" : "border-gray-200"
+                    errors.fullName ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter full name"
                 />
-                {formErrors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.fullName}
-                  </p>
+                {errors.fullName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
                 )}
               </div>
               <div>
@@ -337,12 +390,11 @@ const handleSubmit = async (e) => {
                   Role *
                 </label>
                 <select
-                  value={formData.role.toLowerCase()}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.role ? "border-red-500" : "border-gray-200"
+                    errors.role ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 >
                   <option value="">Select Role</option>
@@ -352,8 +404,8 @@ const handleSubmit = async (e) => {
                     </option>
                   ))}
                 </select>
-                {formErrors.role && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
+                {errors.role && (
+                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
                 )}
               </div>
             </div>
@@ -368,20 +420,18 @@ const handleSubmit = async (e) => {
                     </label>
                     <input
                       type="text"
-                      value={formData.department || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, department: e.target.value })
-                      }
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      maxLength={20}
                       className={`w-full px-3 py-2 border ${
-                        formErrors.department
-                          ? "border-red-500"
-                          : "border-gray-200"
+                        errors.department ? "border-red-500" : "border-gray-200"
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                       placeholder="Enter department"
                     />
-                    {formErrors.department && (
+                    {errors.department && (
                       <p className="mt-1 text-sm text-red-600">
-                        {formErrors.department}
+                        {errors.department}
                       </p>
                     )}
                   </div>
@@ -392,20 +442,17 @@ const handleSubmit = async (e) => {
                   </label>
                   <input
                     type="text"
-                    value={formData.teacherId || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, teacherId: e.target.value })
-                    }
+                    name="teacherId"
+                    value={formData.teacherId}
+                    onChange={handleChange}
                     className={`w-full px-3 py-2 border ${
-                      formErrors.teacherId
-                        ? "border-red-500"
-                        : "border-gray-200"
+                      errors.teacherId ? "border-red-500" : "border-gray-200"
                     } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                    placeholder="Enter teacher ID"
+                    placeholder="Enter teacher ID like T-123"
                   />
-                  {formErrors.teacherId && (
+                  {errors.teacherId && (
                     <p className="mt-1 text-sm text-red-600">
-                      {formErrors.teacherId}
+                      {errors.teacherId}
                     </p>
                   )}
                 </div>
@@ -419,19 +466,16 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="email"
+                  name="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.email ? "border-red-500" : "border-gray-200"
+                    errors.email ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter email address"
                 />
-                {formErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.email}
-                  </p>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
               <div>
@@ -440,19 +484,17 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="tel"
+                  name="phone"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.phone ? "border-red-500" : "border-gray-200"
+                    errors.phone ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter phone number"
+                  maxLength={10}
                 />
-                {formErrors.phone && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.phone}
-                  </p>
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                 )}
               </div>
             </div>
@@ -464,19 +506,16 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="password"
+                  name="password"
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.password ? "border-red-500" : "border-gray-200"
+                    errors.password ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter password"
                 />
-                {formErrors.password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.password}
-                  </p>
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
               <div>
@@ -485,23 +524,19 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="password"
+                  name="confirmPassword"
                   value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.confirmPassword
+                    errors.confirmPassword
                       ? "border-red-500"
                       : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Confirm password"
                 />
-                {formErrors.confirmPassword && (
+                {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">
-                    {formErrors.confirmPassword}
+                    {errors.confirmPassword}
                   </p>
                 )}
               </div>
@@ -537,7 +572,6 @@ const handleSubmit = async (e) => {
       </div>
     );
   };
-
   const EditUserModal = () => {
     const [formData, setFormData] = useState({
       fullName: currentUser?.fullName || "",
@@ -547,27 +581,97 @@ const handleSubmit = async (e) => {
       department: currentUser?.department || "",
       teacherId: currentUser?.teacherId || "",
     });
-    const [formErrors, setFormErrors] = useState({});
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const validateForm = () => {
-      const errors = {};
-      if (!formData.fullName.trim()) errors.fullName = "Full name is required";
-      if (!formData.email.trim()) errors.email = "Email is required";
-      else if (!/^\S+@\S+\.\S+$/.test(formData.email))
-        errors.email = "Email is invalid";
-      if (!formData.phone.trim()) errors.phone = "Phone is required";
-      if (!formData.role) errors.role = "Role is required";
+    const handleChange = (e) => {
+      const { name, value } = e.target;
 
-      // Teacher-specific validation
-      if (formData.role.toLowerCase() === "teacher") {
-        if (!formData.department.trim())
-          errors.department = "Department is required";
-        if (!formData.teacherId.trim())
-          errors.teacherId = "Teacher ID is required";
+      // Clear any existing error for this field
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+
+      // Special validation for fullName (only letters and spaces)
+      if (name === "fullName" && value && !/^[a-zA-Z\s]*$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Only alphabetic characters are allowed",
+        }));
+        return;
       }
 
-      setFormErrors(errors);
-      return Object.keys(errors).length === 0;
+      // Special validation for department (only letters and spaces)
+      if (name === "department" && value && !/^[a-zA-Z\s]*$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Only alphabetic characters are allowed",
+        }));
+        return;
+      }
+
+      // Special handling for phone (only numbers, max 10 digits)
+      if (name === "phone") {
+        const numericValue = value.replace(/\D/g, "").slice(0, 10);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: numericValue,
+        }));
+        return;
+      }
+
+      // Handle all other fields
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    };
+
+    const validateForm = () => {
+      const newErrors = {};
+
+      // Full name validation
+      if (!formData.fullName.trim()) {
+        newErrors.fullName = "Full name is required";
+      } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName)) {
+        newErrors.fullName = "Name should contain only letters";
+      }
+
+      // Email validation
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+        newErrors.email = "Email is invalid";
+      }
+
+      // Phone validation
+      if (!formData.phone.trim()) {
+        newErrors.phone = "Phone is required";
+      } else if (!/^\d{10}$/.test(formData.phone)) {
+        newErrors.phone = "Phone must be 10 digits";
+      }
+
+      // Role validation
+      if (!formData.role) {
+        newErrors.role = "Role is required";
+      }
+
+      // Teacher/HOD-specific validation
+      if (
+        formData.role.toLowerCase() === "teacher" ||
+        formData.role.toLowerCase() === "hod"
+      ) {
+        if (!formData.teacherId.trim()) {
+          newErrors.teacherId = "Teacher ID is required";
+        }
+        if (
+          formData.role.toLowerCase() === "teacher" &&
+          !formData.department.trim()
+        ) {
+          newErrors.department = "Department is required";
+        }
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
@@ -589,10 +693,15 @@ const handleSubmit = async (e) => {
           requestData.department = formData.department;
           requestData.teacherId = formData.teacherId;
         }
+        // Add hod-specific fields if role is hod
+        if (formData.role.toLowerCase() === "hod") {
+          requestData.department = formData.department;
+          requestData.teacherId = formData.teacherId;
+        }
 
         // Determine the endpoint based on current user role
         const endpoint =
-          currentUser.role === "teacher"
+          currentUser.role === "teacher" || currentUser.role === "hod"
             ? `/api/teachers/${currentUser._id}`
             : `/api/userData/${currentUser._id}`;
 
@@ -621,7 +730,7 @@ const handleSubmit = async (e) => {
         setIsSubmitting(false);
       }
     };
-
+    console.log(formData);
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
@@ -643,19 +752,16 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="text"
+                  name="fullName"
                   value={formData.fullName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
-                  }
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.fullName ? "border-red-500" : "border-gray-200"
+                    errors.fullName ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter full name"
                 />
-                {formErrors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.fullName}
-                  </p>
+                {errors.fullName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
                 )}
               </div>
               <div>
@@ -663,12 +769,12 @@ const handleSubmit = async (e) => {
                   Role *
                 </label>
                 <select
-                  value={formData.role.toLowerCase()}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  disabled
                   className={`w-full px-3 py-2 border ${
-                    formErrors.role ? "border-red-500" : "border-gray-200"
+                    errors.role ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 >
                   <option value="">Select Role</option>
@@ -678,41 +784,57 @@ const handleSubmit = async (e) => {
                     </option>
                   ))}
                 </select>
-                {formErrors.role && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.role}</p>
+                {errors.role && (
+                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
                 )}
               </div>
             </div>
 
-            {formData.role === "teacher" && (
+            {(formData.role.toLowerCase() === "teacher" ||
+              formData.role.toLowerCase() === "hod") && (
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.department || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, department: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="Enter department"
-                  />
-                </div>
+                {formData.role.toLowerCase() === "teacher" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Department *
+                    </label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      maxLength={20}
+                      className={`w-full px-3 py-2 border ${
+                        errors.department ? "border-red-500" : "border-gray-200"
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                      placeholder="Enter department"
+                    />
+                    {errors.department && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.department}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Teacher ID *
                   </label>
                   <input
                     type="text"
-                    value={formData.teacherId || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, teacherId: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    name="teacherId"
+                    value={formData.teacherId}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border ${
+                      errors.teacherId ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                     placeholder="Enter teacher ID"
                   />
+                  {errors.teacherId && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.teacherId}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -724,19 +846,16 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="email"
+                  name="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.email ? "border-red-500" : "border-gray-200"
+                    errors.email ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter email address"
                 />
-                {formErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.email}
-                  </p>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
               <div>
@@ -745,19 +864,18 @@ const handleSubmit = async (e) => {
                 </label>
                 <input
                   type="tel"
+                  name="phone"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={handleChange}
+                  maxLength={10}
+                  minLength={10}
                   className={`w-full px-3 py-2 border ${
-                    formErrors.phone ? "border-red-500" : "border-gray-200"
+                    errors.phone ? "border-red-500" : "border-gray-200"
                   } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter phone number"
                 />
-                {formErrors.phone && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formErrors.phone}
-                  </p>
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                 )}
               </div>
             </div>
@@ -796,28 +914,6 @@ const handleSubmit = async (e) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              User Management
-            </h2>
-            <p className="text-gray-500 mt-1 text-sm">
-              Manage user accounts and role permissions
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-medium text-gray-700 shadow-xs hover:shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-medium text-gray-700 shadow-xs hover:shadow-sm">
-              <Upload className="w-4 h-4" />
-              <span>Import</span>
-            </button>
-          </div>
-        </div>
-
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
           <div className="flex border-b border-gray-100">
             <button
@@ -906,9 +1002,9 @@ const handleSubmit = async (e) => {
                                   ? "bg-red-100 text-red-800"
                                   : role === "teacher"
                                   ? "bg-green-100 text-green-800"
-                                  : role === "student"
+                                  : role === "staff"
                                   ? "bg-blue-100 text-blue-800"
-                                  : role === "parent"
+                                  : role === "hod"
                                   ? "bg-purple-100 text-purple-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}

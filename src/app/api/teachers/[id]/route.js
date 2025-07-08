@@ -119,7 +119,8 @@ export async function PUT(req, { params }) {
     await connectToDatabase();
     const { id } = params;
     const { fullName, email, phone, department, teacherId } = await req.json();
-
+    console.log(fullName,email,phone,department,teacherId);
+    
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({
         error: 'Invalid or missing teacher ID'
@@ -129,7 +130,7 @@ export async function PUT(req, { params }) {
     }
 
     // Validation
-    if (!fullName || !email || !phone || !department || !teacherId) {
+    if (!fullName || !email || !phone || !teacherId) {
       return NextResponse.json({ 
         error: "All fields are required" 
       }, {

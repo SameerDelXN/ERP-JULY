@@ -620,106 +620,65 @@ const EnquiriesLeads = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Enhanced Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Enquiries & Leads
-              </h1>
-              <p className="text-gray-600 text-lg">
-                Monitor and manage all student inquiries and conversion pipeline
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
-                <Filter className="w-4 h-4" />
-                Filter
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
-                <Download className="w-4 h-4" />
-                Export
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 ">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Enquiries
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalEnquiries}
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
-                <ArrowUpRight className="w-3 h-3" />
-                +12%
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                {totalEnquiries}
-              </p>
-              <p className="text-sm text-gray-600 font-medium">
-                Total Enquiries
-              </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className=" bg-gradient-to-br from-green-100 to-green-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">New Leads</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {newLeads}
+                </p>
+              </div>
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium">
-                <ArrowUpRight className="w-3 h-3" />
-                +8%
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                {newLeads}
-              </p>
-              <p className="text-sm text-gray-600 font-medium">New Leads</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Converted</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {converted}
+                </p>
+              </div>
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
                 <Target className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium">
-                <ArrowUpRight className="w-3 h-3" />
-                +15%
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                {converted}
-              </p>
-              <p className="text-sm text-gray-600 font-medium">Converted</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">
+                  Conversion Rate
+                </p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {conversionRate}%
+                </p>
+              </div>
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 rounded-lg text-xs font-medium">
-                <ArrowUpRight className="w-3 h-3" />
-                +5%
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                {conversionRate}%
-              </p>
-              <p className="text-sm text-gray-600 font-medium">
-                Conversion Rate
-              </p>
             </div>
           </div>
         </div>
