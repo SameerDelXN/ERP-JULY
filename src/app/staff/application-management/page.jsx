@@ -2,25 +2,42 @@
 import React, { useEffect, useState } from "react";
 import {
   Search,
+  Filter,
+  Download,
   Eye,
+  Edit2,
+  Trash2,
+  Plus,
+  MoreVertical,
   Calendar,
   User,
   Mail,
   Phone,
+  MapPin,
   GraduationCap,
   FileText,
   CheckCircle,
   XCircle,
   Clock,
   Zap,
+  X,
+  ChevronRight,
+  ChevronLeft,
   Target,
   Activity,
   MessageSquare,
   File,
-  FileTextIcon,
-  ChevronLeft,
-  ChevronRight,
+  FileText as FileTextIcon,
+  Loader2,
+  BookOpen,
+  Users,
+  Home,
+  School,
+  FileCheck,
 } from "lucide-react";
+import { useSession } from "@/context/SessionContext";
+import { useForm, Controller } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import LoadingComponent from "@/components/Loading";
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
@@ -42,6 +59,8 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
       setApplication(foundEnquiry || null);
     }
   }, [admissionId, admission]);
+
+  console.log(application);
 
   if (!application) {
     return (
@@ -314,7 +333,7 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
             </div>
-            {application.documents && application.documents.length > 0 ? (
+            {!application.documents && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 {Object.entries(application.documents[0])
                   .filter(([key]) => key !== "_id")
@@ -841,8 +860,6 @@ const DocumentUploadStep = ({
     if (isUploading) {
       return (
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          {/* <Loader2 className="w-4 h-4 animate-spin" />
-          Uploading... */}
           <LoadingComponent />
         </div>
       );
@@ -1020,7 +1037,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
   };
 
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
+    // setIsSubmitting(true);
     try {
       const isUpdate = !!admission?._id;
       const url = isUpdate
@@ -1158,7 +1175,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form >
           <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
             {renderStep()}
           </div>
@@ -1189,15 +1206,15 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit(onSubmit)}
                   disabled={isSubmitting}
                   className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
-                      {/* <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving... */}
-                      <LoadingComponent />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
                     </>
                   ) : (
                     "Submit Application"
@@ -1213,12 +1230,16 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 };
 
 const AdmissionApplications = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [selectedAdmission, setSelectedAdmission] = useState(null);
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [admission, setAdmission] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { user } = useSession();
 
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -1271,6 +1292,17 @@ const AdmissionApplications = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredApplications?.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages =
+    Math.ceil(filteredApplications?.length / itemsPerPage) || 1;
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   const openDetailsModal = (admissionId) => {
     setSelectedAdmissionId(admissionId);
     setShowDetailsModal(true);
@@ -1288,16 +1320,19 @@ const AdmissionApplications = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Admission Applications
-            </h1>
-            <p className="text-gray-600">
-              Manage and review student admission applications
-            </p>
-          </div>
+        {/* Header and Stats Cards */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Admission Applications</h1>
+          <button
+            onClick={() => {
+              setSelectedAdmission(null);
+              setShowForm(true);
+            }}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Admission
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -1305,24 +1340,19 @@ const AdmissionApplications = () => {
           <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Applications
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {admission.length}
-                </p>
+                <p className="text-sm font-medium text-gray-600">Total Applications</p>
+                <p className="text-2xl font-bold text-gray-900">{admission.length}</p>
               </div>
               <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
                 <FileText className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          
+          <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
-                  In Process Review
-                </p>
+                <p className="text-sm font-medium text-gray-600">In Process Review</p>
                 <p className="text-2xl font-bold text-yellow-600">
                   {admission.filter((a) => a.status === "inProcess").length}
                 </p>
@@ -1332,7 +1362,8 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          
+          <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
@@ -1345,7 +1376,8 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          
+          <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
@@ -1386,6 +1418,16 @@ const AdmissionApplications = () => {
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
+              <div className="flex items-center space-x-2">
+                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </button>
+                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1412,8 +1454,8 @@ const AdmissionApplications = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredApplications.map((application) => {
-                  const status = application.status || "In Process";
+                {currentItems.map((application) => {
+                  const status = application.status || "inProcess";
                   const config = statusConfig[status] || statusConfig.inProcess;
                   return (
                     <tr key={application._id} className="hover:bg-gray-50">
@@ -1478,6 +1520,15 @@ const AdmissionApplications = () => {
                             onClick={() => openDetailsModal(application._id)}
                           >
                             <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="text-indigo-600 hover:text-indigo-900"
+                            onClick={() => {
+                              setSelectedAdmission(application);
+                              setShowForm(true);
+                            }}
+                          >
+                            <Edit2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -1563,6 +1614,25 @@ const AdmissionApplications = () => {
           onClose={() => {
             setShowDetailsModal(false);
             setSelectedAdmissionId(null);
+          }}
+        />
+      )}
+      {showForm && (
+        <AdmissionForm
+          admission={selectedAdmission}
+          onClose={() => setShowForm(false)}
+          onUpdate={(updatedData) => {
+            if (updatedData._id) {
+              // Update existing admission
+              setAdmission((prev) =>
+                prev.map((app) =>
+                  app._id === updatedData._id ? updatedData : app
+                )
+              );
+            } else {
+              // Add new admission
+              setAdmission((prev) => [...prev, updatedData]);
+            }
           }}
         />
       )}
