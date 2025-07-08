@@ -48,7 +48,7 @@ export async function GET() {
     return Response.json({
       user: {
         id: user._id.toString(),
-        username: user.username,
+        username: user.fullName,
         email: user.email,
         role: user.role,
       },

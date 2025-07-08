@@ -14,6 +14,8 @@ export const SessionProvider = ({ children }) => {
     try {
       const response = await fetch('/api/auth/session');
       const data = await response.json();
+      console.log(data.user);
+      
       if (response.ok && data.user) {
         setUser(data.user);
       } else {
@@ -31,7 +33,7 @@ export const SessionProvider = ({ children }) => {
     fetchSession();
   }, []);
 
-  const login = async (email, password, role) => {
+  const login = async (email, password, role ) => {
     try {
       const response = await fetch('/api/login', {
         method: 'POST',

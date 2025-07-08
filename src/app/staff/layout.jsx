@@ -94,14 +94,14 @@ const layout = ({ children }) => {
             <div className="flex items-center space-x-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer group">
               {/* Avatar */}
               <div className="relative">
-                <Avatar name={user?.name || "Staff User"} />
+                <Avatar name={user?.username || "Staff User"} />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
 
               {/* User Info */}
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
-                  {user?.name || "Staff User"}
+                  {user?.username || "Staff User"}
                 </p>
                 <p className="text-xs text-gray-500">Staff</p>
               </div>

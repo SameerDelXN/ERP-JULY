@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useSession } from "@/context/SessionContext";
-
+import LoadingComponent from "@/components/Loading";
 
 const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const [enquiry, setEnquiry] = useState(null);
@@ -66,23 +66,35 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "New": return <Zap className="w-4 h-4" />;
-      case "In Progress": return <Clock className="w-4 h-4" />;
-      case "Contacted": return <Phone className="w-4 h-4" />;
-      case "Converted": return <Target className="w-4 h-4" />;
-      case "Lost": return <XCircle className="w-4 h-4" />;
-      default: return <Activity className="w-4 h-4" />;
+      case "New":
+        return <Zap className="w-4 h-4" />;
+      case "In Progress":
+        return <Clock className="w-4 h-4" />;
+      case "Contacted":
+        return <Phone className="w-4 h-4" />;
+      case "Converted":
+        return <Target className="w-4 h-4" />;
+      case "Lost":
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "New": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "In Progress": return "bg-amber-50 text-amber-700 border-amber-200";
-      case "Contacted": return "bg-purple-50 text-purple-700 border-purple-200";
-      case "Converted": return "bg-green-50 text-green-700 border-green-200";
-      case "Lost": return "bg-red-50 text-red-700 border-red-200";
-      default: return "bg-gray-50 text-gray-700 border-gray-200";
+      case "New":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "In Progress":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Contacted":
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Converted":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "Lost":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
@@ -95,8 +107,12 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Enquiry Details</h2>
-              <p className="text-sm text-gray-600">Complete information overview</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                Enquiry Details
+              </h2>
+              <p className="text-sm text-gray-600">
+                Complete information overview
+              </p>
             </div>
           </div>
           <button
@@ -109,11 +125,22 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
           {/* Status Banner */}
-          <div className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(enquiry.status)}`}>
+          <div
+            className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(
+              enquiry.status
+            )}`}
+          >
             {getStatusIcon(enquiry.status)}
             <div>
-              <p className="font-semibold">Status: {enquiry.status || "Unknown"}</p>
-              <p className="text-sm opacity-80">Last updated: {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}</p>
+              <p className="font-semibold">
+                Status: {enquiry.status || "Unknown"}
+              </p>
+              <p className="text-sm opacity-80">
+                Last updated:{" "}
+                {enquiry.createdAt
+                  ? new Date(enquiry.createdAt).toLocaleDateString()
+                  : "N/A"}
+              </p>
             </div>
           </div>
 
@@ -122,7 +149,27 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
             <DetailCard
               icon={<User className="w-5 h-5" />}
               label="Full Name"
-              value={`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
+              value={
+                <span className="group relative inline-block">
+                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                    enquiry.last || ""
+                  }`
+                    .trim()
+                    .substring(0, 25) || "N/A"}
+                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                    enquiry.last || ""
+                  }`.trim().length > 25 && (
+                    <>
+                      <span>...</span>
+                      <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                        {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                          enquiry.last || ""
+                        }`.trim()}
+                      </span>
+                    </>
+                  )}
+                </span>
+              }
               bgColor="bg-blue-50"
               iconColor="text-blue-600"
             />
@@ -150,7 +197,11 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
             <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Enquiry Date"
-              value={enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}
+              value={
+                enquiry.createdAt
+                  ? new Date(enquiry.createdAt).toLocaleDateString()
+                  : "N/A"
+              }
               bgColor="bg-teal-50"
               iconColor="text-teal-600"
             />
@@ -170,23 +221,32 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
                 <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
                   <Activity className="w-4 h-4 text-indigo-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Follow-up History</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Follow-up History
+                </h3>
               </div>
               <div className="space-y-3">
                 {enquiry.followUps.map((fup, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div
+                    key={index}
+                    className="bg-white rounded-lg p-4 border border-gray-200"
+                  >
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-gray-900">
-                            {fup.date ? new Date(fup.date).toLocaleDateString() : "N/A"}
+                            {fup.date
+                              ? new Date(fup.date).toLocaleDateString()
+                              : "N/A"}
                           </span>
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
                             Follow-up #{index + 1}
                           </span>
                         </div>
-                        <p className="text-gray-700">{fup?.note || "No notes available"}</p>
+                        <p className="text-gray-700">
+                          {fup?.note || "No notes available"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -202,12 +262,12 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
   <div className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all duration-200">
     <div className="flex items-start gap-3">
-      <div className={`${bgColor} p-3 rounded-lg ${iconColor}`}>
-        {icon}
-      </div>
+      <div className={`${bgColor} p-3 rounded-lg ${iconColor}`}>{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
-        <p className="text-base font-semibold text-gray-900 break-words">{value}</p>
+        <p className="text-base font-semibold text-gray-900 break-words">
+          {value}
+        </p>
       </div>
     </div>
   </div>
@@ -220,7 +280,7 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
     assignCounselor: "",
     followUpDate: "",
     followUpNote: "",
-    status: currentStatus === "In Progress" ? "Contacted" : currentStatus
+    status: currentStatus === "In Progress" ? "Contacted" : currentStatus,
   });
 
   useEffect(() => {
@@ -252,52 +312,34 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
     fetchCounselors();
   }, []);
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (!formData.followUpDate) {
-  //     alert("Follow-up date is required");
-  //     return;
-  //   }
-  //   try {
-  //     await onSubmit(
-  //       enquiryId,
-  //       formData.followUpDate,
-  //       formData.followUpNote,
-  //       formData.status
-  //     );
-  //     onClose();
-  //   } catch (error) {
-  //     alert(`Failed to update Follows-Up: ${error.message}`);
-  //   }
-  // };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!formData.followUpDate) {
-    alert("Follow-up date is required");
-    return;
-  }
-  try {
-    await onSubmit(
-      enquiryId,
-      formData.followUpDate,
-      formData.followUpNote,
-      formData.status
-    );
-    onClose();
-  } catch (error) {
-    console.error("Submission error:", error);
-    alert(`Failed to update status: ${error.message}`);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.followUpDate) {
+      alert("Follow-up date is required");
+      return;
+    }
+    try {
+      await onSubmit(
+        enquiryId,
+        formData.followUpDate,
+        formData.followUpNote,
+        formData.status
+      );
+      onClose();
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert(`Failed to update status: ${error.message}`);
+    }
+  };
   const handleStatusChange = (status) => {
     if (currentStatus === "Contacted" && status === "Contacted") {
       return;
     }
-    
+
     if (currentStatus === "In Progress" && status !== "Contacted") {
       return;
     }
-    
+
     setFormData({ ...formData, status });
   };
 
@@ -311,7 +353,9 @@ const handleSubmit = async (e) => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">
-                {currentStatus === "In Progress" ? "Follow Up with Student" : "Update Status"}
+                {currentStatus === "In Progress"
+                  ? "Follow Up with Student"
+                  : "Update Status"}
               </h2>
               <p className="text-sm text-gray-600">Set up follow-up details</p>
             </div>
@@ -361,58 +405,64 @@ const handleSubmit = async (e) => {
               <MessageSquare className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">
               Change Status *
             </label>
             <div className="flex justify-around">
               <div className="relative flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  name="status" 
-                  id="contacted" 
+                <input
+                  type="radio"
+                  name="status"
+                  id="contacted"
                   checked={formData.status === "Contacted"}
                   onChange={() => handleStatusChange("Contacted")}
                   disabled={currentStatus === "Contacted"}
                 />
-                <label 
+                <label
                   className={`block text-sm font-semibold ${
-                    currentStatus === "Contacted" ? "text-gray-400" : "text-gray-700"
+                    currentStatus === "Contacted"
+                      ? "text-gray-400"
+                      : "text-gray-700"
                   }`}
                 >
                   Contacted
                 </label>
               </div>
               <div className="relative flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  name="status" 
-                  id="converted" 
+                <input
+                  type="radio"
+                  name="status"
+                  id="converted"
                   checked={formData.status === "Converted"}
                   onChange={() => handleStatusChange("Converted")}
                   disabled={currentStatus === "In Progress"}
                 />
-                <label 
+                <label
                   className={`block text-sm font-semibold ${
-                    currentStatus === "In Progress" ? "text-gray-400" : "text-gray-700"
+                    currentStatus === "In Progress"
+                      ? "text-gray-400"
+                      : "text-gray-700"
                   }`}
                 >
                   Converted
                 </label>
               </div>
               <div className="relative flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  name="status" 
-                  id="lost" 
+                <input
+                  type="radio"
+                  name="status"
+                  id="lost"
                   checked={formData.status === "Lost"}
                   onChange={() => handleStatusChange("Lost")}
                   disabled={currentStatus === "In Progress"}
                 />
-                <label 
+                <label
                   className={`block text-sm font-semibold ${
-                    currentStatus === "In Progress" ? "text-gray-400" : "text-gray-700"
+                    currentStatus === "In Progress"
+                      ? "text-gray-400"
+                      : "text-gray-700"
                   }`}
                 >
                   Lost
@@ -433,7 +483,9 @@ const handleSubmit = async (e) => {
               type="submit"
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-lg shadow-blue-500/25"
             >
-              {currentStatus === "In Progress" ? "Mark as Contacted" : "Update Status"}
+              {currentStatus === "In Progress"
+                ? "Mark as Contacted"
+                : "Update Status"}
             </button>
           </div>
         </form>
@@ -454,30 +506,27 @@ const EnquiriesLeads = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEnquiryId, setSelectedEnquiryId] = useState(null);
   const [selectedEnquiryStatus, setSelectedEnquiryStatus] = useState(null);
-  const [showStatusChangeModal, setShowStatusChangeModal] =
-    useState(false);
+  const [showStatusChangeModal, setShowStatusChangeModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const fetchEnquiries = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/enquiry");
+      if (!res.ok) throw new Error("Failed to fetch enquiries");
+      const enquiriesData = await res.json();
+      const counselorEnquiries = enquiriesData.filter(
+        (enquiry) => enquiry.counsellorId === user.id
+      );
 
+      setEnquiries(counselorEnquiries);
+    } catch (error) {
+      setError(error.message);
+      console.error("Failed to fetch enquiries:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchEnquiries = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/enquiry");
-        if (!res.ok) throw new Error("Failed to fetch enquiries");
-        const enquiriesData = await res.json();
-        const counselorEnquiries = enquiriesData.filter(
-          (enquiry) => enquiry.counsellorId === user.id
-        );
-
-        setEnquiries(counselorEnquiries);
-      } catch (error) {
-        setError(error.message);
-        console.error("Failed to fetch enquiries:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEnquiries();
   }, []);
 
@@ -514,444 +563,126 @@ const EnquiriesLeads = () => {
     }
   };
 
-
-// const handleChangeStatus = async (
-//   enquiryId,
-//   followUpDate,
-//   followUpNote,
-//   newStatus
-// ) => {
-//   try {
-//     if (!followUpDate) {
-//       throw new Error("Follow-up date is required");
-//     }
-
-//     // Create a new Date object and validate it
-//     const followUpDateObj = new Date(followUpDate);
-//     if (isNaN(followUpDateObj.getTime())) {
-//       throw new Error("Invalid follow-up date format");
-//     }
-
-//     // Format to ISO string without timezone adjustment
-//     const followUpISO = followUpDateObj.toISOString();
-
-//     console.log("Sending request with:", {
-//       counsellorId: user.id,
-//       status: newStatus,
-//       followUpDate: followUpISO,
-//       followUpNote
-//     });
-
-//     // First, update the enquiry status
-//     const response = await fetch(`/api/enquiry/${enquiryId}`, {
-//       method: "PUT",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         counsellorId: user.id,
-//         status: newStatus,
-//         followUps: [
-//           {
-//             date: followUpISO,
-//             note: followUpNote || `Status changed to ${newStatus}`,
-//           },
-//         ],
-//       }),
-//     });
-
-//     const responseData = await response.json();
-
-//     if (!response.ok) {
-//       console.error("API Error Response:", responseData);
-//       throw new Error(responseData.message || "Failed to update enquiry status");
-//     }
-
-//     // If status is being changed to "Converted", create an admission record
-//     if (newStatus === "Converted") {
-//       // Find the enquiry data
-//       const enquiryToConvert = enquiries.find(e => e._id === enquiryId);
-//       console.log(enquiryToConvert);
-      
-//       if (enquiryToConvert) {
-//         const admissionResponse = await fetch('/api/admission', {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-//           body: JSON.stringify({
-//             enquiryId: enquiryToConvert._id,
-//             first: enquiryToConvert.first || "", 
-//             middle:enquiryToConvert.middle || "",
-//             last:enquiryToConvert.last || "",
-//             email: enquiryToConvert.email,
-//             mobileNumber: enquiryToConvert.phone,
-//             applyingFor: enquiryToConvert.courseInterested,
-//             courseName: enquiryToConvert.courseInterested,
-//             counsellorId: user.id,
-//             status: "In Process" // Or whatever initial admission status you want
-//           })
-//         });
-
-//         if (!admissionResponse.ok) {
-//           const admissionError = await admissionResponse.json();
-//           console.error("Failed to create admission record:", admissionError);
-//           // You might want to handle this error differently - maybe show a warning
-//           // but not fail the entire operation since the enquiry was updated successfully
-//         }
-//       }
-//     }
-
-//     // Update local state
-//     setEnquiries((prevEnquiries) =>
-//       prevEnquiries.map((enquiry) =>
-//         enquiry._id === enquiryId
-//           ? {
-//               ...enquiry,
-//               status: newStatus,
-//               followUps: [
-//                 ...(enquiry.followUps || []),
-//                 {
-//                   date: followUpISO,
-//                   note: followUpNote || `Status changed to ${newStatus}`,
-//                 },
-//               ],
-//             }
-//           : enquiry
-//       )
-//     );
-
-//     return responseData;
-//   } catch (error) {
-//     console.error("Full error details:", {
-//       error: error.message,
-//       stack: error.stack,
-//       enquiryId,
-//       followUpDate,
-//       newStatus
-//     });
-//     throw new Error(`Failed to update status: ${error.message}`);
-//   }
-// };
-
-
-
-
-
-// 2nd
-
-// const handleChangeStatus = async (
-//   enquiryId,
-//   followUpDate,
-//   followUpNote,
-//   newStatus
-// ) => {
-//   try {
-//     // Validate inputs
-//     if (!followUpDate) {
-//       throw new Error("Follow-up date is required");
-//     }
-
-//     const followUpDateObj = new Date(followUpDate);
-//     if (isNaN(followUpDateObj.getTime())) {
-//       throw new Error("Invalid follow-up date format");
-//     }
-
-//     // 1. First update the enquiry status
-//     const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
-//       method: "PUT",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         counsellorId: user.id,
-//         status: newStatus,
-//         followUps: [
-//           {
-//             date: followUpDateObj.toISOString(),
-//             note: followUpNote || `Status changed to ${newStatus}`,
-//           },
-//         ],
-//       }),
-//     });
-
-//     if (!updateResponse.ok) {
-//       const errorData = await updateResponse.json();
-//       throw new Error(errorData.message || "Failed to update enquiry");
-//     }
-
-//     const updatedEnquiry = await updateResponse.json();
-
-//     // 2. Only if status is "Converted", create admission
-//     if (newStatus === "Converted") {
-//       const enquiryToConvert = updatedEnquiry; // Use the freshly updated enquiry
-      
-//       const admissionData = {
-//         enquiryId: enquiryToConvert._id,
-//         counsellorId: user.id,
-//         fullName: `${enquiryToConvert.first || ''} ${enquiryToConvert.middle || ''} ${enquiryToConvert.last || ''}`.trim(),
-//         email: enquiryToConvert.email,
-//         mobileNumber: enquiryToConvert.phone,
-//         courseName: enquiryToConvert.courseInterested,
-//         // Set other required fields from the enquiry or default values
-//         gender: enquiryToConvert.gender || 'Other',
-//         nationality: enquiryToConvert.nationality || 'Indian',
-//         status: 'inProcess'
-//       };
-
-//       const admissionResponse = await fetch('/api/admission', {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify(admissionData)
-//       });
-
-//       if (!admissionResponse.ok) {
-//         const error = await admissionResponse.json();
-//         console.warn("Admission creation warning:", error.message);
-//         // Continue despite admission creation failure since enquiry was updated
-//       }
-//     }
-
-//     // Update local state
-//     setEnquiries(prev => prev.map(e => 
-//       e._id === enquiryId ? updatedEnquiry : e
-//     ));
-
-//     return updatedEnquiry;
-//   } catch (error) {
-//     console.error("Status update failed:", error);
-//     throw error;
-//   }
-// }; 
-
-
-// const handleChangeStatus = async (
-//   enquiryId,
-//   followUpDate,
-//   followUpNote,
-//   newStatus
-// ) => {
-//   try {
-//     // 1. Validate inputs
-//     if (!followUpDate) {
-//       throw new Error("Follow-up date is required");
-//     }
-
-//     const followUpDateObj = new Date(followUpDate);
-//     if (isNaN(followUpDateObj.getTime())) {
-//       throw new Error("Invalid follow-up date format");
-//     }
-
-//     // 2. First update the enquiry status
-//     const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
-//       method: "PUT",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         counsellorId: user.id,
-//         status: newStatus,
-//         followUps: [
-//           {
-//             date: followUpDateObj.toISOString(),
-//             note: followUpNote || `Status changed to ${newStatus}`,
-//           },
-//         ],
-//       }),
-//     });
-
-//     if (!updateResponse.ok) {
-//       const errorData = await updateResponse.json();
-//       throw new Error(errorData.message || "Failed to update enquiry");
-//     }
-
-//     const updatedEnquiry = await updateResponse.json();
-
-//     // 3. Only if status is "Converted", create admission
-//     if (newStatus === "Converted") {
-//       const enquiryToConvert = updatedEnquiry;
-      
-//       // Prepare all required fields for admission
-//       const admissionData = {
-//         enquiryId: enquiryToConvert._id,
-//         counsellorId: user.id,
-//         fullName: `${enquiryToConvert.first || ''} ${enquiryToConvert.middle || ''} ${enquiryToConvert.last || ''}`.trim(),
-//         mobileNumber: enquiryToConvert.phone || '0000000000', // default if missing
-//         email: enquiryToConvert.email || `${enquiryToConvert._id}@temp.com`, // default if missing
-//         courseName: enquiryToConvert.courseInterested || 'General Course', // default if missing
-        
-//         // Set other required fields with defaults
-//         dateOfBirth: enquiryToConvert.dateOfBirth || new Date('2000-01-01'),
-//         gender: enquiryToConvert.gender || 'Other',
-//         nationality: enquiryToConvert.nationality || 'Indian',
-//         category: enquiryToConvert.category || 'Open',
-        
-//         // Address details (required in some validations)
-//         addressLine: enquiryToConvert.address || 'Not specified',
-//         city: enquiryToConvert.city || 'Not specified',
-//         state: enquiryToConvert.state || 'Not specified',
-//         pincode: enquiryToConvert.pincode || '000000',
-//         country: enquiryToConvert.country || 'India',
-        
-//         // Parent/guardian details
-//         fatherName: enquiryToConvert.fatherName || 'Not specified',
-//         motherName: enquiryToConvert.motherName || 'Not specified',
-        
-//         // System fields
-//         status: 'inProcess',
-//         consent: true,
-//         captchaVerified: true
-//       };
-
-//       const admissionResponse = await fetch('/api/admission', {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify(admissionData)
-//       });
-
-//       if (!admissionResponse.ok) {
-//         const error = await admissionResponse.json();
-//         console.warn("Admission creation warning:", error.message);
-//         // You might want to show this warning to the user
-//         throw new Error(`Enquiry converted but admission creation failed: ${error.message}`);
-//       }
-
-//       const newAdmission = await admissionResponse.json();
-//       console.log("Created admission record:", newAdmission);
-//     }
-
-//     // 4. Update local state
-//     setEnquiries(prev => prev.map(e => 
-//       e._id === enquiryId ? updatedEnquiry : e
-//     ));
-
-//     return updatedEnquiry;
-//   } catch (error) {
-//     console.error("Status update failed:", error);
-//     throw error;
-//   }
-// };
-
   const openDetailsModal = (enquiryId) => {
     setSelectedEnquiryId(enquiryId);
     setShowDetailsModal(true);
   };
 
-const handleChangeStatus = async (
-  enquiryId,
-  followUpDate,
-  followUpNote,
-  newStatus
-) => {
-  try {
-    // Validate inputs
-    if (!followUpDate) {
-      throw new Error("Follow-up date is required");
-    }
-
-    const followUpDateObj = new Date(followUpDate);
-    if (isNaN(followUpDateObj.getTime())) {
-      throw new Error("Invalid follow-up date format");
-    }
-
-    // 1. Update enquiry status
-    const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        counsellorId: user.id,
-        status: newStatus,
-        followUps: [{
-          date: followUpDateObj.toISOString(),
-          note: followUpNote || `Status changed to ${newStatus}`,
-        }],
-      }),
-    });
-
-    if (!updateResponse.ok) {
-      const errorData = await updateResponse.json();
-      throw new Error(errorData.message || "Failed to update enquiry");
-    }
-
-    const updatedEnquiry = await updateResponse.json();
-
-    // 2. Create admission if converted
-    if (newStatus === "Converted") {
-      const requiredFields = [
-        'email', 
-        'phone',
-        'courseInterested',
-        'first',
-        'last'
-      ];
-
-      const missingFields = requiredFields.filter(
-        field => !updatedEnquiry[field]
-      );
-
-      if (missingFields.length > 0) {
-        throw new Error(
-          `Cannot convert: Missing ${missingFields.join(', ')} in enquiry`
-        );
+  const handleChangeStatus = async (
+    enquiryId,
+    followUpDate,
+    followUpNote,
+    newStatus
+  ) => {
+    try {
+      // Validate inputs
+      if (!followUpDate) {
+        throw new Error("Follow-up date is required");
       }
 
-      const admissionData = {
-        enquiryId: updatedEnquiry._id,
-        counsellorId: user.id,
-        fullName: `${updatedEnquiry.first} ${updatedEnquiry.middle || ''} ${updatedEnquiry.last}`.trim(),
-        email: updatedEnquiry.email,
-        mobileNumber: updatedEnquiry.phone,
-        courseName: updatedEnquiry.courseInterested,
-        dateOfBirth: updatedEnquiry.dateOfBirth || new Date('2000-01-01'),
-        gender: updatedEnquiry.gender || 'Other',
-        nationality: updatedEnquiry.nationality || 'Indian',
-        category: updatedEnquiry.category || 'Open',
-        addressLine: updatedEnquiry.address || 'Not specified',
-        city: updatedEnquiry.city || 'Not specified',
-        state: updatedEnquiry.state || 'Not specified',
-        pincode: updatedEnquiry.pincode || '000000',
-        country: updatedEnquiry.country || 'India',
-        fatherName: updatedEnquiry.fatherName || 'Not specified',
-        motherName: updatedEnquiry.motherName || 'Not specified',
-        status: 'inProcess',
-        consent: true,
-        captchaVerified: true
-      };
+      const followUpDateObj = new Date(followUpDate);
+      if (isNaN(followUpDateObj.getTime())) {
+        throw new Error("Invalid follow-up date format");
+      }
 
-      const admissionResponse = await fetch('/api/admission', {
-        method: "POST",
+      // 1. Update enquiry status
+      const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(admissionData)
+        body: JSON.stringify({
+          counsellorId: user.id,
+          status: newStatus,
+          followUps: [
+            {
+              date: followUpDateObj.toISOString(),
+              note: followUpNote || `Status changed to ${newStatus}`,
+            },
+          ],
+        }),
       });
 
-      if (!admissionResponse.ok) {
-        const error = await admissionResponse.json();
-        throw new Error(`Admission creation failed: ${error.message}`);
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.message || "Failed to update enquiry");
       }
 
-      return await admissionResponse.json();
+      const updatedEnquiry = await updateResponse.json();
+
+      // 2. Create admission if converted
+      if (newStatus === "Converted") {
+        const requiredFields = [
+          "email",
+          "phone",
+          "courseInterested",
+          "first",
+          "last",
+        ];
+
+        const missingFields = requiredFields.filter(
+          (field) => !updatedEnquiry[field]
+        );
+
+        if (missingFields.length > 0) {
+          throw new Error(
+            `Cannot convert: Missing ${missingFields.join(", ")} in enquiry`
+          );
+        }
+
+        const admissionData = {
+          enquiryId: updatedEnquiry._id,
+          counsellorId: user.id,
+          fullName: `${updatedEnquiry.first} ${updatedEnquiry.middle || ""} ${
+            updatedEnquiry.last
+          }`.trim(),
+          email: updatedEnquiry.email,
+          mobileNumber: updatedEnquiry.phone,
+          courseName: updatedEnquiry.courseInterested,
+          dateOfBirth: updatedEnquiry.dateOfBirth || new Date("2000-01-01"),
+          gender: updatedEnquiry.gender || "Other",
+          nationality: updatedEnquiry.nationality || "Indian",
+          category: updatedEnquiry.category || "Open",
+          addressLine: updatedEnquiry.address || "Not specified",
+          city: updatedEnquiry.city || "Not specified",
+          state: updatedEnquiry.state || "Not specified",
+          pincode: updatedEnquiry.pincode || "000000",
+          country: updatedEnquiry.country || "India",
+          fatherName: updatedEnquiry.fatherName || "Not specified",
+          motherName: updatedEnquiry.motherName || "Not specified",
+          status: "inProcess",
+          consent: true,
+          captchaVerified: true,
+        };
+
+        const admissionResponse = await fetch("/api/admission", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(admissionData),
+        });
+
+        if (!admissionResponse.ok) {
+          const error = await admissionResponse.json();
+          throw new Error(`Admission creation failed: ${error.message}`);
+        }
+        fetchEnquiries();
+        return await admissionResponse.json();
+      }
+
+      // Update local state
+      setEnquiries((prev) =>
+        prev.map((e) => (e._id === enquiryId ? updatedEnquiry : e))
+      );
+
+      return updatedEnquiry;
+    } catch (error) {
+      console.error("Status update error:", error);
+      throw error;
     }
-
-    // Update local state
-    setEnquiries(prev => prev.map(e => 
-      e._id === enquiryId ? updatedEnquiry : e
-    ));
-
-    return updatedEnquiry;
-  } catch (error) {
-    console.error("Status update error:", error);
-    throw error;
-  }
-};
-const StatCard = ({ title, value, icon: Icon, change, trend }) => (
+  };
+  const StatCard = ({ title, value, icon: Icon, change, trend }) => (
     <div className="bg-white rounded-lg p-6 border border-gray-100 hover:shadow-sm transition-all duration-200">
       <div className="flex items-center justify-between mb-4">
         <div className="p-2 bg-gray-100 rounded-lg">
@@ -1024,18 +755,7 @@ const StatCard = ({ title, value, icon: Icon, change, trend }) => (
     "Walk-in",
   ];
 
-  if (loading)
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Image
-          src="/loading.svg"
-          alt="Loading..."
-          width={300}
-          height={300}
-          className="mb-4"
-        />
-      </div>
-    );
+  if (loading) return <LoadingComponent />;
 
   if (error)
     return (
@@ -1069,10 +789,10 @@ const StatCard = ({ title, value, icon: Icon, change, trend }) => (
               <Download className="w-4 h-4" />
               Export
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            {/* <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
               <Plus className="w-4 h-4" />
               Add Enquiry
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -1116,25 +836,21 @@ const StatCard = ({ title, value, icon: Icon, change, trend }) => (
           {/* Status Tabs */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap gap-2 mb-4">
-              {[
-                "All",
-                "In Progress",
-                "Contacted",
-                "Converted",
-                "Lost",
-              ].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === tab
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+              {["All", "In Progress", "Contacted", "Converted", "Lost"].map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      activeTab === tab
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
+              )}
             </div>
           </div>
 
@@ -1229,11 +945,25 @@ const StatCard = ({ title, value, icon: Icon, change, trend }) => (
                           <User className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <span className="group relative inline-block">
                             {`${enquiry.first || ""} ${enquiry.middle || ""} ${
                               enquiry.last || ""
-                            }`.trim() || "N/A"}
-                          </div>
+                            }`
+                              .trim()
+                              .substring(0, 25) || "N/A"}
+                            {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                              enquiry.last || ""
+                            }`.trim().length > 25 && (
+                              <>
+                                <span>...</span>
+                                <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                                  {`${enquiry.first || ""} ${
+                                    enquiry.middle || ""
+                                  } ${enquiry.last || ""}`.trim()}
+                                </span>
+                              </>
+                            )}
+                          </span>
                           <div className="text-xs text-gray-500">
                             ID: {enquiry._id?.slice(-6) || "N/A"}
                           </div>
@@ -1294,16 +1024,24 @@ const StatCard = ({ title, value, icon: Icon, change, trend }) => (
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-1">
-                        <button className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        onClick={() => openDetailsModal(enquiry._id)}
+                        <button
+                          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          onClick={() => openDetailsModal(enquiry._id)}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {(enquiry.status === "In Progress" || enquiry.status === "Contacted") && (
+                        {(enquiry.status === "In Progress" ||
+                          enquiry.status === "Contacted") && (
                           <button
-                            onClick={() => openAssignModal(enquiry._id, enquiry.status)}
+                            onClick={() =>
+                              openAssignModal(enquiry._id, enquiry.status)
+                            }
                             className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title={enquiry.status === "In Progress" ? "Mark as Contacted" : "Update Status"}
+                            title={
+                              enquiry.status === "In Progress"
+                                ? "Mark as Contacted"
+                                : "Update Status"
+                            }
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -1381,7 +1119,7 @@ const StatCard = ({ title, value, icon: Icon, change, trend }) => (
           onSubmit={handleChangeStatus}
         />
       )}
-       {showDetailsModal && (
+      {showDetailsModal && (
         <EnquiryDetailsModal
           enquiryId={selectedEnquiryId}
           enquiries={enquiries}

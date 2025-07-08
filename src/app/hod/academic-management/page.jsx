@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import {
   BookOpen,
   Calendar,
@@ -48,7 +48,11 @@ const AcademicManagement = () => {
   const [editingExam, setEditingExam] = useState(null);
   
   // Form states
-  const [newYear, setNewYear] = useState({ year: '', divisions: [] });
+  const [newYear, setNewYear] = useState({ 
+    year: '', 
+    semester: '',
+    divisions: [] 
+  });
   const [newDivision, setNewDivision] = useState({ 
     name: '', 
     students: [], 
@@ -75,6 +79,21 @@ const AcademicManagement = () => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const periods = Array.from({ length: 8 }, (_, i) => `Period ${i + 1}`);
   const examTypes = ['Unit Test', 'Mid Term', 'Final Exam', 'Quiz', 'Practical'];
+  const semesters = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'];
+
+  // Fix for input focus issue
+  useEffect(() => {
+    const handleInputFocus = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+        e.target.focus();
+      }
+    };
+
+    document.addEventListener('mousedown', handleInputFocus);
+    return () => {
+      document.removeEventListener('mousedown', handleInputFocus);
+    };
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -90,11 +109,14 @@ const AcademicManagement = () => {
       setError(null);
       
       const response = await fetch(`/api/hod/${user.id}`);
+      console.log("Hod Details = ",response)
       if (!response.ok) {
         throw new Error('Failed to fetch academic data');
-      }
+      } 
+
       
       const data = await response.json();
+      console.log(data)
       setAcademics(data.academics || []);
       setTeachers(data.teachers || []);
       setDepartment(data.department || '');
@@ -167,8 +189,8 @@ const AcademicManagement = () => {
 
   const addYear = async () => {
     try {
-      if (!newYear.year.trim()) {
-        setError('Please select a year');
+      if (!newYear.year.trim() || !newYear.semester.trim()) {
+        setError('Please select both year and semester');
         return;
       }
 
@@ -184,13 +206,39 @@ const AcademicManagement = () => {
       }
       
       setShowYearModal(false);
-      setNewYear({ year: '', divisions: [] });
+      setNewYear({ year: '', semester: '', divisions: [] });
       setError(null);
     } catch (err) {
       setError(err.message);
       console.error('Error adding year:', err);
     }
   };
+  //   const addYear = async () => {
+//     try {
+//       if (!newYear.year.trim()) {
+//         setError('Please select a year');
+//         return;
+//       }
+
+//       const updatedAcademic = {
+//         ...selectedAcademic,
+//         years: [...selectedAcademic.years, newYear]
+//       };
+      
+//       setSelectedAcademic(updatedAcademic);
+      
+//       if (selectedAcademic._id !== 'default') {
+//         await saveAcademicChanges(updatedAcademic);
+//       }
+      
+//       setShowYearModal(false);
+//       setNewYear({ year: '', divisions: [] });
+//       setError(null);
+//     } catch (err) {
+//       setError(err.message);
+//       console.error('Error adding year:', err);
+//     }
+//   };
 
   const addDivision = async () => {
     try {
@@ -409,60 +457,60 @@ const AcademicManagement = () => {
     }
   };
 
-  // Modal Components
-  const YearModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Add New Year</h3>
-          <button onClick={() => setShowYearModal(false)}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+  // ... (keep all other CRUD functions the same, they don't need modification)
+  //   const YearModal = () => (
+//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+//       <div className="bg-white rounded-lg p-6 w-full max-w-md">
+//         <div className="flex justify-between items-center mb-4">
+//           <h3 className="text-lg font-semibold">Add New Year</h3>
+//           <button onClick={() => setShowYearModal(false)}>
+//             <X className="w-5 h-5" />
+//           </button>
+//         </div>
         
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
+//         {error && (
+//           <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+//             {error}
+//           </div>
+//         )}
         
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Year</label>
-            <select
-              value={newYear.year}
-              onChange={(e) => setNewYear({...newYear, year: e.target.value})}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Select Year</option>
-              <option value="1st">1st Year</option>
-              <option value="2nd">2nd Year</option>
-              <option value="3rd">3rd Year</option>
-              <option value="4th">4th Year</option>
-            </select>
-          </div>
+//         <div className="space-y-4">
+//           <div>
+//             <label className="block text-sm font-medium mb-1">Year</label>
+//             <select
+//               value={newYear.year}
+//               onChange={(e) => setNewYear({...newYear, year: e.target.value})}
+//               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+//             >
+//               <option value="">Select Year</option>
+//               <option value="1st">1st Year</option>
+//               <option value="2nd">2nd Year</option>
+//               <option value="3rd">3rd Year</option>
+//               <option value="4th">4th Year</option>
+//             </select>
+//           </div>
           
-          <div className="flex gap-2">
-            <button
-              onClick={addYear}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-            >
-              Add Year
-            </button>
-            <button
-              onClick={() => {
-                setShowYearModal(false);
-                setError(null);
-              }}
-              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+//           <div className="flex gap-2">
+//             <button
+//               onClick={addYear}
+//               className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+//             >
+//               Add Year
+//             </button>
+//             <button
+//               onClick={() => {
+//                 setShowYearModal(false);
+//                 setError(null);
+//               }}
+//               className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+//             >
+//               Cancel
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
 
   const DivisionModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -514,12 +562,51 @@ const AcademicManagement = () => {
     </div>
   );
 
-  const SubjectModal = () => (
+ const SubjectModal = React.memo(({
+  isOpen,
+  onClose,
+  onSave,
+  teachers,
+  initialData,
+  error
+}) => {
+  const [formData, setFormData] = useState(initialData || { 
+    name: '', 
+    teacher: '' 
+  });
+
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.teacher) {
+      onSave(null, 'Please fill in all subject details');
+      return;
+    }
+    onSave(formData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Add New Subject</h3>
-          <button onClick={() => setShowSubjectModal(false)}>
+          <h3 className="text-lg font-semibold">
+            {initialData ? 'Edit Subject' : 'Add New Subject'}
+          </h3>
+          <button onClick={onClose}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -530,13 +617,15 @@ const AcademicManagement = () => {
           </div>
         )}
         
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Subject Name</label>
             <input
+              ref={inputRef}
               type="text"
-              value={newSubject.name}
-              onChange={(e) => setNewSubject({...newSubject, name: e.target.value})}
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g., Programming Fundamentals"
             />
@@ -545,8 +634,9 @@ const AcademicManagement = () => {
           <div>
             <label className="block text-sm font-medium mb-1">Assign Teacher</label>
             <select
-              value={newSubject.teacher}
-              onChange={(e) => setNewSubject({...newSubject, teacher: e.target.value})}
+              name="teacher"
+              value={formData.teacher}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select Teacher</option>
@@ -560,55 +650,150 @@ const AcademicManagement = () => {
           
           <div className="flex gap-2">
             <button
-              onClick={addSubject}
+              type="submit"
               className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
             >
-              {editingDivision !== null ? 'Update Subject' : 'Add Subject'}
+              {initialData ? 'Update Subject' : 'Add Subject'}
             </button>
             <button
-              onClick={() => {
-                setShowSubjectModal(false);
-                setError(null);
-              }}
+              type="button"
+              onClick={onClose}
               className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
             >
               Cancel
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
+});
 
-  const TimetableModal = () => {
-    const currentYear = selectedAcademic?.years[editingYear];
-    const currentDivision = currentYear?.divisions[editingDivision];
-    const currentSubjects = currentDivision?.subjects || [];
+ const TimetableModal = () => {
+  const currentYear = selectedAcademic?.years[editingYear];
+  const currentDivision = currentYear?.divisions[editingDivision];
+  const currentSubjects = currentDivision?.subjects || [];
+  const [timeError, setTimeError] = useState(null);
 
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
-          <div className="flex justify-between items-center mb-4">
+  // Validate time slots
+  const validateTimeSlot = () => {
+    if (!newTimetable.day || !newTimetable.period || !newTimetable.subject || !newTimetable.teacher) {
+      setError('Please fill in all required fields');
+      return false;
+    }
+
+    if (!newTimetable.time.start || !newTimetable.time.end) {
+      setError('Please set both start and end times');
+      return false;
+    }
+
+    // Check if start time is before end time
+    if (newTimetable.time.start >= newTimetable.time.end) {
+      setTimeError('End time must be after start time');
+      return false;
+    }
+
+    // Check for overlapping time slots for the same day
+    const existingSlots = currentDivision.timetable || [];
+    const newStart = newTimetable.time.start;
+    const newEnd = newTimetable.time.end;
+
+    for (let i = 0; i < existingSlots.length; i++) {
+      if (editingTimetable !== null && i === editingTimetable) continue;
+      
+      if (existingSlots[i].day === newTimetable.day) {
+        const existingStart = existingSlots[i].time.start;
+        const existingEnd = existingSlots[i].time.end;
+        
+        if ((newStart >= existingStart && newStart < existingEnd) || 
+            (newEnd > existingStart && newEnd <= existingEnd) ||
+            (newStart <= existingStart && newEnd >= existingEnd)) {
+          setTimeError(`Time conflict with ${existingSlots[i].period} (${existingStart}-${existingEnd})`);
+          return false;
+        }
+      }
+    }
+
+    setTimeError(null);
+    setError(null);
+    return true;
+  };
+
+  const handleAddOrUpdateTimetable = async () => {
+    if (!validateTimeSlot()) return;
+
+    try {
+      const updatedAcademic = { ...selectedAcademic };
+      
+      if (editingTimetable !== null) {
+        // Update existing timetable slot
+        updatedAcademic.years[editingYear].divisions[editingDivision].timetable[editingTimetable] = newTimetable;
+      } else {
+        // Add new timetable slot
+        if (!updatedAcademic.years[editingYear].divisions[editingDivision].timetable) {
+          updatedAcademic.years[editingYear].divisions[editingDivision].timetable = [];
+        }
+        updatedAcademic.years[editingYear].divisions[editingDivision].timetable.push(newTimetable);
+      }
+      
+      setSelectedAcademic(updatedAcademic);
+
+      if (selectedAcademic._id !== 'default') {
+        await saveAcademicChanges(updatedAcademic);
+      }
+      
+      setShowTimetableModal(false);
+      setNewTimetable({
+        day: '',
+        period: '',
+        subject: '',
+        teacher: '',
+        time: { start: '', end: '' }
+      });
+      setError(null);
+      setTimeError(null);
+      setEditingTimetable(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error saving timetable:', err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <div>
             <h3 className="text-lg font-semibold">
-              {editingTimetable !== null ? 'Edit Timetable' : 'Add New Timetable'}
+              {editingTimetable !== null ? 'Edit Timetable Slot' : 'Add New Timetable Slot'}
             </h3>
-            <button onClick={() => {
+            <p className="text-sm text-gray-600 mt-1">
+              {currentYear?.year} Year • {currentYear?.semester} • Division {currentDivision?.name}
+            </p>
+          </div>
+          <button 
+            onClick={() => {
               setShowTimetableModal(false);
               setEditingTimetable(null);
-            }}>
-              <X className="w-5 h-5" />
-            </button>
+              setError(null);
+              setTimeError(null);
+            }}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {(error || timeError) && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            {error || timeError}
           </div>
-          
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-4">
+        )}
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Day</label>
+              <label className="block text-sm font-medium mb-1">Day*</label>
               <select
                 value={newTimetable.day}
                 onChange={(e) => setNewTimetable({...newTimetable, day: e.target.value})}
@@ -622,7 +807,7 @@ const AcademicManagement = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Period</label>
+              <label className="block text-sm font-medium mb-1">Period*</label>
               <select
                 value={newTimetable.period}
                 onChange={(e) => setNewTimetable({...newTimetable, period: e.target.value})}
@@ -634,186 +819,372 @@ const AcademicManagement = () => {
                 ))}
               </select>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Subject</label>
-              <select
-                value={newTimetable.subject}
-                onChange={(e) => setNewTimetable({...newTimetable, subject: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Subject</option>
-                {currentSubjects.map(subject => (
-                  <option key={subject.name} value={subject.name}>{subject.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Teacher</label>
-              <select
-                value={newTimetable.teacher}
-                onChange={(e) => setNewTimetable({...newTimetable, teacher: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Teacher</option>
-                {teachers.map(teacher => (
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Subject*</label>
+            <select
+              value={newTimetable.subject}
+              onChange={(e) => {
+                const selectedSubject = currentSubjects.find(s => s.name === e.target.value);
+                setNewTimetable({
+                  ...newTimetable, 
+                  subject: e.target.value,
+                  teacher: selectedSubject?.teacher || ''
+                });
+              }}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Subject</option>
+              {currentSubjects.map(subject => (
+                <option key={subject.name} value={subject.name}>{subject.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Teacher*</label>
+            <select
+              value={newTimetable.teacher}
+              onChange={(e) => setNewTimetable({...newTimetable, teacher: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={!newTimetable.subject}
+            >
+              <option value="">Select Teacher</option>
+              {newTimetable.subject ? (
+                teachers.map(teacher => (
                   <option key={teacher._id} value={teacher._id}>{teacher.fullName}</option>
-                ))}
-              </select>
+                ))
+              ) : (
+                <option value="" disabled>Select a subject first</option>
+              )}
+            </select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Start Time*</label>
+              <input
+                type="time"
+                value={newTimetable.time.start}
+                onChange={(e) => setNewTimetable({
+                  ...newTimetable, 
+                  time: {...newTimetable.time, start: e.target.value}
+                })}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Start Time</label>
-                <input
-                  type="time"
-                  value={newTimetable.time.start}
-                  onChange={(e) => setNewTimetable({
-                    ...newTimetable, 
-                    time: {...newTimetable.time, start: e.target.value}
-                  })}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">End Time</label>
-                <input
-                  type="time"
-                  value={newTimetable.time.end}
-                  onChange={(e) => setNewTimetable({
-                    ...newTimetable, 
-                    time: {...newTimetable.time, end: e.target.value}
-                  })}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">End Time*</label>
+              <input
+                type="time"
+                value={newTimetable.time.end}
+                onChange={(e) => setNewTimetable({
+                  ...newTimetable, 
+                  time: {...newTimetable.time, end: e.target.value}
+                })}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={addTimetable}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-              >
-                {editingTimetable !== null ? 'Update Schedule' : 'Add Schedule'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowTimetableModal(false);
-                  setEditingTimetable(null);
-                  setError(null);
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </div>
+          </div>
+          
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={handleAddOrUpdateTimetable}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            >
+              {editingTimetable !== null ? 'Update Slot' : 'Add Slot'}
+            </button>
+            <button
+              onClick={() => {
+                setShowTimetableModal(false);
+                setEditingTimetable(null);
+                setError(null);
+                setTimeError(null);
+              }}
+              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+};
+
+ const ExamModal = () => {
+  const currentYear = selectedAcademic?.years[editingYear];
+  const currentDivision = currentYear?.divisions[editingDivision];
+  const currentSubjects = currentDivision?.subjects || [];
+  const [dateError, setDateError] = useState(null);
+
+  // Validate exam data
+  const validateExam = () => {
+    if (!newExam.type || !newExam.subject || !newExam.totalMarks || !newExam.date) {
+      setError('Please fill in all required fields');
+      return false;
+    }
+
+    // Validate total marks is a positive number
+    if (isNaN(newExam.totalMarks)) {
+      setError('Total marks must be a number');
+      return false;
+    }
+
+    if (Number(newExam.totalMarks) <= 0) {
+      setError('Total marks must be greater than 0');
+      return false;
+    }
+
+    // Validate date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const examDate = new Date(newExam.date);
+    
+    if (examDate < today) {
+      setDateError('Exam date cannot be in the past');
+      return false;
+    }
+
+    // Check for duplicate exams (same type, subject and date)
+    const existingExams = currentDivision.exams || [];
+    for (let i = 0; i < existingExams.length; i++) {
+      if (editingExam !== null && i === editingExam) continue;
+      
+      if (
+        existingExams[i].type === newExam.type &&
+        existingExams[i].subject === newExam.subject &&
+        existingExams[i].date === newExam.date
+      ) {
+        setError('An exam of this type for this subject already exists on this date');
+        return false;
+      }
+    }
+
+    setDateError(null);
+    setError(null);
+    return true;
   };
 
-  const ExamModal = () => {
-    const currentYear = selectedAcademic?.years[editingYear];
-    const currentDivision = currentYear?.divisions[editingDivision];
-    const currentSubjects = currentDivision?.subjects || [];
+  const handleAddOrUpdateExam = async () => {
+    if (!validateExam()) return;
 
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
-          <div className="flex justify-between items-center mb-4">
+    try {
+      const updatedAcademic = { ...selectedAcademic };
+      
+      if (editingExam !== null) {
+        // Update existing exam
+        updatedAcademic.years[editingYear].divisions[editingDivision].exams[editingExam] = newExam;
+      } else {
+        // Add new exam
+        if (!updatedAcademic.years[editingYear].divisions[editingDivision].exams) {
+          updatedAcademic.years[editingYear].divisions[editingDivision].exams = [];
+        }
+        updatedAcademic.years[editingYear].divisions[editingDivision].exams.push(newExam);
+      }
+      
+      setSelectedAcademic(updatedAcademic);
+
+      if (selectedAcademic._id !== 'default') {
+        await saveAcademicChanges(updatedAcademic);
+      }
+      
+      setShowExamModal(false);
+      setNewExam({
+        type: '',
+        subject: '',
+        totalMarks: '',
+        date: ''
+      });
+      setError(null);
+      setDateError(null);
+      setEditingExam(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error saving exam:', err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <div>
             <h3 className="text-lg font-semibold">
               {editingExam !== null ? 'Edit Exam' : 'Schedule New Exam'}
             </h3>
-            <button onClick={() => {
+            <p className="text-sm text-gray-600 mt-1">
+              {currentYear?.year} Year • {currentYear?.semester} • Division {currentDivision?.name}
+            </p>
+          </div>
+          <button 
+            onClick={() => {
               setShowExamModal(false);
               setEditingExam(null);
-            }}>
-              <X className="w-5 h-5" />
-            </button>
+              setError(null);
+              setDateError(null);
+            }}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {(error || dateError) && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            {error || dateError}
+          </div>
+        )}
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Exam Type*</label>
+            <select
+              value={newExam.type}
+              onChange={(e) => setNewExam({...newExam, type: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Exam Type</option>
+              {examTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
           </div>
           
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium mb-1">Subject*</label>
+            <select
+              value={newExam.subject}
+              onChange={(e) => setNewExam({...newExam, subject: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Subject</option>
+              {currentSubjects.map(subject => (
+                <option key={subject.name} value={subject.name}>{subject.name}</option>
+              ))}
+            </select>
+          </div>
           
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Exam Type</label>
-              <select
-                value={newExam.type}
-                onChange={(e) => setNewExam({...newExam, type: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Exam Type</option>
-                {examTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Subject</label>
-              <select
-                value={newExam.subject}
-                onChange={(e) => setNewExam({...newExam, subject: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Subject</option>
-                {currentSubjects.map(subject => (
-                  <option key={subject.name} value={subject.name}>{subject.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Total Marks</label>
-              <input
-                type="number"
-                value={newExam.totalMarks}
-                onChange={(e) => setNewExam({...newExam, totalMarks: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., 100"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Exam Date</label>
-              <input
-                type="date"
-                value={newExam.date}
-                onChange={(e) => setNewExam({...newExam, date: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={addExam}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-              >
-                {editingExam !== null ? 'Update Exam' : 'Schedule Exam'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowExamModal(false);
-                  setEditingExam(null);
-                  setError(null);
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Total Marks*</label>
+            <input
+              type="number"
+              min="1"
+              value={newExam.totalMarks}
+              onChange={(e) => setNewExam({...newExam, totalMarks: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., 100"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Exam Date*</label>
+            <input
+              type="date"
+              value={newExam.date}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setNewExam({...newExam, date: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={handleAddOrUpdateExam}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            >
+              {editingExam !== null ? 'Update Exam' : 'Schedule Exam'}
+            </button>
+            <button
+              onClick={() => {
+                setShowExamModal(false);
+                setEditingExam(null);
+                setError(null);
+                setDateError(null);
+              }}
+              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
+  // Modal Components
+  const YearModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Add New Year</h3>
+          <button onClick={() => setShowYearModal(false)}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Year</label>
+            <select
+              value={newYear.year}
+              onChange={(e) => setNewYear({...newYear, year: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Year</option>
+              <option value="1st">1st Year</option>
+              <option value="2nd">2nd Year</option>
+              <option value="3rd">3rd Year</option>
+              <option value="4th">4th Year</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Semester</label>
+            <select
+              value={newYear.semester}
+              onChange={(e) => setNewYear({...newYear, semester: e.target.value})}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Semester</option>
+              {semesters.map(sem => (
+                <option key={sem} value={sem}>{sem}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={addYear}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+            >
+              Add Year
+            </button>
+            <button
+              onClick={() => {
+                setShowYearModal(false);
+                setError(null);
+              }}
+              className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ... (keep other modal components the same)
+  console.log("selected - ",selectedAcademic)
   const renderTabContent = () => {
     switch (activeTab) {
       case 'courses':
@@ -833,7 +1204,10 @@ const AcademicManagement = () => {
             {selectedAcademic?.years?.map((year, yearIndex) => (
               <div key={yearIndex} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
-                  <h4 className="font-medium text-gray-900">{year.year} Year</h4>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{year.year} Year</h4>
+                    <p className="text-sm text-gray-600">{year.semester}</p>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
@@ -918,115 +1292,177 @@ const AcademicManagement = () => {
             ))}
           </div>
         );
-
-      case 'timetable':
-        return (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-black">Timetable Management</h3>
-                {selectedAcademic?.years?.length > 0 && (
-                  <button 
-                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                    onClick={() => {
-                      // Set default values for new timetable
-                      setNewTimetable({
-                        day: '',
-                        period: '',
-                        subject: '',
-                        teacher: '',
-                        time: { start: '', end: '' }
-                      });
-                      setEditingTimetable(null);
-                      setShowTimetableModal(true);
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Schedule
-                  </button>
-                )}
+// In the timetable tab content
+case 'timetable':
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="p-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-black">Timetable Management</h3>
+        </div>
+      </div>
+      
+      {/* Group by Year/Semester/Division */}
+      {selectedAcademic?.years?.map((year, yearIndex) => (
+        <div key={yearIndex} className="mb-8">
+          <div className="px-4 py-3 bg-gray-50 border-b">
+            <h4 className="font-medium">
+              {year.year} Year - {year.semester}
+            </h4>
+          </div>
+          
+          {year.divisions?.map((division, divIndex) => (
+            <div key={divIndex} className="p-4 border-b">
+              <div className="flex justify-between items-center mb-3">
+                <h5 className="font-medium">Division {division.name}</h5>
+                <button
+                  onClick={() => {
+                    setEditingYear(yearIndex);
+                    setEditingDivision(divIndex);
+                    setNewTimetable({
+                      day: '',
+                      period: '',
+                      subject: '',
+                      teacher: '',
+                      time: { start: '', end: '' }
+                    });
+                    setEditingTimetable(null);
+                    setShowTimetableModal(true);
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add Schedule
+                </button>
               </div>
-            </div>
-            <div className="p-4">
+              
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Teacher</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {selectedAcademic?.years?.flatMap((year, yearIndex) =>
-                      year.divisions?.flatMap((division, divIndex) =>
-                        division.timetable?.map((slot, slotIndex) => (
-                          <tr key={`${yearIndex}-${divIndex}-${slotIndex}`} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{year.year}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{division.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{slot.day}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{slot.period}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{slot.subject}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {teachers.find(t => t._id === slot.teacher)?.fullName || 'Not assigned'}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {                              `${slot.time.start} - ${slot.time.end}`}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => {
-                                    setEditingYear(yearIndex);
-                                    setEditingDivision(divIndex);
-                                    setEditingTimetable(slotIndex);
-                                    setNewTimetable(slot);
-                                    setShowTimetableModal(true);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-900"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => deleteTimetable(yearIndex, divIndex, slotIndex)}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )
-                    )}
+                    {division.timetable?.map((slot, slotIndex) => (
+                      <tr key={slotIndex} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">{slot.day}</td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">{slot.period}</td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">{slot.subject}</td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                          {teachers.find(t => t._id === slot.teacher)?.fullName || 'Not assigned'}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                          {slot.time.start} - {slot.time.end}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingYear(yearIndex);
+                                setEditingDivision(divIndex);
+                                setEditingTimetable(slotIndex);
+                                setNewTimetable(slot);
+                                setShowTimetableModal(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteTimetable(yearIndex, divIndex, slotIndex)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-              {selectedAcademic?.years?.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No timetable data available. Add academic years and divisions first.
+              
+              {division.timetable?.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  No timetable entries for this division
                 </div>
               )}
             </div>
-          </div>
-        );
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+        
+   case 'exams':
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="p-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-black">Exam Schedule</h3>
+          {selectedAcademic?.years?.length > 0 && (
+            <button 
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+              onClick={() => {
+                // Find first year and division with subjects
+                let defaultYearIndex = 0;
+                let defaultDivisionIndex = 0;
+                let found = false;
 
-      case 'exams':
-        return (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-black">Exam Schedule</h3>
-                {selectedAcademic?.years?.length > 0 && (
-                  <button 
-                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                for (let y = 0; y < selectedAcademic.years.length; y++) {
+                  const year = selectedAcademic.years[y];
+                  for (let d = 0; d < year.divisions.length; d++) {
+                    if (year.divisions[d].subjects?.length > 0) {
+                      defaultYearIndex = y;
+                      defaultDivisionIndex = d;
+                      found = true;
+                      break;
+                    }
+                  }
+                  if (found) break;
+                }
+
+                setEditingYear(defaultYearIndex);
+                setEditingDivision(defaultDivisionIndex);
+                setNewExam({
+                  type: '',
+                  subject: '',
+                  totalMarks: '',
+                  date: ''
+                });
+                setEditingExam(null);
+                setShowExamModal(true);
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              Schedule Exam
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="p-4">
+        {selectedAcademic?.years?.map((year, yearIndex) => (
+          <div key={yearIndex} className="mb-8">
+            <div className="px-4 py-3 bg-gray-50 border-b">
+              <h4 className="font-medium">
+                {year.year} Year - {year.semester}
+              </h4>
+            </div>
+            
+            {year.divisions?.map((division, divIndex) => (
+              <div key={divIndex} className="p-4 border-b">
+                <div className="flex justify-between items-center mb-3">
+                  <h5 className="font-medium">Division {division.name}</h5>
+                  <button
                     onClick={() => {
-                      // Set default values for new exam
+                      setEditingYear(yearIndex);
+                      setEditingDivision(divIndex);
                       setNewExam({
                         type: '',
                         subject: '',
@@ -1036,77 +1472,84 @@ const AcademicManagement = () => {
                       setEditingExam(null);
                       setShowExamModal(true);
                     }}
+                    className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                   >
-                    <Plus className="w-4 h-4" />
-                    Schedule Exam
+                    <Plus className="w-3 h-3" />
+                    Add Exam
                   </button>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Exam Type</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Marks</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {division.exams?.map((exam, examIndex) => (
+                        <tr key={examIndex} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.type}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.subject}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.totalMarks}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">
+                            {new Date(exam.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingYear(yearIndex);
+                                  setEditingDivision(divIndex);
+                                  setNewExam({
+                                    type: exam.type,
+                                    subject: exam.subject,
+                                    totalMarks: exam.totalMarks,
+                                    date: exam.date.split('T')[0] // Format date for input
+                                  });
+                                  setEditingExam(examIndex);
+                                  setShowExamModal(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteExam(yearIndex, divIndex, examIndex)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {(!division.exams || division.exams.length === 0) && (
+                  <div className="text-center py-4 text-gray-500">
+                    No exams scheduled for this division
+                  </div>
                 )}
               </div>
-            </div>
-            <div className="p-4">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Type</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {selectedAcademic?.years?.flatMap((year, yearIndex) =>
-                      year.divisions?.flatMap((division, divIndex) =>
-                        division.exams?.map((exam, examIndex) => (
-                          <tr key={`${yearIndex}-${divIndex}-${examIndex}`} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{year.year}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{division.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{exam.type}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{exam.subject}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{exam.totalMarks}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(exam.date).toLocaleDateString()}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => {
-                                    setEditingYear(yearIndex);
-                                    setEditingDivision(divIndex);
-                                    setEditingExam(examIndex);
-                                    setNewExam(exam);
-                                    setShowExamModal(true);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-900"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => deleteExam(yearIndex, divIndex, examIndex)}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              {selectedAcademic?.years?.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No exam data available. Add academic years and divisions first.
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        );
+        ))}
+        
+        {selectedAcademic?.years?.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No exam data available. Add academic years and divisions first.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
       default:
         return null;
@@ -1267,7 +1710,27 @@ const AcademicManagement = () => {
       {/* Modals */}
       {showYearModal && <YearModal />}
       {showDivisionModal && <DivisionModal />}
-      {showSubjectModal && <SubjectModal />}
+      {showSubjectModal && (
+  <SubjectModal
+    isOpen={showSubjectModal}
+    onClose={() => {
+      setShowSubjectModal(false);
+      setError(null);
+      setNewSubject({ name: '', teacher: '' });
+    }}
+    onSave={(data, err) => {
+      if (err) {
+        setError(err);
+        return;
+      }
+      setNewSubject(data);
+      addSubject();
+    }}
+    teachers={teachers}
+    initialData={newSubject}
+    error={error}
+  />
+)}
       {showTimetableModal && <TimetableModal />}
       {showExamModal && <ExamModal />}
     </div>

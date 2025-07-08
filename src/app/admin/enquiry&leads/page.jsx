@@ -31,9 +31,10 @@ import {
   Zap,
   Target,
   Award,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 import Image from "next/image";
+import LoadingComponent from "@/components/Loading";
 
 const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const [enquiry, setEnquiry] = useState(null);
@@ -66,23 +67,35 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "New": return <Zap className="w-4 h-4" />;
-      case "In Progress": return <Clock className="w-4 h-4" />;
-      case "Contacted": return <Phone className="w-4 h-4" />;
-      case "Converted": return <Target className="w-4 h-4" />;
-      case "Lost": return <XCircle className="w-4 h-4" />;
-      default: return <Activity className="w-4 h-4" />;
+      case "New":
+        return <Zap className="w-4 h-4" />;
+      case "In Progress":
+        return <Clock className="w-4 h-4" />;
+      case "Contacted":
+        return <Phone className="w-4 h-4" />;
+      case "Converted":
+        return <Target className="w-4 h-4" />;
+      case "Lost":
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "New": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "In Progress": return "bg-amber-50 text-amber-700 border-amber-200";
-      case "Contacted": return "bg-purple-50 text-purple-700 border-purple-200";
-      case "Converted": return "bg-green-50 text-green-700 border-green-200";
-      case "Lost": return "bg-red-50 text-red-700 border-red-200";
-      default: return "bg-gray-50 text-gray-700 border-gray-200";
+      case "New":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "In Progress":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Contacted":
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Converted":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "Lost":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
@@ -95,8 +108,12 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Enquiry Details</h2>
-              <p className="text-sm text-gray-600">Complete information overview</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                Enquiry Details
+              </h2>
+              <p className="text-sm text-gray-600">
+                Complete information overview
+              </p>
             </div>
           </div>
           <button
@@ -109,11 +126,22 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
           {/* Status Banner */}
-          <div className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(enquiry.status)}`}>
+          <div
+            className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(
+              enquiry.status
+            )}`}
+          >
             {getStatusIcon(enquiry.status)}
             <div>
-              <p className="font-semibold">Status: {enquiry.status || "Unknown"}</p>
-              <p className="text-sm opacity-80">Last updated: {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}</p>
+              <p className="font-semibold">
+                Status: {enquiry.status || "Unknown"}
+              </p>
+              <p className="text-sm opacity-80">
+                Last updated:{" "}
+                {enquiry.createdAt
+                  ? new Date(enquiry.createdAt).toLocaleDateString()
+                  : "N/A"}
+              </p>
             </div>
           </div>
 
@@ -122,7 +150,27 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
             <DetailCard
               icon={<User className="w-5 h-5" />}
               label="Full Name"
-              value={`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
+              value={
+                <span className="group relative inline-block">
+                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                    enquiry.last || ""
+                  }`
+                    .trim()
+                    .substring(0, 25) || "N/A"}
+                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                    enquiry.last || ""
+                  }`.trim().length > 25 && (
+                    <>
+                      <span>...</span>
+                      <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                        {`${enquiry.first || ""} ${enquiry.middle || ""} ${
+                          enquiry.last || ""
+                        }`.trim()}
+                      </span>
+                    </>
+                  )}
+                </span>
+              }
               bgColor="bg-blue-50"
               iconColor="text-blue-600"
             />
@@ -150,7 +198,11 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
             <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Enquiry Date"
-              value={enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}
+              value={
+                enquiry.createdAt
+                  ? new Date(enquiry.createdAt).toLocaleDateString()
+                  : "N/A"
+              }
               bgColor="bg-teal-50"
               iconColor="text-teal-600"
             />
@@ -170,23 +222,32 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
                 <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
                   <Activity className="w-4 h-4 text-indigo-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Follow-up History</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Follow-up History
+                </h3>
               </div>
               <div className="space-y-3">
                 {enquiry.followUps.map((fup, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div
+                    key={index}
+                    className="bg-white rounded-lg p-4 border border-gray-200"
+                  >
                     <div className="flex items-start gap-3">
                       <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-gray-900">
-                            {fup.date ? new Date(fup.date).toLocaleDateString() : "N/A"}
+                            {fup.date
+                              ? new Date(fup.date).toLocaleDateString()
+                              : "N/A"}
                           </span>
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
                             Follow-up #{index + 1}
                           </span>
                         </div>
-                        <p className="text-gray-700">{fup?.note || "No notes available"}</p>
+                        <p className="text-gray-700">
+                          {fup?.note || "No notes available"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -203,12 +264,12 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
   <div className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all duration-200">
     <div className="flex items-start gap-3">
-      <div className={`${bgColor} p-3 rounded-lg ${iconColor}`}>
-        {icon}
-      </div>
+      <div className={`${bgColor} p-3 rounded-lg ${iconColor}`}>{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
-        <p className="text-base font-semibold text-gray-900 break-words">{value}</p>
+        <p className="text-base font-semibold text-gray-900 break-words">
+          {value}
+        </p>
       </div>
     </div>
   </div>
@@ -277,8 +338,12 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
               <UserPlus className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Assign Counselor</h2>
-              <p className="text-sm text-gray-600">Set up follow-up and assignment</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                Assign Counselor
+              </h2>
+              <p className="text-sm text-gray-600">
+                Set up follow-up and assignment
+              </p>
             </div>
           </div>
           <button
@@ -378,7 +443,8 @@ const EnquiriesLeads = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showAssignCounselorModal, setShowAssignCounselorModal] = useState(false);
+  const [showAssignCounselorModal, setShowAssignCounselorModal] =
+    useState(false);
   const [selectedEnquiryId, setSelectedEnquiryId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
@@ -405,7 +471,10 @@ const EnquiriesLeads = () => {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredEnquiries.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredEnquiries.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -430,23 +499,35 @@ const EnquiriesLeads = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "New": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "In Progress": return "bg-amber-50 text-amber-700 border-amber-200";
-      case "Contacted": return "bg-purple-50 text-purple-700 border-purple-200";
-      case "Converted": return "bg-green-50 text-green-700 border-green-200";
-      case "Lost": return "bg-red-50 text-red-700 border-red-200";
-      default: return "bg-gray-50 text-gray-700 border-gray-200";
+      case "New":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "In Progress":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Contacted":
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      case "Converted":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "Lost":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "New": return <Zap className="w-3 h-3" />;
-      case "In Progress": return <Clock className="w-3 h-3" />;
-      case "Contacted": return <Phone className="w-3 h-3" />;
-      case "Converted": return <Target className="w-3 h-3" />;
-      case "Lost": return <XCircle className="w-3 h-3" />;
-      default: return <Activity className="w-3 h-3" />;
+      case "New":
+        return <Zap className="w-3 h-3" />;
+      case "In Progress":
+        return <Clock className="w-3 h-3" />;
+      case "Contacted":
+        return <Phone className="w-3 h-3" />;
+      case "Converted":
+        return <Target className="w-3 h-3" />;
+      case "Lost":
+        return <XCircle className="w-3 h-3" />;
+      default:
+        return <Activity className="w-3 h-3" />;
     }
   };
 
@@ -517,16 +598,7 @@ const EnquiriesLeads = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 mx-auto animate-pulse">
-            <Users className="w-8 h-8 text-white" />
-          </div>
-          <p className="text-gray-600 font-medium">Loading enquiries...</p>
-        </div>
-      </div>
-    );
+    return <LoadingComponent />;
   }
 
   if (error) {
@@ -536,7 +608,9 @@ const EnquiriesLeads = () => {
           <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <XCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Error Loading Data
+          </h3>
           <p className="text-red-600">{error}</p>
         </div>
       </div>
@@ -557,7 +631,7 @@ const EnquiriesLeads = () => {
                 Monitor and manage all student inquiries and conversion pipeline
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
                 <Filter className="w-4 h-4" />
@@ -584,8 +658,12 @@ const EnquiriesLeads = () => {
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{totalEnquiries}</p>
-              <p className="text-sm text-gray-600 font-medium">Total Enquiries</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {totalEnquiries}
+              </p>
+              <p className="text-sm text-gray-600 font-medium">
+                Total Enquiries
+              </p>
             </div>
           </div>
 
@@ -600,7 +678,9 @@ const EnquiriesLeads = () => {
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{newLeads}</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {newLeads}
+              </p>
               <p className="text-sm text-gray-600 font-medium">New Leads</p>
             </div>
           </div>
@@ -616,7 +696,9 @@ const EnquiriesLeads = () => {
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{converted}</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {converted}
+              </p>
               <p className="text-sm text-gray-600 font-medium">Converted</p>
             </div>
           </div>
@@ -632,8 +714,12 @@ const EnquiriesLeads = () => {
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{conversionRate}%</p>
-              <p className="text-sm text-gray-600 font-medium">Conversion Rate</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {conversionRate}%
+              </p>
+              <p className="text-sm text-gray-600 font-medium">
+                Conversion Rate
+              </p>
             </div>
           </div>
         </div>
@@ -646,9 +732,18 @@ const EnquiriesLeads = () => {
                 { key: "All", label: "All Enquiries", count: totalEnquiries },
                 { key: "New", label: "New", count: newLeads },
                 { key: "In Progress", label: "In Progress", count: inProgress },
-                { key: "Contacted", label: "Contacted", count: enquiries.filter(e => e.status === "Contacted").length },
+                {
+                  key: "Contacted",
+                  label: "Contacted",
+                  count: enquiries.filter((e) => e.status === "Contacted")
+                    .length,
+                },
                 { key: "Converted", label: "Converted", count: converted },
-              { key: "Lost", label: "Lost", count: enquiries.filter(e => e.status === "Lost").length }
+                {
+                  key: "Lost",
+                  label: "Lost",
+                  count: enquiries.filter((e) => e.status === "Lost").length,
+                },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -663,11 +758,13 @@ const EnquiriesLeads = () => {
                   }`}
                 >
                   {tab.label}
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                    activeTab === tab.key
-                      ? "bg-white/20 text-white"
-                      : "bg-white text-gray-600"
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                      activeTab === tab.key
+                        ? "bg-white/20 text-white"
+                        : "bg-white text-gray-600"
+                    }`}
+                  >
                     {tab.count}
                   </span>
                 </button>
@@ -699,7 +796,8 @@ const EnquiriesLeads = () => {
                   {activeTab} Enquiries
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Showing {currentItems.length} of {filteredEnquiries.length} results
+                  Showing {currentItems.length} of {filteredEnquiries.length}{" "}
+                  results
                 </p>
               </div>
             </div>
@@ -710,7 +808,9 @@ const EnquiriesLeads = () => {
               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
                 <Users className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No enquiries found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No enquiries found
+              </h3>
               <p className="text-gray-600">
                 {searchTerm
                   ? "Try adjusting your search criteria"
@@ -741,19 +841,44 @@ const EnquiriesLeads = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {currentItems.map((enquiry) => (
-                    <tr key={enquiry._id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr
+                      key={enquiry._id}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                             <span className="text-white font-semibold text-sm">
-                              {(enquiry.first?.[0] || enquiry.email?.[0] || "?").toUpperCase()}
+                              {(
+                                enquiry.first?.[0] ||
+                                enquiry.email?.[0] ||
+                                "?"
+                              ).toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
-                              {`${enquiry.first || ''} ${enquiry.middle || ''} ${enquiry.last || ''}`.trim() || "N/A"}
+                            <span className="group relative inline-block">
+                              {`${enquiry.first || ""} ${
+                                enquiry.middle || ""
+                              } ${enquiry.last || ""}`
+                                .trim()
+                                .substring(0, 25) || "N/A"}
+                              {`${enquiry.first || ""} ${
+                                enquiry.middle || ""
+                              } ${enquiry.last || ""}`.trim().length > 25 && (
+                                <>
+                                  <span>...</span>
+                                  <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                                    {`${enquiry.first || ""} ${
+                                      enquiry.middle || ""
+                                    } ${enquiry.last || ""}`.trim()}
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                            <p className="text-sm text-gray-600">
+                              {enquiry.email || "N/A"}
                             </p>
-                            <p className="text-sm text-gray-600">{enquiry.email || "N/A"}</p>
                           </div>
                         </div>
                       </td>
@@ -769,7 +894,11 @@ const EnquiriesLeads = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(enquiry.status)}`}>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(
+                            enquiry.status
+                          )}`}
+                        >
                           {getStatusIcon(enquiry.status)}
                           {enquiry.status || "Unknown"}
                         </span>
@@ -777,10 +906,17 @@ const EnquiriesLeads = () => {
                       <td className="px-6 py-4">
                         <div className="text-sm">
                           <p className="text-gray-900 font-medium">
-                            {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : "N/A"}
+                            {enquiry.createdAt
+                              ? new Date(enquiry.createdAt).toLocaleDateString()
+                              : "N/A"}
                           </p>
                           <p className="text-gray-600">
-                            {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}
+                            {enquiry.createdAt
+                              ? new Date(enquiry.createdAt).toLocaleTimeString(
+                                  [],
+                                  { hour: "2-digit", minute: "2-digit" }
+                                )
+                              : ""}
                           </p>
                         </div>
                       </td>
@@ -816,7 +952,9 @@ const EnquiriesLeads = () => {
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredEnquiries.length)} of {filteredEnquiries.length} results
+                  Showing {indexOfFirstItem + 1} to{" "}
+                  {Math.min(indexOfLastItem, filteredEnquiries.length)} of{" "}
+                  {filteredEnquiries.length} results
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -826,14 +964,15 @@ const EnquiriesLeads = () => {
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  
+
                   <div className="flex items-center gap-1">
                     {[...Array(totalPages)].map((_, index) => {
                       const pageNumber = index + 1;
                       if (
                         pageNumber === 1 ||
                         pageNumber === totalPages ||
-                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        (pageNumber >= currentPage - 1 &&
+                          pageNumber <= currentPage + 1)
                       ) {
                         return (
                           <button
