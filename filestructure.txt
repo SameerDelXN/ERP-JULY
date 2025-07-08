@@ -60,7 +60,8 @@
             |-- register
                 |-- route.js
             |-- students
-                |-- route.js
+                |-- [id]
+                    |-- route.js
             |-- teachers
                 |-- route.js
                 |-- [id]
