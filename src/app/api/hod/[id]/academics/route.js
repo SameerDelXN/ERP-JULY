@@ -56,58 +56,158 @@ export async function POST(request, { params }) {
     const { id } = params;
     const { academicId, years } = await request.json();
 
-    // Validate input
+    // Basic validation
     if (!academicId || !Array.isArray(years) || years.length === 0) {
       return NextResponse.json(
-        {
-          error: 'academicId and at least one year object are required'
-        },
-        {
-          status: 400
-        }
+        { error: 'academicId and at least one year object are required' },
+        { status: 400 }
       );
     }
 
     if (!mongoose.Types.ObjectId.isValid(academicId)) {
-      return NextResponse.json({
-        error: 'Invalid academicId'
-      }, {
-        status: 400
-      });
+      return NextResponse.json({ error: 'Invalid academicId' }, { status: 400 });
     }
 
     const hod = await teacherSchema.findById(id);
     if (!hod || hod.role !== 'HOD') {
-      return NextResponse.json({
-        error: 'Unauthorized: Not an HOD'
-      }, {
-        status: 403
-      });
+      return NextResponse.json({ error: 'Unauthorized: Not an HOD' }, { status: 403 });
     }
 
     const academic = await academicSchema.findById(academicId);
     if (!academic) {
-      return NextResponse.json({
-        error: 'Academic record not found'
-      }, {
-        status: 404
-      });
+      return NextResponse.json({ error: 'Academic record not found' }, { status: 404 });
     }
 
     if (hod.department !== academic.department) {
-      return NextResponse.json({
-        error: 'HOD is not assigned to this department'
-      }, {
-        status: 403
-      });
+      return NextResponse.json({ error: 'HOD is not assigned to this department' }, { status: 403 });
     }
 
-    // Loop through each year
+    // Loop through each year object
     for (const yearObj of years) {
-      if (!yearObj.year || !Array.isArray(yearObj.divisions)) {
+      if (!yearObj.year || !yearObj.semester || !Array.isArray(yearObj.divisions)) {
+        return NextResponse.json(
+          { error: 'Each year object must include year, semester, and divisions array' },
+          { status: 400 }
+        );
+      }
+
+      const newYear = {
+        year: yearObj.year,
+        semester: yearObj.semester,
+        divisions: [],
+      };
+
+      for (const division of yearObj.divisions) {
+        if (!division.name || !division.subjects || !division.timetable || !division.exams) {
+          return NextResponse.json(
+            { error: 'Each division must include name, subjects, timetable, and exams' },
+            { status: 400 }
+          );
+        }
+
+        // Validate subjects
+        for (const subject of division.subjects) {
+          if (!subject.name || !subject.teacher) {
+            return NextResponse.json({ error: 'Each subject must have name and teacher' }, { status: 400 });
+          }
+
+          const teacher = await teacherSchema.findById(subject.teacher);
+          if (!teacher || teacher.role !== 'teacher') {
+            return NextResponse.json({ error: `Invalid teacher ID: ${subject.teacher}` }, { status: 400 });
+          }
+        }
+
+        // Validate timetable
+        for (const slot of division.timetable) {
+          if (!slot.day || !slot.period || !slot.subject || !slot.teacher || !slot.time?.start || !slot.time?.end) {
+            return NextResponse.json({ error: 'Timetable slot missing required fields' }, { status: 400 });
+          }
+
+          const teacher = await teacherSchema.findById(slot.teacher);
+          if (!teacher || teacher.role !== 'teacher') {
+            return NextResponse.json({ error: `Invalid timetable teacher ID: ${slot.teacher}` }, { status: 400 });
+          }
+        }
+
+        // Validate exams
+        for (const exam of division.exams) {
+          if (!exam.type || !exam.subject || !exam.totalMarks || !exam.date) {
+            return NextResponse.json({ error: 'Each exam must have type, subject, totalMarks, and date' }, { status: 400 });
+          }
+        }
+
+        // Validate optional students
+        if (division.students && Array.isArray(division.students)) {
+          if (division.students.length > 50) {
+            return NextResponse.json({ error: 'A division cannot have more than 50 students' }, { status: 400 });
+          }
+
+          for (const studentId of division.students) {
+            const student = await userSchema.findById(studentId);
+            if (!student || student.role !== 'student') {
+              return NextResponse.json({ error: `Invalid student ID: ${studentId}` }, { status: 400 });
+            }
+          }
+        }
+
+        // Push the division to newYear
+        newYear.divisions.push({
+          name: division.name,
+          students: division.students || [],
+          subjects: division.subjects,
+          timetable: division.timetable,
+          exams: division.exams,
+          attendance: division.attendance || [],
+        });
+      }
+
+      // Push the year with semester into academic.years
+      academic.years.push(newYear);
+    }
+
+    await academic.save();
+
+    return NextResponse.json(
+      { message: 'Years, semesters, and divisions added successfully', academic },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Error in POST /api/hod/[id]/academics:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+//PUT route handler for HOD to update academics details 
+
+export async function PUT(request) {
+  try {
+    await connectToDatabase();
+
+    const { academicId, years } = await request.json();
+
+    // Basic input validation
+    if (!academicId || !Array.isArray(years)) {
+      return NextResponse.json(
+        { error: 'academicId and years array are required' },
+        { status: 400 }
+      );
+    }
+
+    const academic = await academicSchema.findById(academicId);
+    if (!academic) {
+      return NextResponse.json(
+        { error: 'Academic record not found' },
+        { status: 404 }
+      );
+    }
+
+    // Validate each year object
+    for (const yearObj of years) {
+      if (!yearObj.year || !yearObj.semester || !Array.isArray(yearObj.divisions)) {
         return NextResponse.json(
           {
-            error: 'Each year object must include year and divisions array'
+            error: 'Each year must include year, semester, and divisions array'
           },
           {
             status: 400
@@ -115,12 +215,6 @@ export async function POST(request, { params }) {
         );
       }
 
-      const newYear = {
-        year: yearObj.year,
-        divisions: [],
-      };
-
-      // Validate and add divisions
       for (const division of yearObj.divisions) {
         if (!division.name || !division.subjects || !division.timetable || !division.exams) {
           return NextResponse.json(
@@ -136,151 +230,51 @@ export async function POST(request, { params }) {
         // Validate subjects
         for (const subject of division.subjects) {
           if (!subject.name || !subject.teacher) {
-            return NextResponse.json({
-              error: 'Each subject must have name and teacher'
-            }, {
-              status: 400
-            });
-          }
-
-          const teacher = await teacherSchema.findById(subject.teacher);
-          if (!teacher || teacher.role !== 'teacher') {
-            return NextResponse.json({
-              error: `Invalid teacher ID: ${subject.teacher}`
-            }, {
-              status: 400
-            });
+            return NextResponse.json(
+              { error: 'Each subject must include name and teacher' },
+              { status: 400 }
+            );
           }
         }
 
         // Validate timetable
         for (const slot of division.timetable) {
           if (!slot.day || !slot.period || !slot.subject || !slot.teacher || !slot.time?.start || !slot.time?.end) {
-            return NextResponse.json({
-              error: 'Timetable slot missing required fields'
-            }, {
-              status: 400
-            });
-          }
-
-          const teacher = await teacherSchema.findById(slot.teacher);
-          if (!teacher || teacher.role !== 'teacher') {
-            return NextResponse.json({
-              error: `Invalid timetable teacher ID: ${slot.teacher}`
-            }, {
-              status: 400
-            });
+            return NextResponse.json(
+              { error: 'Each timetable slot must have day, period, subject, teacher, and time range' },
+              { status: 400 }
+            );
           }
         }
 
         // Validate exams
         for (const exam of division.exams) {
           if (!exam.type || !exam.subject || !exam.totalMarks || !exam.date) {
-            return NextResponse.json({
-              error: 'Each exam must have type, subject, totalMarks, and date'
-            }, {
-              status: 400
-            });
+            return NextResponse.json(
+              { error: 'Each exam must include type, subject, totalMarks, and date' },
+              { status: 400 }
+            );
           }
         }
 
-        // Validate students (optional)
-        if (division.students && Array.isArray(division.students)) {
-          if (division.students.length > 50) {
-            return NextResponse.json({
-              error: 'A division cannot have more than 50 students'
-            }, {
-              status: 400
-            });
-          }
-
-          for (const studentId of division.students) {
-            const student = await userSchema.findById(studentId);
-            if (!student || student.role !== 'student') {
-              return NextResponse.json({
-                error: `Invalid student ID: ${studentId}`
-              }, {
-                status: 400
-              });
-            }
-          }
+        // Optional: Validate students
+        if (division.students && division.students.length > 50) {
+          return NextResponse.json(
+            { error: 'A division cannot have more than 50 students' },
+            { status: 400 }
+          );
         }
-
-        // Add division to year
-        newYear.divisions.push({
-          name: division.name,
-          students: division.students || [],
-          subjects: division.subjects,
-          timetable: division.timetable,
-          exams: division.exams,
-          attendance: division.attendance || [],
-        });
       }
-
-      // Push the year into academic.years
-      academic.years.push(newYear);
     }
 
-    await academic.save();
-
-    return NextResponse.json(
-      {
-        message: 'Years and divisions added successfully', academic
-      },
-      {
-        status: 200
-      }
-    );
-
-  } catch (error) {
-    console.error('Error in POST /api/hod/[id]/academics:', error);
-    return NextResponse.json({
-      error: 'Internal server error'
-    }, {
-      status: 500
-    });
-  }
-}
-
-//PUT route handler for HOD to update academics details 
-
-export async function PUT(request) {
-  try {
-    await connectToDatabase();
-
-    const { academicId, years } = await request.json();
-
-    if (!academicId || !Array.isArray(years)) {
-      return NextResponse.json(
-        {
-          error: 'academicId and years array are required'
-        },
-        {
-          status: 400
-        }
-      );
-    }
-
-    const academic = await academicSchema.findById(academicId);
-    if (!academic) {
-      return NextResponse.json(
-        {
-          error: 'Academic record not found'
-        },
-        {
-          status: 404
-        }
-      );
-    }
-
-    // Replace the entire years array
+    // Replace the years array
     academic.years = years;
 
     await academic.save();
 
     return NextResponse.json(
       {
-        message: 'Years updated successfully',
+        message: 'Years with semesters updated successfully',
         updated: academic
       },
       {
@@ -290,12 +284,8 @@ export async function PUT(request) {
   } catch (error) {
     console.error('Error updating years:', error);
     return NextResponse.json(
-      {
-        error: 'Internal server error'
-      },
-      {
-        status: 500
-      }
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
 }
@@ -307,70 +297,74 @@ export async function DELETE(request, { params }) {
     await connectToDatabase();
 
     const { id: hodId } = params;
-    const { academicId } = await request.json();
+    const { academicId, year, semester } = await request.json();
 
-    // Validate academicId
-    if (!academicId || !mongoose.Types.ObjectId.isValid(academicId)) {
-      return NextResponse.json({
-        error: 'Invalid or missing academicId'
-      }, {
-        status: 400
-      });
+    // Validate academicId, year, and semester
+    if (
+      !academicId ||
+      !mongoose.Types.ObjectId.isValid(academicId) ||
+      !year ||
+      !semester
+    ) {
+      return NextResponse.json(
+        { error: 'academicId, year, and semester are required' },
+        { status: 400 }
+      );
     }
 
     // ✅ Verify HOD
     const hod = await teacherSchema.findById(hodId);
     if (!hod || hod.role !== 'HOD') {
-      return NextResponse.json({
-        error: 'Unauthorized: Not a valid HOD'
-      }, {
-        status: 403
-      });
+      return NextResponse.json(
+        { error: 'Unauthorized: Not a valid HOD' },
+        { status: 403 }
+      );
     }
 
     // ✅ Find academic record
     const academic = await academicSchema.findById(academicId);
     if (!academic) {
-      return NextResponse.json({
-        error: 'Academic record not found'
-      }, {
-        status: 404
-      });
+      return NextResponse.json(
+        { error: 'Academic record not found' },
+        { status: 404 }
+      );
     }
 
     // ✅ Check HOD belongs to same department
     if (academic.department !== hod.department) {
-      return NextResponse.json({
-        error: 'HOD not authorized for this department'
-      }, {
-        status: 403
-      });
+      return NextResponse.json(
+        { error: 'HOD not authorized for this department' },
+        { status: 403 }
+      );
     }
 
-    // ✅ Only remove year and divisions
-    academic.year = null;
-    academic.divisions = [];
+    // ✅ Remove the year+semester object from years array
+    const originalLength = academic.years.length;
+    academic.years = academic.years.filter(
+      (y) => !(y.year === year && y.semester === semester)
+    );
+
+    if (academic.years.length === originalLength) {
+      return NextResponse.json(
+        { error: 'No matching year and semester found to delete' },
+        { status: 404 }
+      );
+    }
 
     await academic.save();
 
     return NextResponse.json(
       {
-        message: 'Year and divisions removed successfully', academic
+        message: `Year "${year}" Semester "${semester}" removed successfully`,
+        updated: academic
       },
-      {
-        status: 200
-      }
+      { status: 200 }
     );
-
   } catch (error) {
     console.error('Error in DELETE /api/hod/[id]/academics:', error);
     return NextResponse.json(
-      {
-        error: 'Internal server error'
-      },
-      {
-        status: 500
-      }
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
 }
