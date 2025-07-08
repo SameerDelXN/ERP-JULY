@@ -20,12 +20,13 @@
     BookOpen,
     DollarSign,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Icon
   } from 'lucide-react';
   import { useSession } from '@/context/SessionContext';
   const AdminDashboard = () => {
     const { user, refreshSession } = useSession();
-    console.log("user = ",user)
+    // console.log("user = ",user)
     useEffect(() => {
       refreshSession();
     }, []);
@@ -58,14 +59,6 @@
           <div className="p-2 bg-gray-100 rounded-lg">
             <Icon className="w-5 h-5 text-gray-600" />
           </div>
-          <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-            trend === 'up' 
-              ? 'bg-green-50 text-green-700' 
-              : 'bg-red-50 text-red-700'
-          }`}>
-            {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-            {Math.abs(growth)}%
-          </div>
         </div>
         
         <div className="space-y-3">
@@ -90,31 +83,6 @@
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="p-6">
-          {/* Page Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-900">Dashboard Overview</h2>
-              <p className="text-gray-600 text-sm mt-1">Monitor your institution's key metrics and activities</p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <select 
-                value={timeframe}
-                onChange={(e) => setTimeframe(e.target.value)}
-                className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-              
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                <Download className="w-4 h-4" />
-                Export
-              </button>
-            </div>
-          </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

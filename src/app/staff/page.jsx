@@ -138,19 +138,11 @@ const StaffOverview = () => {
   const totalPages = Math.ceil(filteredStaff.length / 10);
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * 10, currentPage * 10);
 
-  const StatCard = ({ title, value, icon: Icon, change, trend }) => (
+  const StatCard = ({ title, value, icon: Icon, }) => (
     <div className="bg-white rounded-lg p-6 border border-gray-100 hover:shadow-sm transition-all duration-200">
       <div className="flex items-center justify-between mb-4">
         <div className="p-2 bg-gray-100 rounded-lg">
           <Icon className="w-5 h-5 text-gray-600" />
-        </div>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-          trend === 'up' 
-            ? 'bg-green-50 text-green-700' 
-            : 'bg-blue-50 text-blue-700'
-        }`}>
-          {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-          {change}
         </div>
       </div>
       
@@ -166,29 +158,21 @@ const StaffOverview = () => {
       title: 'Total Staff', 
       value: staffData.length, 
       icon: Users, 
-      change: '+5 this month',
-      trend: 'up'
     },
     { 
       title: 'Active Staff', 
       value: staffData.filter(s => s.status === 'active').length, 
       icon: UserCheck, 
-      change: '+2 this week',
-      trend: 'up'
     },
     { 
       title: 'On Leave', 
       value: staffData.filter(s => s.status === 'on_leave').length, 
       icon: Calendar, 
-      change: '3 returning soon',
-      trend: 'neutral'
     },
     { 
       title: 'Departments', 
       value: departments.length, 
       icon: BookOpen, 
-      change: 'All active',
-      trend: 'neutral'
     }
   ];
 
@@ -215,20 +199,6 @@ const StaffOverview = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Staff Overview</h2>
-            <p className="text-gray-600 text-sm mt-1">Manage and monitor your educational staff</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-          </div>
-        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

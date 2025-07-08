@@ -2,18 +2,11 @@
 import React, { useEffect, useState } from "react";
 import {
   Search,
-  Filter,
-  Download,
   Eye,
-  Edit2,
-  Trash2,
-  Plus,
-  MoreVertical,
   Calendar,
   User,
   Mail,
   Phone,
-  MapPin,
   GraduationCap,
   FileText,
   CheckCircle,
@@ -25,8 +18,9 @@ import {
   MessageSquare,
   File,
   FileTextIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import Image from "next/image";
 import LoadingComponent from "@/components/Loading";
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
@@ -84,8 +78,6 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
         return <Activity className="w-4 h-4" />;
     }
   };
-
-  console.log(application.documents);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -322,9 +314,9 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
             </div>
-            {!application.documents && (
+            {application.documents && application.documents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {Object?.entries(application.documents[0])
+                {Object.entries(application.documents[0])
                   .filter(([key]) => key !== "_id")
                   .map(([key, doc]) => (
                     <DetailCard
@@ -337,6 +329,8 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
                     />
                   ))}
               </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No documents uploaded</p>
             )}
           </div>
         </div>
@@ -347,12 +341,13 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
 
 const AdmissionApplications = () => {
   const [selectedTab, setSelectedTab] = useState("all");
-  const [showNewApplication, setShowNewApplication] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [admission, setAdmission] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
@@ -362,12 +357,8 @@ const AdmissionApplications = () => {
       try {
         setLoading(true);
         const res = await fetch("/api/admission");
-        console.log(res);
-
         if (!res.ok) throw new Error("Failed to fetch Admissions");
         const admissionData = await res.json();
-        console.log(admissionData);
-
         setAdmission(admissionData.data);
       } catch (error) {
         setError(error.message);
@@ -400,13 +391,23 @@ const AdmissionApplications = () => {
 
   const filteredApplications = admission?.filter((app) => {
     const matchesSearch =
-      app.first?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app._id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
       selectedFilter === "all" || app.status === selectedFilter;
     return matchesSearch && matchesFilter;
   });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredApplications?.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredApplications?.length / itemsPerPage) || 1;
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const openDetailsModal = (admissionId) => {
     setSelectedAdmissionId(admissionId);
@@ -425,21 +426,9 @@ const AdmissionApplications = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Admission Applications
-            </h1>
-            <p className="text-gray-600">
-              Manage and review student admission applications
-            </p>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm ">
+          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
@@ -449,12 +438,12 @@ const AdmissionApplications = () => {
                   {admission.length}
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                <FileText className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
@@ -464,12 +453,12 @@ const AdmissionApplications = () => {
                   {admission.filter((a) => a.status === "inProcess").length}
                 </p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
+                <Clock className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
@@ -477,12 +466,12 @@ const AdmissionApplications = () => {
                   {admission.filter((a) => a.status === "approved").length}
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
+                <CheckCircle className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
@@ -490,8 +479,8 @@ const AdmissionApplications = () => {
                   {admission.filter((a) => a.status === "rejected").length}
                 </p>
               </div>
-              <div className="p-3 bg-red-100 rounded-lg">
-                <XCircle className="w-6 h-6 text-red-600" />
+              <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
+                <XCircle className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
@@ -523,16 +512,6 @@ const AdmissionApplications = () => {
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-                </button>
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </button>
-              </div>
             </div>
           </div>
 
@@ -559,8 +538,8 @@ const AdmissionApplications = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredApplications.map((application) => {
-                  const status = application.status || "In Process";
+                {currentItems?.map((application) => {
+                  const status = application.status || "inProcess";
                   const config = statusConfig[status] || statusConfig.inProcess;
                   return (
                     <tr key={application._id} className="hover:bg-gray-50">
@@ -626,9 +605,6 @@ const AdmissionApplications = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {/* <button className="text-gray-600 hover:text-gray-900">
-                            <Edit2 className="w-4 h-4" />
-                          </button> */}
                         </div>
                       </td>
                     </tr>
@@ -639,50 +615,70 @@ const AdmissionApplications = () => {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-3 flex items-center justify-between border-t">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                Previous
-              </button>
-              <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                Next
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">1</span> to{" "}
-                  <span className="font-medium">
-                    {Math.min(4, filteredApplications.length)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium">
-                    {filteredApplications.length}
-                  </span>{" "}
-                  results
-                </p>
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {indexOfFirstItem + 1} to{" "}
+                  {Math.min(indexOfLastItem, filteredApplications?.length)} of{" "}
+                  {filteredApplications?.length} results
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 &&
+                          pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => paginate(pageNumber)}
+                            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                              currentPage === pageNumber
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNumber} className="px-2 text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div>
-                <nav
-                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                  aria-label="Pagination"
-                >
-                  <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    Previous
-                  </button>
-                  <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    1
-                  </button>
-                  <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    2
-                  </button>
-                  <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    Next
-                  </button>
-                </nav>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

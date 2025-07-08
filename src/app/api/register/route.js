@@ -76,7 +76,7 @@ export async function POST(req) {
     }
 
     // ✅ If role is HOD, register in Teacher model with null department
-    if (role === 'HOD') {
+    if (role === 'hod') {
       if (!fullName || !email || !phone || !teacherId || !password || !confirmPassword) {
         return NextResponse.json({ error: 'All HOD fields are required (department not required)' }, { status: 400 });
       }
