@@ -131,7 +131,7 @@ import admissionSchema from '../../../models/admissionSchema';
 // }
 
 
-// import { connectToDatabase } from '@/lib/mongodb';
+//import { connectToDatabase } from '@/lib/mongodb';
 import Enquiry from '../../../models/enquirySchema';
 
 export async function PUT(request) {
