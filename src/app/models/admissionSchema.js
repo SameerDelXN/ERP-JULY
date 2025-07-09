@@ -1,141 +1,232 @@
-//database schema for admission form 
+// import mongoose from 'mongoose';
+
+// const admissionSchema = new mongoose.Schema({
+//   enquiryId: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: 'enquiry',
+//     // required: true
+//   },
+//   counsellorId: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: 'User',
+//     // required: true
+//   },
+
+//   // System generated fields
+//   dteApplicationNumber: { type: String },
+//   prn: { type: String, unique: true, sparse: true },
+//   isPrnGenerated: { type: Boolean, default: false },
+
+//   // Personal details
+//   admissionYear: { type: String, required: true }, // e.g. "2024-25"
+//   email: { type: String, required: true, lowercase: true },
+  
+//   // Name details
+//   fullName: { type: String, required: true }, // As per last qualifying exam
+//   nameAsPerAadhar: { type: String, required: true },
+//   firstName: { type: String, required: true },
+//   middleName: { type: String },
+//   lastName: { type: String, required: true },
+  
+//   gender: { 
+//     type: String, 
+//     required: true,
+//     enum: ['Male', 'Female', 'Other'] 
+//   },
+  
+//   // Academic details
+//   programType: { 
+//     type: String, 
+//     required: true,
+//     enum: ["Diploma", "UG", "PG"] 
+//   },
+//   year: { 
+//     type: String, 
+//     required: true,
+//     enum: ['1st Year', '2nd Year', '3rd Year', '4th Year'] 
+//   },
+//   branch: { type: String, required: true }, // Course/Branch name
+//   shift: { type: String },
+  
+//   // Admission process details
+//   round: { 
+//     type: String,
+//     enum: ["CAP1", "CAP2", "CAP3", "Institute Level"],
+//     required: true
+//   },
+//   quota: { type: String },
+//   seatType: { 
+//     type: String,
+//     required: true,
+//     enum: ["GOV", "MIN", "Management", "TFWS"] 
+//   },
+//   admissionCategoryDTE: { 
+//     type: String,
+//     required: true,
+//     enum: ["CAP", "Institute Level", "Against CAP"] 
+//   },
+//   feesCategory: { type: String },
+//   admissionType: { type: String },
+  
+//   // Personal background details
+//   casteAsPerLC: { type: String, required: true },
+//   subCasteAsPerLC: { type: String },
+//   domicile: { type: String, required: true },
+//   nationality: { type: String, required: true },
+//   religionAsPerLC: { type: String },
+//   isForeignNational: { type: Boolean, default: false },
+  
+//   dateOfBirth: { type: Date, required: true },
+  
+//   // Family details
+//   motherName: { type: String, required: true }, // As per LC/TC
+//   familyIncome: { type: Number },
+  
+//   // Contact details
+//   studentWhatsappNumber: { type: String, required: true },
+//   fatherGuardianWhatsappNumber: { type: String, required: true },
+//   motherMobileNumber: { type: String },
+  
+//   // Documents
+//   documents: [
+//     {
+//       type: { type: String }, // e.g., "aadhar", "lcCertificate"
+//       fileName: { type: String },
+//       fileUrl: { type: String },
+//       mimeType: { type: String }
+//     }
+//   ],
+  
+//   // Status fields
+//   status: {
+//     type: String,
+//     enum: ['inProcess', 'approved', 'rejected'],
+//     default: 'inProcess',
+//   },
+  
+//   // System timestamps
+//   createdAt: { type: Date, default: Date.now },
+//   updatedAt: { type: Date, default: Date.now }
+
+// }, { timestamps: true });
+
+// delete mongoose.models.admission;
+// const admission = mongoose.models.admission || mongoose.model('admission', admissionSchema);
+
+// export default admission;
+
+
 import mongoose from 'mongoose';
 
 const admissionSchema = new mongoose.Schema({
   enquiryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'enquiry',
-    required: true
+    // Optional for Excel import
   },
   counsellorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // optional: reference to a User model
-    required: true
-
+    ref: 'User',
+    // Optional for Excel import
   },
 
-  //personal details
-  fullName: { type: String, }, // As per last mark sheet (CAPITAL)
-  dateOfBirth: { type: Date, },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'] },
-  nationality: { type: String, },
-  category: {
-    type: String,
-    enum: ['Open', 'SC', 'ST', 'OBC', 'EWS', 'NT', 'SBC', 'VJ', 'Other'],
-    default:null
-  },
-  mobileNumber: { type: String, required: true },
+  // System generated fields
+  dteApplicationNumber: { type: String },
+  prn: { type: String, unique: true, sparse: true },
+  isPrnGenerated: { type: Boolean, default: false },
+
+  // Personal details
+  admissionYear: { type: String, required: true },
   email: { type: String, required: true, lowercase: true },
 
-  //parent details
-  fatherName: { type: String,default:null },
-  motherName: { type: String,default:null },
-  guardianName: { type: String,default:null },
-  parentMobile: { type: String,default:null },
-  parentEmail: { type: String,default:null },
-  familyIncome: { type: Number,default:null },
+  // Name details
+  fullName: { type: String, required: true },
+  nameAsPerAadhar: { type: String,  },
+  firstName: { type: String,  },
+  middleName: { type: String, default: '' },
+  lastName: { type: String, },
 
-  // 3. Address Details permanent and present
-  addressLine: String,
-  city: String,
-  state: String,
-  pincode: String,
-  country: String,
+  gender: {
+    type: String,
+    // required: true,
+    // enum: ['Male', 'Female', 'Other']
+  },
 
-
-  // Academic Information
+  // Academic details
   programType: {
     type: String,
-    enum: ["Diploma", "UG", "PG"],
-    default:null
+    // required: true,
+    // enum: ['Diploma', 'UG', 'PG']
   },
-  courseName: { type: String, required: true }, // Name of the course admitted
-  yearOfAdmission: {
+  year: {
     type: String,
-    enum: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
-    default:null
+    // required: true,
+    // enum: ['1st Year', '2nd Year', '3rd Year', '4th Year']
   },
+  branch: { type: String,  },
+  shift: { type: String, default: '' },
+
+  // Admission process details
   round: {
     type: String,
-    enum: ["CAP1", "CAP2", "CAP3", "Institute Level"],
-    default:null
+    // required: true,
+    // enum: ['CAP1', 'CAP2', 'CAP3', 'Institute Level']
   },
-
+  quota: { type: String, default: '' },
   seatType: {
     type: String,
-    enum: ["GOV", "MIN", "Management", "TFWS"],
-    default:null
+    // required: true,
+    // enum: ['GOV', 'MIN', 'Management', 'TFWS']
   },
   admissionCategoryDTE: {
     type: String,
-    enum: ["CAP", "Institute Level", "Against CAP"],
-    default:null
+    // required: true,
+    // enum: ['CAP', 'Institute Level', 'Against CAP']
   },
+  feesCategory: { type: String, default: '' },
+  admissionType: { type: String, default: '' },
 
-  casteAsPerLC: { type: String,default:null},
-  subCasteAsPerLC: { type: String,default:null },
-  domicile: { type: String,default:null },
-  religionAsPerLC: { type: String,default:null },
+  // Personal background
+  casteAsPerLC: { type: String,},
+  subCasteAsPerLC: { type: String, default: '' },
+  domicile: { type: String},
+  nationality: { type: String},
+  religionAsPerLC: { type: String, default: '' },
+  isForeignNational: { type: Boolean, default: false },
+  dateOfBirth: { type:String},
 
-  // 4. Academic Interest
-  // currentSchoolName: String,
-  // currentClass: String,
-  // applyingFor: String,
-  // academicYear: String,
+  // Family details
+  motherName: { type: String },
+  familyIncome: { type: Number, default: 0 },
 
+  // Contact details
+  studentWhatsappNumber: { type: Number,},
+  fatherGuardianWhatsappNumber: { type: Number, },
+  motherMobileNumber: { type: String, default: '' },
 
-  qualifyingExam: { type: String,default:null }, // e.g., HSC, Graduation
-  marksObtained: { type: Number,default:null },
-  totalMarks: { type: Number, default:null },
-  percentage: { type: Number, default:null },
-  grade: { type: String,default:null },
-  monthYearOfPassing: { type: String,default:null }, // e.g., "Mar 2023"
-
-
-  // Documents (URLs or file names)
-  photograph: { type: String },
-  signature: { type: String },
-  markSheets: [{ type: String }], // array of file URLs/names
-  transferCertificate: { type: String },
-  migrationCertificate: { type: String },
-  undertakingDocument: { type: String },
-
-
-  // 5. Documents
+  // Documents (optional)
   documents: [
     {
-      type: {
-        type: String, // e.g., "birthCertificate", "parentIdProof"
-      },
-      fileName: {
-        type: String,
-      },
-      fileUrl: {
-        type: String,
-      },
-      mimeType: {
-        type: String,
-      }
+      type: { type: String },
+      fileName: { type: String },
+      fileUrl: { type: String },
+      mimeType: { type: String }
     }
   ],
 
-  // System-generated
-  prn: { type: String, unique: true, sparse: true }, // ZPRN (can be generated after form is filled)
-  isprnGenerated: { type: Boolean, default: false },
-
-  // 6. Consent & Verification
-  consent: Boolean,
-  captchaVerified: Boolean,
-
-  // 7. Status Field
+  // Status
   status: {
     type: String,
     enum: ['inProcess', 'approved', 'rejected'],
-    default: 'inProcess',
-  }
+    default: 'inProcess'
+  },
+
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 
 }, { timestamps: true });
 
+// Avoid overwrite issues in dev
 delete mongoose.models.admission;
 const admission = mongoose.models.admission || mongoose.model('admission', admissionSchema);
 
