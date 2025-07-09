@@ -68,6 +68,10 @@ const Login = () => {
     );
   }, [email, password]);
 
+  // const handelForgotPassword = () =>{
+  //   router.push('/forgot-password')
+  // }
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -328,7 +332,7 @@ const Login = () => {
             {/* Additional Options */}
             <div className="text-center pt-3">
               <a
-                href="#"
+                href="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors duration-200"
               >
                 Forgot your password?

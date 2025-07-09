@@ -20,6 +20,8 @@ import {
   FileTextIcon,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Upload,
 } from "lucide-react";
 import LoadingComponent from "@/components/Loading";
 
@@ -348,7 +350,7 @@ const AdmissionApplications = () => {
   const [admission, setAdmission] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-
+  const [importLoading, setImportLoading] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
 
@@ -405,7 +407,8 @@ const AdmissionApplications = () => {
     indexOfFirstItem,
     indexOfLastItem
   );
-  const totalPages = Math.ceil(filteredApplications?.length / itemsPerPage) || 1;
+  const totalPages =
+    Math.ceil(filteredApplications?.length / itemsPerPage) || 1;
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -423,9 +426,74 @@ const AdmissionApplications = () => {
       </div>
     );
 
+  // Add this function to handle the file upload
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setImportLoading(true);
+      const response = await fetch("/api/admission", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to import file");
+      }
+
+      const result = await response.json();
+      // Refresh the admission data
+      const res = await fetch("/api/admission");
+      const admissionData = await res.json();
+      setAdmission(admissionData.data);
+
+      // Show success message
+      alert("File imported successfully!");
+    } catch (error) {
+      console.error("Error importing file:", error);
+      alert("Error importing file: " + error.message);
+    } finally {
+      setImportLoading(false);
+      // Reset the file input
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex gap-4 pb-4 justify-end">
+          <button
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
+            onClick={() => document.getElementById("fileInput").click()}
+            disabled={importLoading}
+          >
+            {importLoading ? (
+              <LoadingComponent size={4} />
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span>Import</span>
+              </>
+            )}
+          </button>
+          <input
+            id="fileInput"
+            type="file"
+            accept=".xlsx, .xls, .csv"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center">
+            <Upload className="w-4 h-4" />
+            <span>Export</span>
+          </button>
+        </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
