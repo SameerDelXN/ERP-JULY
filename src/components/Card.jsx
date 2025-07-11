@@ -10,5 +10,5 @@ const Card = ({ children, className = "", hover = true }) => {
     </div>
   );
 };
-
+//sample
 export default Card;
