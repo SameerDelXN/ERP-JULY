@@ -236,7 +236,7 @@ if (name === 'phone') {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      maxLength={10}
+                      maxLength={20}
                       minLength={2}
                       className={`w-full px-4 py-2.5 rounded-lg border ${
                         errors.firstName ? "border-red-500" : "border-gray-300"
@@ -264,7 +264,7 @@ if (name === 'phone') {
                     name="middleName"
                     value={formData.middleName}
                     onChange={handleChange}
-                    maxLength={10}
+                    maxLength={20}
                     minLength={2}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                     placeholder="Enter middle name"
@@ -290,7 +290,7 @@ if (name === 'phone') {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      maxLength={10}
+                      maxLength={20}
                       minLength={2}
                       className={`w-full px-4 py-2.5 rounded-lg border ${
                         errors.lastName ? "border-red-500" : "border-gray-300"
@@ -356,7 +356,7 @@ if (name === 'phone') {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      maxLength={25}
+                      maxLength={45}
                       className={`w-full pl-10 px-4 py-2.5 rounded-lg border ${
                         errors.email ? "border-red-500" : "border-gray-300"
                       } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}

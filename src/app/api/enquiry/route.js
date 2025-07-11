@@ -36,6 +36,7 @@ export async function POST(req) {
       email,
       courseInterested:course,
       source,
+      notes,
 
     });
     await enquiry.save();

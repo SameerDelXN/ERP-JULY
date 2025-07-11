@@ -1,4 +1,4 @@
-//Google drive api 
+// app/api/upload/multiple/route.js
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { Readable } from 'stream';
@@ -19,24 +19,18 @@ export async function POST(request) {
   try {
     // 1. Parse form data
     const formData = await request.formData();
-    console.log(formData);
-    
-    const file = formData.get("files");
+    const files = formData.getAll("files"); // Get all files
 
-    if (!file) {
+    if (!files || files.length === 0) {
       return NextResponse.json(
-        { error: "No file provided" },
+        { error: "No files provided" },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    console.log("File info:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
+    console.log("Files to upload:", files.length);
 
-    // 2. Initialize Google Auth
+    // 2. Initialize Google Auth (same as single upload)
     const auth = new google.auth.GoogleAuth({
       credentials: {
         "type": "service_account",
@@ -57,46 +51,54 @@ export async function POST(request) {
     // 3. Create drive client
     const drive = google.drive({ version: 'v3', auth });
 
-    // 4. Convert file to stream
-    const buffer = await file.arrayBuffer();
-    const stream = new Readable();
-    stream.push(Buffer.from(buffer));
-    stream.push(null); // End of stream
+    // 4. Process all files in parallel
+    const uploadPromises = files.map(async (file) => {
+      // Convert file to stream
+      const buffer = await file.arrayBuffer();
+      const stream = new Readable();
+      stream.push(Buffer.from(buffer));
+      stream.push(null);
 
-    // 5. Upload to Google Drive
-    const response = await drive.files.create({
-      requestBody: {
-        name: file.name,
+      // Upload to Google Drive
+      const response = await drive.files.create({
+        requestBody: {
+          name: file.name,
+          mimeType: file.type,
+          parents: ["15XV0UIVA0xgA7G7wDuL7t0RS5SWRpNJV"],
+        },
+        media: {
+          mimeType: file.type,
+          body: stream,
+        },
+      });
+
+      // Set public permissions
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+
+      return {
+        documentUrl: `https://drive.google.com/uc?export=view&id=${response.data.id}`,
+        documentId: response.data.id,
+        fileName: file.name,
         mimeType: file.type,
-        parents: ["15XV0UIVA0xgA7G7wDuL7t0RS5SWRpNJV"],
-      },
-      media: {
-        mimeType: file.type,
-        body: stream,
-      },
+      };
     });
 
-    console.log("Upload response:", response.data);
-
-    // 6. Set permissions
-    await drive.permissions.create({
-      fileId: response.data.id,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone',
-      },
-    });
-
-    const fileUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
+    // 5. Wait for all uploads to complete
+    const results = await Promise.all(uploadPromises);
 
     return NextResponse.json({
       success: true,
-      documentUrl: fileUrl,
-      documentId: response.data.id,
+      uploadedFiles: results,
     }, { headers: CORS_HEADERS });
 
   } catch (error) {
-    console.error("Full error:", {
+    console.error("Multiple upload error:", {
       message: error.message,
       stack: error.stack,
       response: error.response?.data,
@@ -104,7 +106,7 @@ export async function POST(request) {
 
     return NextResponse.json(
       {
-        error: "Failed to upload document",
+        error: "Failed to upload documents",
         details: error.message,
         ...(error.response?.data && { googleError: error.response.data })
       },

@@ -22,15 +22,47 @@ import {
   ChevronRight,
   Download,
   Upload,
+  MapPin,
+  ShieldCheck,
+  IndianRupee,
+  Tent,
 } from "lucide-react";
 import LoadingComponent from "@/components/Loading";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
   <div className="flex items-start gap-3">
     <div className={`p-2 rounded-lg ${bgColor} ${iconColor}`}>{icon}</div>
     <div>
       <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="font-medium text-gray-900">{value}</p>
+      <p className="font-medium text-gray-900">{value || "N/A"}</p>
+    </div>
+  </div>
+);
+
+const DetailCardDocuments = ({
+  icon,
+  label,
+  value,
+  bgColor,
+  iconColor,
+  fileUrl,
+  viewIcon,
+}) => (
+  <div className="flex items-start gap-3">
+    <div className={`p-2 rounded-lg ${bgColor} ${iconColor}`}>{icon}</div>
+    <div>
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <div className="flex items-center gap-2">
+        {viewIcon}
+        <p className="font-medium text-gray-900">
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+            {value || "N/A"}
+          </a>
+        </p>
+      </div>
     </div>
   </div>
 );
@@ -127,18 +159,18 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
           {/* Status Banner */}
           <div
             className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(
-              application.status
+              application?.status
             )}`}
           >
-            {getStatusIcon(application.status)}
+            {getStatusIcon(application?.status)}
             <div>
               <p className="font-semibold">
-                Status: {application.status || "Unknown"}
+                Status: {application?.status || "Unknown"}
               </p>
               <p className="text-sm opacity-80">
                 Last updated:{" "}
-                {application.createdAt
-                  ? new Date(application.createdAt).toLocaleDateString()
+                {application.updatedAt
+                  ? new Date(application.updatedAt).toLocaleDateString()
                   : "N/A"}
               </p>
             </div>
@@ -149,166 +181,214 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<User className="w-5 h-5" />}
               label="Full Name"
-              value={
-                <span className="group relative inline-block">
-                  {application.fullName ? (
-                    <>
-                      {application.fullName.substring(0, 25)}
-                      {application.fullName.length > 25 && (
-                        <>
-                          <span>...</span>
-                          <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
-                            {application.fullName}
-                          </span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    "N/A"
-                  )}
-                </span>
-              }
+              value={application?.fullName}
               bgColor="bg-blue-50"
               iconColor="text-blue-600"
             />
+
             <DetailCard
               icon={<Mail className="w-5 h-5" />}
               label="Email Address"
-              value={application.email || "N/A"}
+              value={application.email}
               bgColor="bg-green-50"
               iconColor="text-green-600"
             />
+
             <DetailCard
               icon={<Phone className="w-5 h-5" />}
-              label="Phone Number"
-              value={application.mobileNumber || "N/A"}
+              label="Student WhatsApp"
+              value={application.studentWhatsappNumber}
               bgColor="bg-purple-50"
               iconColor="text-purple-600"
             />
+
             <DetailCard
               icon={<GraduationCap className="w-5 h-5" />}
-              label="Course Interested"
-              value={application.courseName || "N/A"}
+              label="Branch"
+              value={application.branch}
               bgColor="bg-orange-50"
               iconColor="text-orange-600"
             />
+
             <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Date of Birth"
-              value={
-                application.dateOfBirth
-                  ? new Date(application.dateOfBirth).toLocaleDateString()
-                  : "N/A"
-              }
+              value={application.dateOfBirth}
               bgColor="bg-teal-50"
               iconColor="text-teal-600"
             />
-            <DetailCard
-              icon={<MessageSquare className="w-5 h-5" />}
-              label="Nationality"
-              value={application.nationality || "N/A"}
-              bgColor="bg-pink-50"
-              iconColor="text-pink-600"
-            />
+
             <DetailCard
               icon={<MessageSquare className="w-5 h-5" />}
               label="Gender"
-              value={application.gender || "N/A"}
+              value={application.gender}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
-            <DetailCard
-              icon={<MessageSquare className="w-5 h-5" />}
-              label="Father Name"
-              value={application.fatherName || "N/A"}
-              bgColor="bg-pink-50"
-              iconColor="text-pink-600"
-            />
+
             <DetailCard
               icon={<MessageSquare className="w-5 h-5" />}
               label="Mother Name"
-              value={application.motherName || "N/A"}
+              value={application.motherName}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
+
             <DetailCard
               icon={<Phone className="w-5 h-5" />}
-              label="Parent Number"
-              value={application.parentMobile || "N/A"}
+              label="Parent WhatsApp"
+              value={application.fatherGuardianWhatsappNumber}
               bgColor="bg-purple-50"
               iconColor="text-purple-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="Parent Email"
-              value={application.parentEmail || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Program Type"
+              value={application.programType}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="Address"
-              value={application.addressLine || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Year"
+              value={application.year}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="city"
-              value={application.city || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Round"
+              value={application.round}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="state"
-              value={application.state || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Seat Type"
+              value={application.seatType}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="pincode"
-              value={application.pincode || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Category"
+              value={application.admissionCategoryDTE}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="country"
-              value={application.country || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Caste (as per LC)"
+              value={application.casteAsPerLC}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="currentSchoolName"
-              value={application.currentSchoolName || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Domicile"
+              value={application.domicile}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="currentClass"
-              value={application.currentClass || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<Tent className="w-5 h-5" />}
+              label="Nationality"
+              value={application.nationality}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="academicYear"
-              value={application.academicYear || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<IndianRupee className="w-5 h-5" />}
+              label="Family Income"
+              value={
+                application.familyIncome
+                  ? `₹${application.familyIncome}`
+                  : "N/A"
+              }
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="preferredMedium"
-              value={application.preferredMedium || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Year"
+              value={application.admissionYear}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+
+            <DetailCard
+              icon={<ShieldCheck className="w-5 h-5" />}
+              label="PRN"
+              value={application.prn || "Not Generated"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
           </div>
+
+          {/* Address Section */}
+          {application.address && application.address.length > 0 && (
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Address</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {application.address.map((addr, index) => (
+                  <React.Fragment key={index}>
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="Address Line"
+                      value={addr.addressLine}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="City"
+                      value={addr.city}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="State"
+                      value={addr.state}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="Pincode"
+                      value={addr.pincode}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="Country"
+                      value={addr.country}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Documents Section */}
           <div className="bg-gray-50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -316,23 +396,24 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
             </div>
+
             {application.documents && application.documents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {Object.entries(application.documents[0])
-                  .filter(([key]) => key !== "_id")
-                  .map(([key, doc]) => (
-                    <DetailCard
-                      key={key}
-                      icon={<FileTextIcon className="w-5 h-5" />}
-                      label={key}
-                      value={doc.fileName || "N/A"}
-                      bgColor="bg-purple-50"
-                      iconColor="text-purple-600"
-                    />
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {application.documents.map((doc, index) => (
+                  <DetailCardDocuments
+                    key={index}
+                    icon={<FileTextIcon className="w-5 h-5" />}
+                    label={doc.type || `Document ${index + 1}`}
+                    value={doc.fileName}
+                    fileUrl={doc.fileUrl}
+                    bgColor="bg-purple-50"
+                    viewIcon={<Eye className="w-4 h-4" />}
+                    iconColor="text-purple-600"
+                  />
+                ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">No documents uploaded</p>
+              <p className="text-gray-500">No documents uploaded</p>
             )}
           </div>
         </div>
@@ -361,7 +442,13 @@ const AdmissionApplications = () => {
         const res = await fetch("/api/admission");
         if (!res.ok) throw new Error("Failed to fetch Admissions");
         const admissionData = await res.json();
-        setAdmission(admissionData.data);
+
+        // Sort by createdAt date in descending order (newest first)
+        const sortedAdmissions = admissionData.data.sort((a, b) => {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        setAdmission(sortedAdmissions);
       } catch (error) {
         setError(error.message);
         console.error("Failed to fetch admissions:", error);
@@ -436,7 +523,7 @@ const AdmissionApplications = () => {
 
     try {
       setImportLoading(true);
-      const response = await fetch("/api/admission", {
+      const response = await fetch("/api/importData", {
         method: "POST",
         body: formData,
       });
@@ -451,6 +538,8 @@ const AdmissionApplications = () => {
       const admissionData = await res.json();
       setAdmission(admissionData.data);
 
+      console.log(admissionData.data);
+
       // Show success message
       alert("File imported successfully!");
     } catch (error) {
@@ -461,6 +550,53 @@ const AdmissionApplications = () => {
       // Reset the file input
       e.target.value = "";
     }
+  };
+
+  const handleExportToExcel = () => {
+    if (!admission || admission.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const exportData = admission.map((app) => ({
+      FullName: app.fullName || "",
+      Email: app.email || "",
+      WhatsApp: app.studentWhatsappNumber || "",
+      Branch: app.branch || "",
+      ProgramType: app.programType || "",
+      Year: app.year || "",
+      Round: app.round || "",
+      SeatType: app.seatType || "",
+      AdmissionCategory: app.admissionCategoryDTE || "",
+      Gender: app.gender || "",
+      MotherName: app.motherName || "",
+      ParentWhatsApp: app.fatherGuardianWhatsappNumber || "",
+      Caste: app.casteAsPerLC || "",
+      Domicile: app.domicile || "",
+      Nationality: app.nationality || "",
+      FamilyIncome: app.familyIncome || "",
+      AdmissionYear: app.admissionYear || "",
+      PRN: app.prn || "",
+      DateOfBirth: app.dateOfBirth || "",
+      Status: app.status || "",
+      CreatedAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : "",
+      UpdatedAt: app.updatedAt ? new Date(app.updatedAt).toLocaleString() : "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(data, "admissions.xlsx");
   };
 
   return (
@@ -474,7 +610,7 @@ const AdmissionApplications = () => {
             disabled={importLoading}
           >
             {importLoading ? (
-              <LoadingComponent size={4} />
+              <span>Importing...</span>
             ) : (
               <>
                 <Download className="w-4 h-4" />
@@ -489,7 +625,10 @@ const AdmissionApplications = () => {
             className="hidden"
             onChange={handleFileUpload}
           />
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center">
+          <button
+            onClick={handleExportToExcel}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
+          >
             <Upload className="w-4 h-4" />
             <span>Export</span>
           </button>
@@ -649,7 +788,10 @@ const AdmissionApplications = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {application.courseName || "N/A"}
+                          {application.branch || "N/A"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {application.programType || "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
