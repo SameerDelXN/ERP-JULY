@@ -1,9 +1,10 @@
 // app/verification-success/page.js
-'use client';
+'use client'
 
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function VerificationSuccess() {
+function VerificationContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
 
@@ -14,5 +15,13 @@ export default function VerificationSuccess() {
       <p>You may now return to your original device to complete the form.</p>
       <p>The form should automatically update to show your email is verified.</p>
     </div>
+  );
+}
+
+export default function VerificationSuccess() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerificationContent />
+    </Suspense>
   );
 }
