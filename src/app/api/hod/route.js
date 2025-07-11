@@ -8,7 +8,7 @@ export async function GET() {
     await connectToDatabase();
 
     // ✅ Fetch all teachers where role is HOD
-    const hods = await teacherSchema.find({ role: 'HOD' }).select('-password');
+    const hods = await teacherSchema.find({ role: 'hod' }).select('-password');
 
     return NextResponse.json(
       {

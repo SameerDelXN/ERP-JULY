@@ -68,6 +68,10 @@ const Login = () => {
     );
   }, [email, password]);
 
+  // const handelForgotPassword = () =>{
+  //   router.push('/forgot-password')
+  // }
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -201,18 +205,18 @@ const Login = () => {
                 Access Level
               </label>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   {
                     role: "admin",
                     label: "Administrator",
                     icon: Settings,
                   },
-                  {
-                    role: "hod",
-                    label: "HOD",
-                    icon: UserCheck,
-                  },
+                  // {
+                  //   role: "hod",
+                  //   label: "HOD",
+                  //   icon: UserCheck,
+                  // },
                   {
                     role: "staff",
                     label: "Staff Member",
@@ -331,7 +335,7 @@ const Login = () => {
             {/* Additional Options */}
             <div className="text-center pt-3">
               <a
-                href="#"
+                href="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors duration-200"
               >
                 Forgot your password?

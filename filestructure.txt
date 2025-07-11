@@ -45,6 +45,8 @@
                     |-- route.js
                 |-- session
                     |-- route.js
+            |-- check-verification
+                |-- route.js
             |-- courses
                 |-- route.js
                 |-- [id]
@@ -84,17 +86,23 @@
                         |-- route.js
                     |-- route.js
             |-- upload
+                |-- multiple
+                    |-- route.js
                 |-- route.js
             |-- userData
                 |-- route.js
                 |-- [id]
                     |-- route.js
+            |-- verify-email
+                |-- route.js
         |-- docs
             |-- sample birth cert.pdf
             |-- sample id proof.pdf
         |-- enquiry-form
             |-- page.jsx
         |-- favicon.ico
+        |-- forgot-password
+            |-- page.jsx
         |-- globals.css
         |-- hod
             |-- academic-management
@@ -111,6 +119,7 @@
             |-- academicSchema.js
             |-- admissionSchema.js
             |-- course.js
+            |-- EmailVerification.js
             |-- enquirySchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
@@ -125,6 +134,8 @@
                 |-- page.jsx
             |-- layout.jsx
             |-- page.jsx
+            |-- profile
+                |-- page.jsx
         |-- student
             |-- assignments
                 |-- page.jsx
@@ -140,6 +151,10 @@
                 |-- page.jsx
             |-- schedule
                 |-- page.jsx
+        |-- verification-success
+            |-- page.jsx
+        |-- verify-email
+            |-- page.jsx
     |-- components
         |-- Avatar.jsx
         |-- Card.jsx

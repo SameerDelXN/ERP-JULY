@@ -20,6 +20,7 @@ export default function EnquiryForm() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [showOTPSection, setShowOTPSection] = useState(false);
   const [showEmailSection, setShowEmailSection] = useState(false);
+  const [verificationCheckInterval, setVerificationCheckInterval] = useState(null);
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -79,7 +80,111 @@ export default function EnquiryForm() {
       setErrors({...errors, submit: error.message});
     }
   };
+// Add this useEffect to handle verification status checks
+// Replace your existing verification useEffect with this optimized version
+useEffect(() => {
+  let intervalId;
 
+  const checkVerificationStatus = async () => {
+    try {
+      console.log('Checking verification status for:', formData.email);
+      const response = await fetch('/api/check-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      });
+      
+      const data = await response.json();
+      console.log('Verification response:', data);
+      
+      if (data.verified) {
+        console.log('Email verified, updating state...');
+        setEmailVerified(true);
+        setShowEmailSection(false);
+        localStorage.setItem(`verifiedEmail_${formData.email}`, 'true');
+        clearInterval(intervalId);
+      }
+    } catch (error) {
+      console.error('Verification check failed:', error);
+    }
+  };
+
+  if (formData.email && !emailVerified) {
+    // Check immediately when email changes
+    checkVerificationStatus();
+    
+    // Then set up polling every 3 seconds
+    intervalId = setInterval(checkVerificationStatus, 3000);
+  }
+
+  return () => {
+    if (intervalId) clearInterval(intervalId);
+  };
+}, [formData.email, emailVerified]);
+// Add this useEffect to check verification status when email is entered
+useEffect(() => {
+  if (formData.email) {
+    // Check localStorage first
+    const isVerified = localStorage.getItem(`verifiedEmail_${formData.email}`) === 'true';
+    if (isVerified) {
+      setEmailVerified(true);
+      setShowEmailSection(false);
+      return;
+    }
+
+    // Then check server status
+    const checkServerVerification = async () => {
+      try {
+        const response = await fetch('/api/check-verification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email })
+        });
+        
+        const data = await response.json();
+        if (data.verified) {
+          setEmailVerified(true);
+          setShowEmailSection(false);
+          localStorage.setItem(`verifiedEmail_${formData.email}`, 'true');
+        }
+      } catch (error) {
+        console.error('Initial verification check failed:', error);
+      }
+    };
+
+    checkServerVerification();
+  }
+}, [formData.email]);
+useEffect(() => {
+  return () => {
+    if (verificationCheckInterval) {
+      clearInterval(verificationCheckInterval);
+    }
+  };
+}, [verificationCheckInterval]);
+// Add this useEffect at the top of your component
+useEffect(() => {
+  // Check URL parameters for verification status
+  const urlParams = new URLSearchParams(window.location.search);
+  const verified = urlParams.get('verified');
+  const verificationError = urlParams.get('verificationError');
+
+  if (verified === 'true' && formData.email) {
+    setEmailVerified(true);
+    setShowEmailSection(false);
+    localStorage.setItem(`verifiedEmail_${formData.email}`, 'true');
+    
+    // Clean up the URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  if (verificationError === 'true') {
+    setErrors({...errors, emailVerification: 'Email verification failed'});
+    
+    // Clean up the URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}, [formData.email]);
   const verifyMobileOTP = () => {
     if (mobileOTP === generatedOTP) { // In production, verify against DB-stored OTP
       setMobileVerified(true);
@@ -112,12 +217,32 @@ export default function EnquiryForm() {
     }
   };
 
-  const verifyEmailToken = () => {
-    // In production, verify token against DB
-    setEmailVerified(true);
-    setShowEmailSection(false);
-  };
+const verifyEmailToken = async () => {
+  try {
+    const response = await fetch('/api/verify-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email: formData.email, 
+        token: emailToken 
+      }),
+    });
 
+    const data = await response.json();
+
+    if (response.ok && data.verified) {
+      setEmailVerified(true);
+      setShowEmailSection(false);
+      localStorage.setItem(`verifiedEmail_${formData.email}`, 'true');
+    } else {
+      setErrors({...errors, emailVerification: data.error || 'Verification failed'});
+    }
+  } catch (error) {
+    setErrors({...errors, emailVerification: error.message});
+  }
+};
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -318,7 +443,7 @@ export default function EnquiryForm() {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      maxLength={10}
+                      maxLength={20}
                       minLength={2}
                       className={`w-full px-4 py-2.5 rounded-lg border ${
                         errors.firstName ? "border-red-500" : "border-gray-300"
@@ -346,7 +471,7 @@ export default function EnquiryForm() {
                     name="middleName"
                     value={formData.middleName}
                     onChange={handleChange}
-                    maxLength={10}
+                    maxLength={20}
                     minLength={2}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                     placeholder="Enter middle name"
@@ -372,7 +497,7 @@ export default function EnquiryForm() {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      maxLength={10}
+                      maxLength={20}
                       minLength={2}
                       className={`w-full px-4 py-2.5 rounded-lg border ${
                         errors.lastName ? "border-red-500" : "border-gray-300"
@@ -455,7 +580,7 @@ export default function EnquiryForm() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      maxLength={25}
+                      maxLength={45}
                       className={`w-full pl-10 px-4 py-2.5 rounded-lg border ${
                         errors.email ? "border-red-500" : "border-gray-300"
                       } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
@@ -467,23 +592,28 @@ export default function EnquiryForm() {
                       </p>
                     )}
                   </div>
-                  {!emailVerified && formData.email && (
-                    <button
-                      type="button"
-                      onClick={sendVerificationEmail}
-                      className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      {showEmailSection ? 'Resend Verification' : 'Send Verification Email'}
-                    </button>
-                  )}
-                  {emailVerified && (
-                    <p className="mt-2 text-sm text-green-600 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Email verified
-                    </p>
-                  )}
+       
+{emailVerified ? (
+  <div className="mt-2">
+    <p className="text-sm text-green-600 flex items-center">
+      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+      </svg>
+      Email verified
+    </p>
+  </div>
+) : (
+  <div>
+    <button
+      type="button"
+      onClick={sendVerificationEmail}
+      className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+    >
+      {showEmailSection ? 'Resend Verification' : 'Send Verification Email'}
+    </button>
+  
+  </div>
+)}
                 </div>
               </div>
 
@@ -520,41 +650,7 @@ export default function EnquiryForm() {
               )}
 
               {/* Email Verification Section */}
-              {showEmailSection && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center mb-3">
-                    <Mail className="w-5 h-5 text-blue-600 mr-2" />
-                    <h3 className="font-medium">Email Verification</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    We've sent a verification link to {formData.email}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="text"
-                      value={emailToken}
-                      onChange={(e) => setEmailToken(e.target.value)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                      placeholder="Enter verification token"
-                    />
-                    <button
-                      onClick={verifyEmailToken}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Verify
-                    </button>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Didn't receive the email? Check your spam folder or <button 
-                      type="button" 
-                      onClick={sendVerificationEmail}
-                      className="text-blue-600 hover:underline"
-                    >
-                      resend
-                    </button>.
-                  </p>
-                </div>
-              )}
+           
             </div>
 
             {/* Enquiry Details Section */}

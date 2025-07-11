@@ -16,7 +16,6 @@ export async function POST(request) {
     // Get the form data
     const formData = await request.formData();
     const file = formData.get('file');
-
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
@@ -26,7 +25,6 @@ export async function POST(request) {
     const workbook = XLSX.read(buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
     if (jsonData.length === 0) {
       return NextResponse.json({ error: 'No data found in Excel file' }, { status: 400 });
     }
@@ -171,7 +169,7 @@ export async function POST(request) {
         processedData.push(admissionData);
       }
     });
-
+    console.log(validationErrors)
     // If there are validation errors, return them
     if (validationErrors.length > 0) {
       return NextResponse.json({
