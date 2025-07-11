@@ -14,15 +14,21 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Eye,
 } from "lucide-react";
 import { roles } from "@/data/data";
 import LoadingComponent from "@/components/Loading";
+
+
+
 
 const UserManagementPage = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [userPerformance, setUserPerformance] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [sortBy, setSortBy] = useState("name");
@@ -30,7 +36,6 @@ const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedRoles, setExpandedRoles] = useState({});
 
   const toggleRoleExpansion = (role) => {
@@ -98,7 +103,23 @@ const UserManagementPage = () => {
       setLoading(false);
     }
   };
-  console.log(users);
+
+  const fetchUserPerformance = async (userId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/staff-performance/${userId}`);
+      if (!res.ok) throw new Error("Failed to fetch performance data");
+      const data = await res.json();
+      setUserPerformance(data);
+      setShowPerformanceModal(true);
+    } catch (err) {
+      alert(err.message);
+      console.error("Performance fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEditUser = (user) => {
     setCurrentUser({
       ...user,
@@ -183,7 +204,8 @@ const UserManagementPage = () => {
       </div>
     );
 
-  const AddUserModal = () => {
+  // ... (keep all your existing modal components: AddUserModal and EditUserModal)
+     const AddUserModal = () => {
     const [formData, setFormData] = useState({
       fullName: "",
       email: "",
@@ -910,6 +932,116 @@ const UserManagementPage = () => {
       </div>
     );
   };
+  const PerformanceModal = () => {
+    if (!userPerformance) return null;
+
+    const conversionRate = userPerformance.totalEnquiries > 0 
+      ? ((userPerformance.convertedEnquiries / userPerformance.totalEnquiries) * 100).toFixed(2)
+      : 0;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-medium text-gray-900">
+              {currentUser?.fullName}'s Performance
+            </h2>
+            <button
+              onClick={() => setShowPerformanceModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">
+                Total Enquiries
+              </h3>
+              <p className="text-2xl font-bold text-blue-600">
+                {userPerformance.totalEnquiries}
+              </p>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+              <h3 className="text-sm font-medium text-green-800 mb-2">
+                Converted Enquiries
+              </h3>
+              <p className="text-2xl font-bold text-green-600">
+                {userPerformance.convertedEnquiries}
+              </p>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              <h3 className="text-sm font-medium text-purple-800 mb-2">
+                Admission Applications
+              </h3>
+              <p className="text-2xl font-bold text-purple-600">
+                {userPerformance.admissionApplications}
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+              <h3 className="text-sm font-medium text-yellow-800 mb-2">
+                Conversion Rate
+              </h3>
+              <p className="text-2xl font-bold text-yellow-600">
+                {conversionRate}%
+              </p>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Recent Enquiries
+            </h3>
+            {userPerformance.recentEnquiries.length > 0 ? (
+              <div className="space-y-2">
+                {userPerformance.recentEnquiries.map((enquiry) => (
+                  <div
+                    key={enquiry._id}
+                    className="p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex justify-between">
+                      <span className="font-medium">
+                        {enquiry.first} {enquiry.last}
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          enquiry.status === "Converted"
+                            ? "bg-green-100 text-green-800"
+                            : enquiry.status === "Lost"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {enquiry.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {enquiry.courseInterested}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No recent enquiries</p>
+            )}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={() => setShowPerformanceModal(false)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1071,6 +1203,18 @@ const UserManagementPage = () => {
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-3">
+                                          {role === "staff" && (
+                                            <button
+                                              onClick={() => {
+                                                setCurrentUser(user);
+                                                fetchUserPerformance(user._id);
+                                              }}
+                                              className="text-gray-400 hover:text-green-600 transition-colors p-1 rounded-full hover:bg-green-50"
+                                              title="View Performance"
+                                            >
+                                              <Eye className="w-4 h-4" />
+                                            </button>
+                                          )}
                                           <button
                                             onClick={() => handleEditUser(user)}
                                             className="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
@@ -1126,9 +1270,10 @@ const UserManagementPage = () => {
         </div>
       </div>
 
-      {/* Modals would go here */}
+      {/* Modals */}
       {showAddUserModal && <AddUserModal />}
       {showEditUserModal && <EditUserModal />}
+      {showPerformanceModal && <PerformanceModal />}
     </div>
   );
 };

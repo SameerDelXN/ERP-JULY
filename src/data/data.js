@@ -19,6 +19,7 @@ export const adminSidebarItems = [
   { id: "manage-users", label: "Manage Users/Roles", icon: Users },
   { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
   { id: "admission-applications", label: "Admission Applications", icon: BookImage },
+  { id: "courses", label: "CRM Management", icon: BookImage },
   // { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
   // { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },

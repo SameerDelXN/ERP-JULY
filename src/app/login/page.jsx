@@ -195,6 +195,7 @@ const Login = () => {
 
           <div className="space-y-5">
             {/* Role Selection */}
+            <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Access Level
@@ -304,7 +305,8 @@ const Login = () => {
 
             {/* Login Button */}
             <button
-              onClick={handleLogin}
+              type="submit"
+              
               disabled={!formValid || loading}
               className={`w-full py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center ${
                 formValid && !loading
@@ -324,6 +326,7 @@ const Login = () => {
                 </>
               )}
             </button>
+            </form>
 
             {/* Additional Options */}
             <div className="text-center pt-3">

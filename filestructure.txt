@@ -25,6 +25,8 @@
         |-- admin
             |-- admission-applications
                 |-- page.jsx
+            |-- courses
+                |-- page.jsx
             |-- enquiry&leads
                 |-- page.jsx
             |-- layout.jsx
@@ -42,6 +44,10 @@
                 |-- logout
                     |-- route.js
                 |-- session
+                    |-- route.js
+            |-- courses
+                |-- route.js
+                |-- [id]
                     |-- route.js
             |-- department
                 |-- route.js
@@ -61,6 +67,13 @@
                 |-- route.js
             |-- register
                 |-- route.js
+            |-- send-otp
+                |-- route.js
+            |-- send-verification-email
+                |-- route.js
+            |-- staff-performance
+                |-- [userId]
+                    |-- route.js
             |-- students
                 |-- [id]
                     |-- route.js
@@ -97,6 +110,7 @@
         |-- models
             |-- academicSchema.js
             |-- admissionSchema.js
+            |-- course.js
             |-- enquirySchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
