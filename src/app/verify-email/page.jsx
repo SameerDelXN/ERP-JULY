@@ -1,10 +1,10 @@
-// app/verify-email/page.js
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -15,13 +15,12 @@ export default function VerifyEmail() {
         const response = await fetch('/api/verify-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token })
+          body: JSON.stringify({ token }),
         });
 
         const data = await response.json();
-        
+
         if (data.verified) {
-          // Redirect to success page with email parameter
           router.push(`/verification-success?email=${encodeURIComponent(data.email)}`);
         } else {
           router.push('/verification-failed');
@@ -36,4 +35,12 @@ export default function VerifyEmail() {
   }, [token, router]);
 
   return <div className="verification-loading">Verifying your email...</div>;
+}
+
+export default function VerifyEmail() {
+  return (
+    <Suspense fallback={<div className="verification-loading">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
+  );
 }
