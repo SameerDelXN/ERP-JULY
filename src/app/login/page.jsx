@@ -68,6 +68,10 @@ const Login = () => {
     );
   }, [email, password]);
 
+  // const handelForgotPassword = () =>{
+  //   router.push('/forgot-password')
+  // }
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -195,23 +199,24 @@ const Login = () => {
 
           <div className="space-y-5">
             {/* Role Selection */}
+            <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Access Level
               </label>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   {
                     role: "admin",
                     label: "Administrator",
                     icon: Settings,
                   },
-                  {
-                    role: "hod",
-                    label: "HOD",
-                    icon: UserCheck,
-                  },
+                  // {
+                  //   role: "hod",
+                  //   label: "HOD",
+                  //   icon: UserCheck,
+                  // },
                   {
                     role: "staff",
                     label: "Staff Member",
@@ -304,7 +309,8 @@ const Login = () => {
 
             {/* Login Button */}
             <button
-              onClick={handleLogin}
+              type="submit"
+              
               disabled={!formValid || loading}
               className={`w-full py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center ${
                 formValid && !loading
@@ -324,11 +330,12 @@ const Login = () => {
                 </>
               )}
             </button>
+            </form>
 
             {/* Additional Options */}
             <div className="text-center pt-3">
               <a
-                href="#"
+                href="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors duration-200"
               >
                 Forgot your password?

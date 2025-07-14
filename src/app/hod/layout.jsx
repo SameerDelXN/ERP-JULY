@@ -1,7 +1,7 @@
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import React, { useState, useEffect } from "react";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, BookOpen, ChevronDown, LayoutDashboard } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
@@ -14,12 +14,12 @@ const hodSidebarItems = [
   {
     id: "overview",
     label: "Overview",
-    icon: "LayoutDashboard", // You'll need to import or define this icon
+    icon: LayoutDashboard, // You'll need to import or define this icon
   },
   {
     id: "academic-management",
     label: "Academic Management",
-    icon: "BookOpen", // You'll need to import or define this icon
+    icon: BookOpen, // You'll need to import or define this icon
     subItems: [
       { id: "courses", label: "Courses" },
       { id: "timetable", label: "Timetable" },

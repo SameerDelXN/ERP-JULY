@@ -42,7 +42,7 @@ export async function POST(req) {
       // Use findOne instead of find to get a single document
       const hodUser = await teacher.findOne({
         email,
-        role: "HOD",
+        role: "hod",
       });
 
       console.log("HOD User:", hodUser);

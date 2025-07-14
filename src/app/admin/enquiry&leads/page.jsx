@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   Search,
   Plus,
@@ -38,13 +38,36 @@ import LoadingComponent from "@/components/Loading";
 
 const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const [enquiry, setEnquiry] = useState(null);
+  const [counselor, setCounselor] = useState("");
 
   useEffect(() => {
     if (enquiryId && enquiries) {
       const foundEnquiry = enquiries.find((e) => e._id === enquiryId);
       setEnquiry(foundEnquiry || null);
+      // Fetch counselor details if enquiry has a counselorId
+      if (foundEnquiry?.counsellorId) {
+        fetchCounselor(foundEnquiry.counsellorId);
+      }
     }
   }, [enquiryId, enquiries]);
+
+  const fetchCounselor = async (counselorId) => {
+    try {
+      const res = await fetch(`/api/userData?id=${counselorId}`);
+      if (!res.ok) throw new Error('Failed to fetch counselor');
+      const data = await res.json();
+      const assignCounselor = data.users
+
+      assignCounselor.map(user =>{
+        if (user._id === counselorId) {
+          setCounselor(user.fullName)
+        }
+      })
+      
+    } catch (error) {
+      console.error('Error fetching counselor:', error);
+    }
+  };
 
   if (!enquiry) {
     return (
@@ -210,6 +233,20 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               icon={<MessageSquare className="w-5 h-5" />}
               label="Source"
               value={enquiry.source || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Enquiry Note"
+              value={enquiry.notes || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Assigned Counsellor"
+              value={counselor  || "Not Yet Assigned"}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />

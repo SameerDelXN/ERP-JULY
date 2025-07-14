@@ -25,6 +25,8 @@
         |-- admin
             |-- admission-applications
                 |-- page.jsx
+            |-- courses
+                |-- page.jsx
             |-- enquiry&leads
                 |-- page.jsx
             |-- layout.jsx
@@ -42,6 +44,12 @@
                 |-- logout
                     |-- route.js
                 |-- session
+                    |-- route.js
+            |-- check-verification
+                |-- route.js
+            |-- courses
+                |-- route.js
+                |-- [id]
                     |-- route.js
             |-- department
                 |-- route.js
@@ -61,6 +69,13 @@
                 |-- route.js
             |-- register
                 |-- route.js
+            |-- send-otp
+                |-- route.js
+            |-- send-verification-email
+                |-- route.js
+            |-- staff-performance
+                |-- [userId]
+                    |-- route.js
             |-- students
                 |-- [id]
                     |-- route.js
@@ -71,17 +86,23 @@
                         |-- route.js
                     |-- route.js
             |-- upload
+                |-- multiple
+                    |-- route.js
                 |-- route.js
             |-- userData
                 |-- route.js
                 |-- [id]
                     |-- route.js
+            |-- verify-email
+                |-- route.js
         |-- docs
             |-- sample birth cert.pdf
             |-- sample id proof.pdf
         |-- enquiry-form
             |-- page.jsx
         |-- favicon.ico
+        |-- forgot-password
+            |-- page.jsx
         |-- globals.css
         |-- hod
             |-- academic-management
@@ -97,6 +118,8 @@
         |-- models
             |-- academicSchema.js
             |-- admissionSchema.js
+            |-- course.js
+            |-- EmailVerification.js
             |-- enquirySchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
@@ -111,6 +134,8 @@
                 |-- page.jsx
             |-- layout.jsx
             |-- page.jsx
+            |-- profile
+                |-- page.jsx
         |-- student
             |-- assignments
                 |-- page.jsx
@@ -126,6 +151,10 @@
                 |-- page.jsx
             |-- schedule
                 |-- page.jsx
+        |-- verification-success
+            |-- page.jsx
+        |-- verify-email
+            |-- page.jsx
     |-- components
         |-- Avatar.jsx
         |-- Card.jsx

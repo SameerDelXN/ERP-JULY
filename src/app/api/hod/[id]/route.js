@@ -14,7 +14,7 @@ export async function GET(req, { params }) {
 
     // ✅ Find the HOD by ID
     const hod = await teacherSchema.findById(hodId);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json({
         error: 'HOD not found or invalid role'
       }, {

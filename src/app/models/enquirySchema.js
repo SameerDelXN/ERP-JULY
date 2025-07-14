@@ -48,6 +48,9 @@ const enquirySchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  notes:{
+    type: String,
+  },
 });
 delete mongoose.models.enquiry
 const enquiry = mongoose.models.enquiry|| mongoose.model('enquiry', enquirySchema);

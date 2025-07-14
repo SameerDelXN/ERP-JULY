@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Search,
-  Filter,
   Download,
   Eye,
   Edit2,
@@ -34,18 +33,48 @@ import {
   Home,
   School,
   FileCheck,
+  Upload,
+  IndianRupee,
+  Tent,
+  ShieldCheck,
 } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { useForm, Controller } from "react-hook-form";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import LoadingComponent from "@/components/Loading";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
   <div className="flex items-start gap-3">
     <div className={`p-2 rounded-lg ${bgColor} ${iconColor}`}>{icon}</div>
     <div>
       <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="font-medium text-gray-900">{value}</p>
+      <p className="font-medium text-gray-900">{value || "N/A"}</p>
+    </div>
+  </div>
+);
+const DetailCardDocuments = ({
+  icon,
+  label,
+  value,
+  bgColor,
+  iconColor,
+  fileUrl,
+  viewIcon,
+}) => (
+  <div className="flex items-start gap-3">
+    <div className={`p-2 rounded-lg ${bgColor} ${iconColor}`}>{icon}</div>
+    <div>
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <div className="flex items-center gap-2">
+        {viewIcon}
+        <p className="font-medium text-gray-900">
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+            {value || "N/A"}
+          </a>
+        </p>
+      </div>
     </div>
   </div>
 );
@@ -55,12 +84,10 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
 
   useEffect(() => {
     if (admissionId && admission) {
-      const foundEnquiry = admission.find((e) => e._id === admissionId);
+      const foundEnquiry = admission.find((e) => e?._id === admissionId);
       setApplication(foundEnquiry || null);
     }
   }, [admissionId, admission]);
-
-  console.log(application);
 
   if (!application) {
     return (
@@ -83,15 +110,11 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "New":
-        return <Zap className="w-4 h-4" />;
-      case "In Progress":
+      case "inProcess":
         return <Clock className="w-4 h-4" />;
-      case "Contacted":
-        return <Phone className="w-4 h-4" />;
-      case "Converted":
-        return <Target className="w-4 h-4" />;
-      case "Lost":
+      case "approved":
+        return <CheckCircle className="w-4 h-4" />;
+      case "rejected":
         return <XCircle className="w-4 h-4" />;
       default:
         return <Activity className="w-4 h-4" />;
@@ -100,20 +123,18 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "New":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "In Progress":
-        return "bg-amber-50 text-amber-700 border-amber-200";
-      case "Contacted":
-        return "bg-purple-50 text-purple-700 border-purple-200";
-      case "Converted":
+      case "inProcess":
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "approved":
         return "bg-green-50 text-green-700 border-green-200";
-      case "Lost":
+      case "rejected":
         return "bg-red-50 text-red-700 border-red-200";
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
+
+  console.log(application);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -144,18 +165,18 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
           {/* Status Banner */}
           <div
             className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(
-              application.status
+              application?.status
             )}`}
           >
-            {getStatusIcon(application.status)}
+            {getStatusIcon(application?.status)}
             <div>
               <p className="font-semibold">
-                Status: {application.status || "Unknown"}
+                Status: {application?.status || "Unknown"}
               </p>
               <p className="text-sm opacity-80">
                 Last updated:{" "}
-                {application.createdAt
-                  ? new Date(application.createdAt).toLocaleDateString()
+                {application.updatedAt
+                  ? new Date(application.updatedAt).toLocaleDateString()
                   : "N/A"}
               </p>
             </div>
@@ -166,166 +187,214 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<User className="w-5 h-5" />}
               label="Full Name"
-              value={
-                <span className="group relative inline-block">
-                  {application.fullName ? (
-                    <>
-                      {application.fullName.substring(0, 25)}
-                      {application.fullName.length > 25 && (
-                        <>
-                          <span>...</span>
-                          <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
-                            {application.fullName}
-                          </span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    "N/A"
-                  )}
-                </span>
-              }
+              value={application?.fullName}
               bgColor="bg-blue-50"
               iconColor="text-blue-600"
             />
+
             <DetailCard
               icon={<Mail className="w-5 h-5" />}
               label="Email Address"
-              value={application.email || "N/A"}
+              value={application.email}
               bgColor="bg-green-50"
               iconColor="text-green-600"
             />
+
             <DetailCard
               icon={<Phone className="w-5 h-5" />}
-              label="Phone Number"
-              value={application.mobileNumber || "N/A"}
+              label="Student WhatsApp"
+              value={application.studentWhatsappNumber}
               bgColor="bg-purple-50"
               iconColor="text-purple-600"
             />
+
             <DetailCard
               icon={<GraduationCap className="w-5 h-5" />}
-              label="Course Interested"
-              value={application.courseName || "N/A"}
+              label="Branch"
+              value={application.branch}
               bgColor="bg-orange-50"
               iconColor="text-orange-600"
             />
+
             <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Date of Birth"
-              value={
-                application.dateOfBirth
-                  ? new Date(application.dateOfBirth).toLocaleDateString()
-                  : "N/A"
-              }
+              value={application.dateOfBirth}
               bgColor="bg-teal-50"
               iconColor="text-teal-600"
             />
-            <DetailCard
-              icon={<MessageSquare className="w-5 h-5" />}
-              label="Nationality"
-              value={application.nationality || "N/A"}
-              bgColor="bg-pink-50"
-              iconColor="text-pink-600"
-            />
+
             <DetailCard
               icon={<MessageSquare className="w-5 h-5" />}
               label="Gender"
-              value={application.gender || "N/A"}
+              value={application.gender}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
-            <DetailCard
-              icon={<MessageSquare className="w-5 h-5" />}
-              label="Father Name"
-              value={application.fatherName || "N/A"}
-              bgColor="bg-pink-50"
-              iconColor="text-pink-600"
-            />
+
             <DetailCard
               icon={<MessageSquare className="w-5 h-5" />}
               label="Mother Name"
-              value={application.motherName || "N/A"}
+              value={application.motherName}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
+
             <DetailCard
               icon={<Phone className="w-5 h-5" />}
-              label="Parent Number"
-              value={application.parentMobile || "N/A"}
+              label="Parent WhatsApp"
+              value={application.fatherGuardianWhatsappNumber}
               bgColor="bg-purple-50"
               iconColor="text-purple-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="Parent Email"
-              value={application.parentEmail || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Program Type"
+              value={application.programType}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="Address"
-              value={application.addressLine || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Year"
+              value={application.year}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="city"
-              value={application.city || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Round"
+              value={application.round}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="state"
-              value={application.state || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Seat Type"
+              value={application.seatType}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="pincode"
-              value={application.pincode || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Category"
+              value={application.admissionCategoryDTE}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="country"
-              value={application.country || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Caste (as per LC)"
+              value={application.casteAsPerLC}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="currentSchoolName"
-              value={application.currentSchoolName || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Domicile"
+              value={application.domicile}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="currentClass"
-              value={application.currentClass || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<Tent className="w-5 h-5" />}
+              label="Nationality"
+              value={application.nationality}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="academicYear"
-              value={application.academicYear || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<IndianRupee className="w-5 h-5" />}
+              label="Family Income"
+              value={
+                application.familyIncome
+                  ? `₹${application.familyIncome}`
+                  : "N/A"
+              }
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
+
             <DetailCard
-              icon={<Phone className="w-5 h-5" />}
-              label="preferredMedium"
-              value={application.preferredMedium || "N/A"}
-              bgColor="bg-purple-50"
-              iconColor="text-purple-600"
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Year"
+              value={application.admissionYear}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
+
+            <DetailCard
+              icon={<ShieldCheck className="w-5 h-5" />}
+              label="PRN"
+              value={application.prn || "Not Generated"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
             />
           </div>
+
+          {/* Address Section */}
+          {application.address && application.address.length > 0 && (
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Address</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {application.address.map((addr, index) => (
+                  <React.Fragment key={index}>
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="Address Line"
+                      value={addr.addressLine}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="City"
+                      value={addr.city}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="State"
+                      value={addr.state}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="Pincode"
+                      value={addr.pincode}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                    <DetailCard
+                      icon={<MapPin className="w-5 h-5" />}
+                      label="Country"
+                      value={addr.country}
+                      bgColor="bg-purple-50"
+                      iconColor="text-purple-600"
+                    />
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Documents Section */}
           <div className="bg-gray-50 rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -333,21 +402,24 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
             </div>
-            {!application.documents && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {Object.entries(application.documents[0])
-                  .filter(([key]) => key !== "_id")
-                  .map(([key, doc]) => (
-                    <DetailCard
-                      key={key}
-                      icon={<FileTextIcon className="w-5 h-5" />}
-                      label={key}
-                      value={doc.fileName || "N/A"}
-                      bgColor="bg-purple-50"
-                      iconColor="text-purple-600"
-                    />
-                  ))}
+
+            {application.documents && application.documents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {application.documents.map((doc, index) => (
+                  <DetailCardDocuments
+                    key={index}
+                    icon={<FileTextIcon className="w-5 h-5" />}
+                    label={doc.type || `Document ${index + 1}`}
+                    value={doc.type}
+                    fileUrl={doc.fileUrl}
+                    bgColor="bg-purple-50"
+                    viewIcon={<Eye className="w-4 h-4" />}
+                    iconColor="text-purple-600"
+                  />
+                ))}
               </div>
+            ) : (
+              <p className="text-gray-500">No documents uploaded</p>
             )}
           </div>
         </div>
@@ -366,45 +438,110 @@ const FormField = ({
   icon = null,
   error = null,
   required = false,
+  pattern = null,
+  minLength,
+  maxLength,
+  min = null,
+  max = null,
+  validate = null,
+  alphaOnly = false,
+  numericOnly = false,
+  maxDate = null,
   ...props
-}) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    <Controller
-      name={name}
-      control={control}
-      render={({ field }) => {
-        if (type === "select") {
-          return (
-            <select
-              {...field}
-              className={`w-full px-3 py-2 border ${
-                error ? "border-red-500" : "border-gray-300"
-              } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-              {...props}
-            >
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          );
-        }
+}) => {
+  const handleTextInput = (e) => {
+    // Only allow alphabets and spaces for text fields
+    if (type === "text" && alphaOnly) {
+      e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+    }
+    // Only allow numbers for numeric fields
+    if (type === "number" || (type === "tel" && numericOnly)) {
+      e.target.value = e.target.value.replace(/\D/g, "");
+    }
+  };
+  // Filter out custom props that shouldn't be passed to DOM elements
+  const inputProps = {
+    ...props,
+    ...(type === "date" && maxDate ? { max: maxDate } : {}),
+  };
 
-        if (type === "date") {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <Controller
+        name={name}
+        control={control}
+        rules={{
+          required: required ? `${label} is required` : false,
+          pattern,
+          minLength,
+          maxLength,
+          min,
+          max,
+          validate,
+        }}
+        render={({ field }) => {
+          if (type === "select") {
+            return (
+              <select
+                {...field}
+                className={`w-full px-3 py-2 border ${
+                  error ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                {...inputProps}
+              >
+                {options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            );
+          }
+
+          if (type === "date") {
+            return (
+              <div className="relative">
+                <input
+                  {...field}
+                  type="date"
+                  value={field.value || ""}
+                  className={`w-full px-3 py-2 border ${
+                    error ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  placeholder={placeholder}
+                  max={props.maxDate || undefined}
+                  {...inputProps}
+                />
+                {icon && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    {icon}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <div className="relative">
               <input
                 {...field}
-                type="date"
+                type={type}
+                value={field.value || ""}
+                minLength={minLength}
+                maxLength={maxLength}
+                onChange={(e) => {
+                  handleTextInput(e);
+                  field.onChange(e);
+                }}
                 className={`w-full px-3 py-2 border ${
                   error ? "border-red-500" : "border-gray-300"
                 } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 placeholder={placeholder}
-                {...props}
+                pattern={pattern}
+                {...inputProps}
               />
               {icon && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -413,31 +550,12 @@ const FormField = ({
               )}
             </div>
           );
-        }
-
-        return (
-          <div className="relative">
-            <input
-              {...field}
-              type={type}
-              className={`w-full px-3 py-2 border ${
-                error ? "border-red-500" : "border-gray-300"
-              } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-              placeholder={placeholder}
-              {...props}
-            />
-            {icon && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                {icon}
-              </div>
-            )}
-          </div>
-        );
-      }}
-    />
-    {error && <p className="mt-1 text-sm text-red-600">{error.message}</p>}
-  </div>
-);
+        }}
+      />
+      {error && <p className="mt-1 text-sm text-red-600">{error.message}</p>}
+    </div>
+  );
+};
 
 const DocumentField = ({
   name,
@@ -468,216 +586,309 @@ const DocumentField = ({
   </div>
 );
 
-const PersonalDetailsStep = ({ control, errors }) => (
-  <div className="space-y-4">
-    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-      <User className="w-5 h-5 text-blue-600" />
-      Personal Details
-    </h3>
+const AddressFields = ({ control, errors, index }) => (
+  <div className="space-y-4 border border-gray-200 p-4 rounded-lg">
+    <h4 className="font-medium text-gray-700">
+      Address {index > 0 ? index + 1 : ""}
+    </h4>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
         control={control}
-        name="fullName"
-        label="Full Name"
+        name={`address[${index}].addressLine`}
+        label="Address Line"
         type="text"
-        placeholder="As per mark sheet (CAPITAL)"
-        error={errors.fullName}
-        required
+        error={errors.address?.[index]?.addressLine}
+        maxLength={200}
       />
-
       <FormField
         control={control}
-        name="dateOfBirth"
-        label="Date of Birth"
-        type="date"
-        icon={<Calendar className="w-4 h-4" />}
-        error={errors.dateOfBirth}
-        required
-      />
-
-      <FormField
-        control={control}
-        name="gender"
-        label="Gender"
-        type="select"
-        options={[
-          { value: "", label: "Select Gender" },
-          { value: "Male", label: "Male" },
-          { value: "Female", label: "Female" },
-          { value: "Other", label: "Other" },
-        ]}
-        error={errors.gender}
-        required
-      />
-
-      <FormField
-        control={control}
-        name="nationality"
-        label="Nationality"
-        type="text"
-        error={errors.nationality}
-        required
-      />
-
-      <FormField
-        control={control}
-        name="category"
-        label="Category"
-        type="select"
-        options={[
-          { value: "", label: "Select Category" },
-          { value: "Open", label: "Open" },
-          { value: "SC", label: "SC" },
-          { value: "ST", label: "ST" },
-          { value: "OBC", label: "OBC" },
-          { value: "EWS", label: "EWS" },
-          { value: "NT", label: "NT" },
-          { value: "SBC", label: "SBC" },
-          { value: "VJ", label: "VJ" },
-          { value: "Other", label: "Other" },
-        ]}
-      />
-
-      <FormField
-        control={control}
-        name="mobileNumber"
-        label="Mobile Number"
-        type="tel"
-        placeholder="10-digit mobile number"
-        icon={<Phone className="w-4 h-4" />}
-        error={errors.mobileNumber}
-        required
-      />
-
-      <FormField
-        control={control}
-        name="email"
-        label="Email"
-        type="email"
-        icon={<Mail className="w-4 h-4" />}
-        error={errors.email}
-        required
-      />
-    </div>
-  </div>
-);
-
-const ParentDetailsStep = ({ control, errors }) => (
-  <div className="space-y-4">
-    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-      <Users className="w-5 h-5 text-blue-600" />
-      Parent/Guardian Details
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <FormField
-        control={control}
-        name="fatherName"
-        label="Father's Name"
-        type="text"
-      />
-
-      <FormField
-        control={control}
-        name="motherName"
-        label="Mother's Name"
-        type="text"
-      />
-
-      <FormField
-        control={control}
-        name="guardianName"
-        label="Guardian's Name"
-        type="text"
-        placeholder="If applicable"
-      />
-
-      <FormField
-        control={control}
-        name="parentMobile"
-        label="Parent/Guardian Mobile"
-        type="tel"
-        icon={<Phone className="w-4 h-4" />}
-        error={errors.parentMobile}
-      />
-
-      <FormField
-        control={control}
-        name="parentEmail"
-        label="Parent/Guardian Email"
-        type="email"
-        icon={<Mail className="w-4 h-4" />}
-        error={errors.parentEmail}
-      />
-
-      <FormField
-        control={control}
-        name="familyIncome"
-        label="Annual Family Income (₹)"
-        type="number"
-        error={errors.familyIncome}
-      />
-    </div>
-  </div>
-);
-
-const AddressDetailsStep = ({ control, errors }) => (
-  <div className="space-y-4">
-    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-      <Home className="w-5 h-5 text-blue-600" />
-      Address Details
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="md:col-span-2">
-        <FormField
-          control={control}
-          name="addressLine"
-          label="Address Line"
-          type="text"
-          placeholder="House no, street, area"
-          error={errors.addressLine}
-          required
-        />
-      </div>
-
-      <FormField
-        control={control}
-        name="city"
+        name={`address[${index}].city`}
         label="City"
         type="text"
-        error={errors.city}
-        required
+        alphaOnly={true}
+        error={errors.address?.[index]?.city}
+        maxLength={50}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
-
       <FormField
         control={control}
-        name="state"
+        name={`address[${index}].state`}
         label="State"
         type="text"
-        error={errors.state}
-        required
+        alphaOnly={true}
+        error={errors.address?.[index]?.state}
+        maxLength={50}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
-
       <FormField
         control={control}
-        name="pincode"
+        name={`address[${index}].pincode`}
         label="Pincode"
-        type="text"
-        placeholder="6-digit pincode"
-        error={errors.pincode}
+        type="number"
+        error={errors.address?.[index]?.pincode}
         required
+        numericOnly={true}
+        minLength={6}
+        maxLength={6}
+        pattern={{
+          value: /^[0-9]{6}$/,
+          message: "Must be a valid 6-digit pincode",
+        }}
       />
-
       <FormField
         control={control}
-        name="country"
+        name={`address[${index}].country`}
         label="Country"
         type="text"
-        error={errors.country}
-        required
+        alphaOnly={true}
+        error={errors.address?.[index]?.country}
+        maxLength={50}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
     </div>
   </div>
 );
+
+const PersonalDetailsStep = ({ control, errors }) => {
+  const validateEmail = (value) => {
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    return emailRegex.test(value) || "Invalid email address";
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <User className="w-5 h-5 text-blue-600" />
+        Personal Details
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="firstName"
+          label="First Name"
+          type="text"
+          placeholder="Enter First Name"
+          error={errors?.firstName}
+          required
+          alphaOnly={true}
+          minLength={2}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+        <FormField
+          control={control}
+          name="middleName"
+          label="Middle Name"
+          type="text"
+          placeholder="Enter Middle Name"
+          error={errors?.middleName}
+          required
+          alphaOnly={true}
+          minLength={3}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+        <FormField
+          control={control}
+          name="lastName"
+          label="Last Name"
+          type="text"
+          placeholder="Enter Last Name"
+          error={errors?.lastName}
+          required
+          alphaOnly={true}
+          minLength={3}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+        <FormField
+          control={control}
+          name="fullName"
+          label="Full Name"
+          type="text"
+          placeholder="As per mark sheet"
+          error={errors?.fullName}
+          required
+          alphaOnly={true}
+          minLength={3}
+          maxLength={60}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+        <FormField
+          control={control}
+          name="nameAsPerAadhar"
+          label="Name as per Aadhar"
+          type="text"
+          placeholder="As per Aadhar card"
+          error={errors?.nameAsPerAadhar}
+          required
+          alphaOnly={true}
+          minLength={3}
+          maxLength={60}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+
+        <FormField
+          control={control}
+          name="dateOfBirth"
+          label="Date of Birth"
+          type="date"
+          error={errors.dateOfBirth}
+          required
+          maxDate={new Date().toISOString().split("T")[0]}
+          validate={(value) => {
+            const selectedDate = new Date(value);
+            const today = new Date();
+            return (
+              selectedDate <= today || "Date of birth cannot be in the future"
+            );
+          }}
+        />
+
+        <FormField
+          control={control}
+          name="gender"
+          label="Gender"
+          type="select"
+          options={[
+            { value: "", label: "Select Gender" },
+            { value: "Male", label: "Male" },
+            { value: "Female", label: "Female" },
+            { value: "Other", label: "Other" },
+          ]}
+          error={errors.gender}
+          required
+        />
+
+        <FormField
+          control={control}
+          name="email"
+          label="Email"
+          type="email"
+          icon={<Mail className="w-4 h-4" />}
+          error={errors?.email}
+          required
+          validate={validateEmail}
+        />
+
+        <FormField
+          control={control}
+          name="studentWhatsappNumber"
+          label="Student WhatsApp Number"
+          type="tel"
+          placeholder="10-digit mobile number"
+          icon={<Phone className="w-4 h-4" />}
+          error={errors.studentWhatsappNumber}
+          required
+          numericOnly={true}
+          minLength={10}
+          maxLength={10}
+          pattern={{
+            value: /^[0-9]{10}$/,
+            message: "Must be a valid 10-digit number",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const FamilyDetailsStep = ({ control, errors }) => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <Users className="w-5 h-5 text-blue-600" />
+        Family Details
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="motherName"
+          label="Mother's Name"
+          type="text"
+          error={errors.motherName}
+          alphaOnly={true}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+
+        <FormField
+          control={control}
+          name="fatherGuardianWhatsappNumber"
+          label="Father/Guardian WhatsApp"
+          type="tel"
+          icon={<Phone className="w-4 h-4" />}
+          error={errors.fatherGuardianWhatsappNumber}
+          numericOnly={true}
+          minLength={10}
+          maxLength={10}
+          pattern={{
+            value: /^[0-9]{10}$/,
+            message: "Must be a valid 10-digit number",
+          }}
+        />
+
+        <FormField
+          control={control}
+          name="motherMobileNumber"
+          label="Mother's Mobile"
+          type="tel"
+          icon={<Phone className="w-4 h-4" />}
+          error={errors.motherMobileNumber}
+          numericOnly={true}
+          minLength={10}
+          maxLength={10}
+          pattern={{
+            value: /^[0-9]{10}$/,
+            message: "Must be a valid 10-digit number",
+          }}
+        />
+
+        <FormField
+          control={control}
+          name="familyIncome"
+          label="Annual Family Income (₹)"
+          type="number"
+          numericOnly={true}
+          error={errors.familyIncome}
+          min={0}
+          maxLength={8}
+          validate={(value) => {
+            if (value === "" || value === null) return true;
+            return !isNaN(value) || "Must be a number";
+          }}
+        />
+      </div>
+    </div>
+  );
+};
 
 const AcademicDetailsStep = ({ control, errors }) => (
   <div className="space-y-4">
@@ -686,6 +897,16 @@ const AcademicDetailsStep = ({ control, errors }) => (
       Academic Information
     </h3>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <FormField
+        control={control}
+        name="admissionYear"
+        label="Admission Year"
+        type="text"
+        placeholder="e.g. 2024-25"
+        error={errors.admissionYear}
+        required
+      />
+
       <FormField
         control={control}
         name="programType"
@@ -703,17 +924,23 @@ const AcademicDetailsStep = ({ control, errors }) => (
 
       <FormField
         control={control}
-        name="courseName"
-        label="Course Name"
+        name="branch"
+        label="Branch/Course"
         type="text"
-        error={errors.courseName}
+        alphaOnly={true}
+        error={errors.branch}
         required
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
         control={control}
-        name="yearOfAdmission"
-        label="Year of Admission"
+        name="year"
+        label="Year"
         type="select"
         options={[
           { value: "", label: "Select Year" },
@@ -722,7 +949,7 @@ const AcademicDetailsStep = ({ control, errors }) => (
           { value: "3rd Year", label: "3rd Year" },
           { value: "4th Year", label: "4th Year" },
         ]}
-        error={errors.yearOfAdmission}
+        error={errors.year}
         required
       />
 
@@ -738,6 +965,8 @@ const AcademicDetailsStep = ({ control, errors }) => (
           { value: "CAP3", label: "CAP Round 3" },
           { value: "Institute Level", label: "Institute Level" },
         ]}
+        error={errors.round}
+        required
       />
 
       <FormField
@@ -752,6 +981,8 @@ const AcademicDetailsStep = ({ control, errors }) => (
           { value: "Management", label: "Management" },
           { value: "TFWS", label: "TFWS" },
         ]}
+        error={errors.seatType}
+        required
       />
 
       <FormField
@@ -765,13 +996,32 @@ const AcademicDetailsStep = ({ control, errors }) => (
           { value: "Institute Level", label: "Institute Level" },
           { value: "Against CAP", label: "Against CAP" },
         ]}
+        error={errors.admissionCategoryDTE}
+        required
       />
-
+    </div>
+  </div>
+);
+const BackgroundDetailsStep = ({ control, errors }) => (
+  <div className="space-y-4">
+    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <User className="w-5 h-5 text-blue-600" />
+      Background Information
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
         control={control}
         name="casteAsPerLC"
         label="Caste as per LC"
         type="text"
+        error={errors.casteAsPerLC}
+        alphaOnly={true}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -779,6 +1029,14 @@ const AcademicDetailsStep = ({ control, errors }) => (
         name="subCasteAsPerLC"
         label="Sub-Caste as per LC"
         type="text"
+        error={errors.subCasteAsPerLC}
+        alphaOnly={true}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -786,6 +1044,30 @@ const AcademicDetailsStep = ({ control, errors }) => (
         name="domicile"
         label="Domicile"
         type="text"
+        error={errors.domicile}
+        alphaOnly={true}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
+      />
+
+      <FormField
+        control={control}
+        name="nationality"
+        label="Nationality"
+        type="text"
+        error={errors.nationality}
+        alphaOnly={true}
+        required
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -793,98 +1075,94 @@ const AcademicDetailsStep = ({ control, errors }) => (
         name="religionAsPerLC"
         label="Religion as per LC"
         type="text"
-      />
-    </div>
-
-    <h3 className="text-lg font-semibold text-gray-900 mt-6 flex items-center gap-2">
-      <BookOpen className="w-5 h-5 text-blue-600" />
-      Academic Details
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <FormField
-        control={control}
-        name="qualifyingExam"
-        label="Qualifying Exam"
-        type="text"
-        placeholder="e.g., HSC, Graduation"
+        error={errors.religionAsPerLC}
+        alphaOnly={true}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
         control={control}
-        name="marksObtained"
-        label="Marks Obtained"
-        type="number"
-      />
-
-      <FormField
-        control={control}
-        name="totalMarks"
-        label="Total Marks"
-        type="number"
-      />
-
-      <FormField
-        control={control}
-        name="percentage"
-        label="Percentage"
-        type="number"
-        step="0.01"
-        min="0"
-        max="100"
-      />
-
-      <FormField control={control} name="grade" label="Grade" type="text" />
-
-      <FormField
-        control={control}
-        name="monthYearOfPassing"
-        label="Month & Year of Passing"
-        type="text"
-        placeholder="e.g., Mar 2023"
+        name="isForeignNational"
+        label="Is Foreign National?"
+        type="select"
+        options={[
+          { value: "", label: "Select" },
+          { value: "true", label: "Yes" },
+          { value: "false", label: "No" },
+        ]}
+        error={errors.isForeignNational}
       />
     </div>
   </div>
 );
 
 const DocumentUploadStep = ({
-  control,
-  errors,
-  watch,
-  uploadingFiles,
-  handleFileChange,
-}) => {
-  const renderFileStatus = (fieldName) => {
-    const value = watch(fieldName);
-    const isUploading = uploadingFiles[fieldName];
+    control,
+    errors,
+    watch,
+    uploadingFiles,
+    handleFileChange,
+  }) => {
+    const renderFileStatus = (fieldName) => {
+      const value = watch(`documents.${fieldName}`);
+      const isUploading = uploadingFiles[fieldName];
 
-    if (isUploading) {
-      return (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <LoadingComponent />
-        </div>
-      );
-    }
+      if (isUploading) {
+        return (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Uploading...</span>
+          </div>
+        );
+      }
 
-    if (Array.isArray(value) && value.length > 0) {
-      return (
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        return <span className="text-sm text-gray-500">No file uploaded</span>;
+      }
+
+      if (Array.isArray(value)) {
+        return (
+          <div className="flex flex-col gap-1">
+            {value.map((doc, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <File className="w-4 h-4 text-gray-500" />
+                <span className="text-sm">
+                  {doc.type || `Document ${index + 1}`}
+                </span>
+                <a
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline text-xs"
+                >
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+  return (
         <div className="flex items-center gap-2">
           <File className="w-4 h-4 text-gray-500" />
-          <span className="text-sm">{value.length} files uploaded</span>
+          <span className="text-sm">{value.type}</span>
+          <a
+            href={value.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline text-xs"
+          >
+            View
+          </a>
         </div>
       );
-    }
-
-    if (value) {
-      return (
-        <div className="flex items-center gap-2">
-          <File className="w-4 h-4 text-gray-500" />
-          <span className="text-sm">{value}</span>
-        </div>
-      );
-    }
-
-    return <span className="text-sm text-gray-500">No file uploaded</span>;
-  };
+    };
 
   return (
     <div className="space-y-4">
@@ -894,19 +1172,19 @@ const DocumentUploadStep = ({
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DocumentField
-          name="photograph"
-          label="Photograph"
-          accept="image/*"
-          renderStatus={() => renderFileStatus("photograph")}
-          onChange={(e) => handleFileChange("photograph", e)}
+          name="aadharCard"
+          label="Aadhar Card"
+          accept=".pdf,.jpg,.png"
+          renderStatus={() => renderFileStatus("aadharCard")}
+          onChange={(e) => handleFileChange("aadharCard", e)}
         />
 
         <DocumentField
-          name="signature"
-          label="Signature"
-          accept="image/*"
-          renderStatus={() => renderFileStatus("signature")}
-          onChange={(e) => handleFileChange("signature", e)}
+          name="lcCertificate"
+          label="LC Certificate"
+          accept=".pdf,.jpg,.png"
+          renderStatus={() => renderFileStatus("lcCertificate")}
+          onChange={(e) => handleFileChange("lcCertificate", e)}
         />
 
         <DocumentField
@@ -919,29 +1197,50 @@ const DocumentUploadStep = ({
         />
 
         <DocumentField
-          name="transferCertificate"
-          label="Transfer Certificate"
+          name="tcCertificate"
+          label="TC Certificate"
           accept=".pdf,.jpg,.png"
-          renderStatus={() => renderFileStatus("transferCertificate")}
-          onChange={(e) => handleFileChange("transferCertificate", e)}
+          renderStatus={() => renderFileStatus("tcCertificate")}
+          onChange={(e) => handleFileChange("tcCertificate", e)}
         />
 
         <DocumentField
-          name="migrationCertificate"
-          label="Migration Certificate"
+          name="incomeCertificate"
+          label="Income Certificate"
           accept=".pdf,.jpg,.png"
-          renderStatus={() => renderFileStatus("migrationCertificate")}
-          onChange={(e) => handleFileChange("migrationCertificate", e)}
+          renderStatus={() => renderFileStatus("incomeCertificate")}
+          onChange={(e) => handleFileChange("incomeCertificate", e)}
         />
 
         <DocumentField
-          name="undertakingDocument"
-          label="Undertaking Document"
+          name="casteCertificate"
+          label="Caste Certificate"
           accept=".pdf,.jpg,.png"
-          renderStatus={() => renderFileStatus("undertakingDocument")}
-          onChange={(e) => handleFileChange("undertakingDocument", e)}
+          renderStatus={() => renderFileStatus("casteCertificate")}
+          onChange={(e) => handleFileChange("casteCertificate", e)}
         />
       </div>
+    </div>
+  );
+};
+
+const AddressStep = ({ control, errors, watch }) => {
+  const addresses = watch("address") || [{}];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <MapPin className="w-5 h-5 text-blue-600" />
+        Address Information
+      </h3>
+      {addresses.map((_, index) => (
+        <AddressFields
+          key={index}
+          control={control}
+          errors={errors}
+          index={index}
+        />
+      ))}
     </div>
   );
 };
@@ -960,8 +1259,51 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
     watch,
     trigger,
   } = useForm({
-    defaultValues: admission || {},
+    defaultValues: admission || {
+      isForeignNational: "false",
+      status: "inProcess",
+      address: [{}], // Initialize with one empty address object
+      documents: {
+        aadharCard: "",
+        lcCertificate: "",
+        markSheets: [],
+        tcCertificate: "",
+        incomeCertificate: "",
+        casteCertificate: "",
+      },
+    },
   });
+
+   useEffect(() => {
+    if (admission?.documents) {
+      const existingDocs = admission.documents;
+      
+      // Group mark sheets separately
+      const markSheets = existingDocs.filter(doc => doc.type === "Mark Sheet");
+      
+      // Set individual documents
+      setValue('documents.aadharCard', 
+        existingDocs.find(doc => doc.type === "Aadhar Card") || null);
+      setValue('documents.lcCertificate', 
+        existingDocs.find(doc => doc.type === "LC Certificate") || null);
+      setValue('documents.tcCertificate', 
+        existingDocs.find(doc => doc.type === "TC Certificate") || null);
+      setValue('documents.incomeCertificate', 
+        existingDocs.find(doc => doc.type === "Income Certificate") || null);
+      setValue('documents.casteCertificate', 
+        existingDocs.find(doc => doc.type === "Caste Certificate") || null);
+      setValue('documents.markSheets', markSheets);
+    }
+  }, [admission, setValue]);
+
+  const steps = [
+    { id: 1, name: "Personal", icon: <User size={16} /> },
+    { id: 2, name: "Family", icon: <Users size={16} /> },
+    { id: 3, name: "Academic", icon: <School size={16} /> },
+    { id: 4, name: "Background", icon: <User size={16} /> },
+    { id: 5, name: "Address", icon: <MapPin size={16} /> },
+    { id: 6, name: "Documents", icon: <FileCheck size={16} /> },
+  ];
 
   const validateStep = async (step) => {
     let fields = [];
@@ -971,21 +1313,31 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
           "fullName",
           "dateOfBirth",
           "gender",
-          "nationality",
-          "mobileNumber",
           "email",
+          "studentWhatsappNumber",
         ];
         break;
       case 2:
-        fields = []; // Parent details are optional
+        fields = []; // Family details are optional
         break;
       case 3:
-        fields = ["addressLine", "city", "state", "pincode", "country"];
+        fields = [
+          "admissionYear",
+          "programType",
+          "branch",
+          "year",
+          "round",
+          "seatType",
+          "admissionCategoryDTE",
+        ];
         break;
       case 4:
-        fields = ["programType", "courseName", "yearOfAdmission"];
+        fields = []; // Background details are optional
         break;
       case 5:
+        fields = []; // Address is optional
+        break;
+      case 6:
         fields = []; // Documents are optional
         break;
       default:
@@ -996,85 +1348,179 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
     return result;
   };
 
-  const steps = [
-    { id: 1, name: "Personal", icon: <User size={16} /> },
-    { id: 2, name: "Parent", icon: <Users size={16} /> },
-    { id: 3, name: "Address", icon: <Home size={16} /> },
-    { id: 4, name: "Academic", icon: <School size={16} /> },
-    { id: 5, name: "Documents", icon: <FileCheck size={16} /> },
-  ];
+  const handleFileChange = async (fieldName, e) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-  const handleFileUpload = async (fieldName, file) => {
+    // Check file sizes before proceeding
+    const files = Array.from(fileList);
+    const maxSize = 256 * 1024; // 256KB in bytes
+    const oversizedFiles = files.filter((file) => file.size > maxSize);
+
+    if (oversizedFiles.length > 0) {
+      toast.error(
+        `Some files exceed 256KB limit: ${oversizedFiles
+          .map((f) => f.name)
+          .join(", ")}`
+      );
+      return;
+    }
+
     setUploadingFiles((prev) => ({ ...prev, [fieldName]: true }));
 
-    // Simulate file upload
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const formData = new FormData();
+      const documentTypeMap = {
+        aadharCard: "Aadhar Card",
+        lcCertificate: "LC Certificate",
+        markSheets: "Mark Sheets",
+        tcCertificate: "TC Certificate",
+        incomeCertificate: "Income Certificate",
+        casteCertificate: "Caste Certificate",
+      };
 
-    // In a real app, you would upload to cloud storage here
-    const fileName = `uploaded_${fieldName}_${Date.now()}.${file.name
-      .split(".")
-      .pop()}`;
+      if (fieldName !== "markSheets") {
+        // Single file upload
+        formData.append("files", files[0]);
+        formData.append("fieldName", fieldName);
+        formData.append("documentType", documentTypeMap[fieldName]);
 
-    setValue(fieldName, fileName);
-    setUploadingFiles((prev) => ({ ...prev, [fieldName]: false }));
-    return fileName;
-  };
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
 
-  const handleFileChange = async (fieldName, e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+        if (!response.ok) throw new Error("Failed to upload file");
+        const result = await response.json();
 
-    if (fieldName === "markSheets") {
-      const fileNames = [];
-      for (let i = 0; i < files.length; i++) {
-        const fileName = await handleFileUpload(fieldName, files[i]);
-        fileNames.push(fileName);
+        console.log("Result : ",result);
+        
+
+        setValue(`documents.${fieldName}`, {
+          type: documentTypeMap[fieldName],
+          fileName: files[0].name,
+          fileUrl: result.documentUrl,
+          mimeType: files[0].type,
+        });
+      } else {
+        // Multiple files upload (markSheets)
+        files.forEach((file) => {
+          formData.append("files", file);
+        });
+        formData.append("fieldName", fieldName);
+        formData.append("documentType", "Mark Sheets");
+
+        const response = await fetch("/api/upload/multiple", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error("Failed to upload files");
+        const result = await response.json();
+
+        const markSheetDocuments = files.map((file, index) => ({
+          type: "Mark Sheet",
+          fileName: file.name,
+          fileUrl: result?.uploadedFiles[index].documentUrl,
+          mimeType: file.type,
+        }));
+
+        setValue("documents.markSheets", markSheetDocuments);
       }
-      setValue(fieldName, fileNames);
-    } else {
-      await handleFileUpload(fieldName, files[0]);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      toast.error("Failed to upload files");
+    } finally {
+      setUploadingFiles((prev) => ({ ...prev, [fieldName]: false }));
     }
   };
 
   const onSubmit = async (data) => {
-    // setIsSubmitting(true);
-    try {
-      const isUpdate = !!admission?._id;
-      const url = isUpdate
-        ? `/api/admission/${admission._id}`
-        : "/api/admission";
-      const method = isUpdate ? "PUT" : "POST";
+  setIsSubmitting(true);
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+  try {
+    const isUpdate = !!admission?._id;
+    const url = isUpdate
+      ? `/api/admission/${admission?._id}`
+      : "/api/admission";
+    const method = isUpdate ? "PUT" : "POST";
 
-      if (!response.ok) {
-        throw new Error(
-          isUpdate ? "Failed to update admission" : "Failed to create admission"
-        );
+    // Prepare documents array by collecting all uploaded documents
+    const documents = [];
+    
+    // Add all document types to the documents array
+    const documentTypes = [
+      'aadharCard',
+      'lcCertificate',
+      'tcCertificate',
+      'incomeCertificate',
+      'casteCertificate'
+    ];
+    
+    // Handle single-file documents
+    documentTypes.forEach(type => {
+      if (data.documents?.[type]) {
+        documents.push(data.documents[type]);
       }
-
-      const result = await response.json();
-
-      onUpdate(isUpdate ? { ...admission, ...data } : result.data);
-      toast.success(
-        isUpdate
-          ? "Admission updated successfully"
-          : "Admission created successfully"
-      );
-      onClose();
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.message);
-    } finally {
-      setIsSubmitting(false);
+    });
+    
+    // Handle markSheets (array of files)
+    if (data.documents?.markSheets && Array.isArray(data.documents.markSheets)) {
+      documents.push(...data.documents.markSheets);
     }
-  };
+   
+    // Prepare the payload - create a new object without the nested documents structure
+    const payload = {
+      ...data,
+      documents, // Include the documents array
+      isForeignNational: data.isForeignNational === "true",
+      address: data.address || [{}],
+    };
+
+    // Remove the nested documents structure from the copied data
+    delete payload.documents?.aadharCard;
+    delete payload.documents?.lcCertificate;
+    delete payload.documents?.tcCertificate;
+    delete payload.documents?.incomeCertificate;
+    delete payload.documents?.casteCertificate;
+    delete payload.documents?.markSheets;
+
+    console.log("Final payload going to backend:", payload);
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message ||
+          (isUpdate
+            ? "Failed to update admission"
+            : "Failed to create admission")
+      );
+    }
+
+    const result = await response.json();
+    onUpdate(isUpdate ? { ...admission, ...result.data } : result.data);
+    toast.success(
+      isUpdate
+        ? "Admission updated successfully"
+        : "Admission created successfully"
+    );
+    onClose();
+  } catch (error) {
+    console.error("Submission error:", error);
+    toast.error(error.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const nextStep = async () => {
     const isValid = await validateStep(currentStep);
@@ -1092,12 +1538,14 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
       case 1:
         return <PersonalDetailsStep control={control} errors={errors} />;
       case 2:
-        return <ParentDetailsStep control={control} errors={errors} />;
+        return <FamilyDetailsStep control={control} errors={errors} />;
       case 3:
-        return <AddressDetailsStep control={control} errors={errors} />;
-      case 4:
         return <AcademicDetailsStep control={control} errors={errors} />;
+      case 4:
+        return <BackgroundDetailsStep control={control} errors={errors} />;
       case 5:
+        return <AddressStep control={control} errors={errors} watch={watch} />;
+      case 6:
         return (
           <DocumentUploadStep
             control={control}
@@ -1114,6 +1562,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <Toaster />
       <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl relative border border-gray-100 max-h-[96vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
           <div className="flex items-center gap-3">
@@ -1125,7 +1574,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
                 {admission ? "Edit Admission" : "New Admission"}
               </h2>
               <p className="text-sm text-gray-600">
-                {currentStep === 5
+                {currentStep === 6
                   ? "Upload required documents"
                   : "Complete all steps to submit"}
               </p>
@@ -1175,7 +1624,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
           </div>
         </div>
 
-        <form >
+        <form>
           <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
             {renderStep()}
           </div>
@@ -1232,16 +1681,14 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 const AdmissionApplications = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState(null);
-  const [selectedTab, setSelectedTab] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [admission, setAdmission] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const { user } = useSession();
-
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
 
@@ -1252,7 +1699,13 @@ const AdmissionApplications = () => {
         const res = await fetch("/api/admission");
         if (!res.ok) throw new Error("Failed to fetch Admissions");
         const admissionData = await res.json();
-        setAdmission(admissionData.data);
+
+        // Sort by createdAt date in descending order (newest first)
+        const sortedAdmissions = admissionData.data.sort((a, b) => {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        setAdmission(sortedAdmissions);
       } catch (error) {
         setError(error.message);
         console.error("Failed to fetch admissions:", error);
@@ -1284,11 +1737,11 @@ const AdmissionApplications = () => {
 
   const filteredApplications = admission?.filter((app) => {
     const matchesSearch =
-      app.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app._id?.toLowerCase().includes(searchTerm.toLowerCase());
+      app?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app?._id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter =
-      selectedFilter === "all" || app.status === selectedFilter;
+      selectedFilter === "all" || app?.status === selectedFilter;
     return matchesSearch && matchesFilter;
   });
 
@@ -1316,19 +1769,73 @@ const AdmissionApplications = () => {
         <div className="p-6 text-red-600">Error: {error}</div>
       </div>
     );
+  const handleExportToExcel = () => {
+    if (!admission || admission.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const exportData = admission.map((app) => ({
+      FullName: app.fullName || "",
+      Email: app.email || "",
+      WhatsApp: app.studentWhatsappNumber || "",
+      Branch: app.branch || "",
+      ProgramType: app.programType || "",
+      Year: app.year || "",
+      Round: app.round || "",
+      SeatType: app.seatType || "",
+      AdmissionCategory: app.admissionCategoryDTE || "",
+      Gender: app.gender || "",
+      MotherName: app.motherName || "",
+      ParentWhatsApp: app.fatherGuardianWhatsappNumber || "",
+      Caste: app.casteAsPerLC || "",
+      Domicile: app.domicile || "",
+      Nationality: app.nationality || "",
+      FamilyIncome: app.familyIncome || "",
+      AdmissionYear: app.admissionYear || "",
+      PRN: app.prn || "",
+      DateOfBirth: app.dateOfBirth || "",
+      Status: app.status || "",
+      CreatedAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : "",
+      UpdatedAt: app.updatedAt ? new Date(app.updatedAt).toLocaleString() : "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(data, "admissions.xlsx");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+    <Toaster />
       <div className="max-w-7xl mx-auto">
-        {/* Header and Stats Cards */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Admission Applications</h1>
+        {/* Header */}
+        <div className="flex gap-4 pb-4 justify-end">
+          <button
+            onClick={handleExportToExcel}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Export</span>
+          </button>
+
           <button
             onClick={() => {
               setSelectedAdmission(null);
               setShowForm(true);
             }}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Admission
@@ -1340,21 +1847,27 @@ const AdmissionApplications = () => {
           <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Applications</p>
-                <p className="text-2xl font-bold text-gray-900">{admission.length}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Applications
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {admission.length}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
                 <FileText className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">In Process Review</p>
+                <p className="text-sm font-medium text-gray-600">
+                  In Process Review
+                </p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {admission.filter((a) => a.status === "inProcess").length}
+                  {admission.filter((a) => a?.status === "inProcess").length}
                 </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
@@ -1362,13 +1875,13 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {admission.filter((a) => a.status === "approved").length}
+                  {admission.filter((a) => a?.status === "approved").length}
                 </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
@@ -1376,13 +1889,13 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {admission.filter((a) => a.status === "rejected").length}
+                  {admission.filter((a) => a?.status === "rejected").length}
                 </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
@@ -1418,16 +1931,6 @@ const AdmissionApplications = () => {
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-                </button>
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </button>
-              </div>
             </div>
           </div>
 
@@ -1440,7 +1943,7 @@ const AdmissionApplications = () => {
                     Applicant
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Applying For
+                    Branch
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -1455,10 +1958,10 @@ const AdmissionApplications = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentItems.map((application) => {
-                  const status = application.status || "inProcess";
+                  const status = application?.status || "inProcess";
                   const config = statusConfig[status] || statusConfig.inProcess;
                   return (
-                    <tr key={application._id} className="hover:bg-gray-50">
+                    <tr key={application?._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -1468,36 +1971,23 @@ const AdmissionApplications = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              <span className="group relative inline-block">
-                                {application.fullName ? (
-                                  <>
-                                    {application.fullName.substring(0, 25)}
-                                    {application.fullName.length > 25 && (
-                                      <>
-                                        <span>...</span>
-                                        <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
-                                          {application.fullName}
-                                        </span>
-                                      </>
-                                    )}
-                                  </>
-                                ) : (
-                                  "N/A"
-                                )}
-                              </span>
+                              {application?.fullName || "N/A"}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {application.email}
+                              {application?.email}
                             </div>
                             <div className="text-xs text-gray-400">
-                              ID: {application._id?.slice(-6) || "N/A"}
+                              ID: {application?._id?.slice(-6) || "N/A"}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {application.courseName || "N/A"}
+                          {application.branch || "N/A"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {application.programType || "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1517,7 +2007,7 @@ const AdmissionApplications = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             className="text-blue-600 hover:text-blue-900"
-                            onClick={() => openDetailsModal(application._id)}
+                            onClick={() => openDetailsModal(application?._id)}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -1622,11 +2112,11 @@ const AdmissionApplications = () => {
           admission={selectedAdmission}
           onClose={() => setShowForm(false)}
           onUpdate={(updatedData) => {
-            if (updatedData._id) {
+            if (updatedData?._id) {
               // Update existing admission
               setAdmission((prev) =>
                 prev.map((app) =>
-                  app._id === updatedData._id ? updatedData : app
+                  app?._id === updatedData?._id ? updatedData : app
                 )
               );
             } else {

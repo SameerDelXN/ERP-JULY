@@ -213,6 +213,13 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
+            <DetailCard
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Notes"
+              value={enquiry.notes || "N/A"}
+              bgColor="bg-pink-50"
+              iconColor="text-pink-600"
+            />
           </div>
 
           {/* Follow-ups Section */}
@@ -532,7 +539,7 @@ const EnquiriesLeads = () => {
   }, []);
 
   const totalEnquiries = enquiries.length;
-  const contacted = enquiries.filter((e) => e.status === "Contacted").length;
+  const inProgress = enquiries.filter((e) => e.status === "In Progress").length;
   const converted = enquiries.filter((e) => e.status === "Converted").length;
   const conversionRate = totalEnquiries
     ? Math.round((converted / totalEnquiries) * 100)
@@ -568,120 +575,130 @@ const EnquiriesLeads = () => {
     setShowDetailsModal(true);
   };
 
-  const handleChangeStatus = async (
-    enquiryId,
-    followUpDate,
-    followUpNote,
-    newStatus
-  ) => {
-    try {
-      // Validate inputs
-      if (!followUpDate) {
-        throw new Error("Follow-up date is required");
+const handleChangeStatus = async (
+  enquiryId,
+  followUpDate,
+  followUpNote,
+  newStatus
+) => {
+  try {
+    // Validate inputs
+    if (!followUpDate) {
+      throw new Error("Follow-up date is required");
+    }
+
+    const followUpDateObj = new Date(followUpDate);
+    if (isNaN(followUpDateObj.getTime())) {
+      throw new Error("Invalid follow-up date format");
+    }
+
+    // 1. Update enquiry status
+    const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        counsellorId: user.id,
+        status: newStatus,
+        followUps: [
+          {
+            date: followUpDateObj.toISOString(),
+            note: followUpNote || `Status changed to ${newStatus}`,
+          },
+        ],
+      }),
+    });
+
+    if (!updateResponse.ok) {
+      const errorData = await updateResponse.json();
+      throw new Error(errorData.message || "Failed to update enquiry");
+    }
+
+    const updatedEnquiry = await updateResponse.json();
+
+    // 2. Create admission if converted
+    if (newStatus === "Converted") {
+      const requiredFields = [
+        "email",
+        "phone",
+        "courseInterested",
+        "first",
+        "last",
+      ];
+
+      const missingFields = requiredFields.filter(
+        (field) => !updatedEnquiry[field]
+      );
+
+      if (missingFields.length > 0) {
+        throw new Error(
+          `Cannot convert: Missing ${missingFields.join(", ")} in enquiry`
+        );
       }
 
-      const followUpDateObj = new Date(followUpDate);
-      if (isNaN(followUpDateObj.getTime())) {
-        throw new Error("Invalid follow-up date format");
-      }
+      // Prepare admission data according to the new schema
+      const admissionData = {
+        enquiryId: updatedEnquiry._id,
+        counsellorId: user?.id,
+        email: updatedEnquiry.email,
+        fullName: `${updatedEnquiry.first} ${updatedEnquiry.middle || ""} ${
+          updatedEnquiry.last
+        }`.trim(),
+        nameAsPerAadhar: `${updatedEnquiry.first} ${
+          updatedEnquiry.middle || ""
+        } ${updatedEnquiry.last}`.trim(),
+        firstName: updatedEnquiry.first,
+        middleName: updatedEnquiry.middle || "",
+        lastName: updatedEnquiry.last,
+        gender: updatedEnquiry.gender || "Other",
+        studentWhatsappNumber: updatedEnquiry.phone,
+        branch: updatedEnquiry.courseInterested,
+        programType: updatedEnquiry.programType || "",
+        nationality: updatedEnquiry.nationality || "Indian",
+        address: [
+          {
+            addressLine: updatedEnquiry.address || "Not specified",
+            city: updatedEnquiry.city || "Not specified",
+            state: updatedEnquiry.state || "Not specified",
+            pincode: updatedEnquiry.pincode || "000000",
+            country: updatedEnquiry.country || "India",
+          },
+        ],
+        motherName: updatedEnquiry.motherName || "Not specified",
+        dateOfBirth: updatedEnquiry.dateOfBirth || new Date("2000-01-01"),
+        status: "inProcess",
+      };
 
-      // 1. Update enquiry status
-      const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
-        method: "PUT",
+      const admissionResponse = await fetch("/api/admission", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          counsellorId: user.id,
-          status: newStatus,
-          followUps: [
-            {
-              date: followUpDateObj.toISOString(),
-              note: followUpNote || `Status changed to ${newStatus}`,
-            },
-          ],
-        }),
+        body: JSON.stringify(admissionData),
       });
 
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
-        throw new Error(errorData.message || "Failed to update enquiry");
+      if (!admissionResponse.ok) {
+        const error = await admissionResponse.json();
+        throw new Error(`Admission creation failed: ${error.message}`);
       }
-
-      const updatedEnquiry = await updateResponse.json();
-
-      // 2. Create admission if converted
-      if (newStatus === "Converted") {
-        const requiredFields = [
-          "email",
-          "phone",
-          "courseInterested",
-          "first",
-          "last",
-        ];
-
-        const missingFields = requiredFields.filter(
-          (field) => !updatedEnquiry[field]
-        );
-
-        if (missingFields.length > 0) {
-          throw new Error(
-            `Cannot convert: Missing ${missingFields.join(", ")} in enquiry`
-          );
-        }
-
-        const admissionData = {
-          enquiryId: updatedEnquiry._id,
-          counsellorId: user.id,
-          fullName: `${updatedEnquiry.first} ${updatedEnquiry.middle || ""} ${
-            updatedEnquiry.last
-          }`.trim(),
-          email: updatedEnquiry.email,
-          mobileNumber: updatedEnquiry.phone,
-          courseName: updatedEnquiry.courseInterested,
-          dateOfBirth: updatedEnquiry.dateOfBirth || new Date("2000-01-01"),
-          gender: updatedEnquiry.gender || "Other",
-          nationality: updatedEnquiry.nationality || "Indian",
-          category: updatedEnquiry.category || "Open",
-          addressLine: updatedEnquiry.address || "Not specified",
-          city: updatedEnquiry.city || "Not specified",
-          state: updatedEnquiry.state || "Not specified",
-          pincode: updatedEnquiry.pincode || "000000",
-          country: updatedEnquiry.country || "India",
-          fatherName: updatedEnquiry.fatherName || "Not specified",
-          motherName: updatedEnquiry.motherName || "Not specified",
-          status: "inProcess",
-          consent: true,
-          captchaVerified: true,
-        };
-
-        const admissionResponse = await fetch("/api/admission", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(admissionData),
-        });
-
-        if (!admissionResponse.ok) {
-          const error = await admissionResponse.json();
-          throw new Error(`Admission creation failed: ${error.message}`);
-        }
-        fetchEnquiries();
-        return await admissionResponse.json();
-      }
-
-      // Update local state
-      setEnquiries((prev) =>
-        prev.map((e) => (e._id === enquiryId ? updatedEnquiry : e))
-      );
-
-      return updatedEnquiry;
-    } catch (error) {
-      console.error("Status update error:", error);
-      throw error;
+      
+      // Refresh the enquiries list
+      await fetchEnquiries();
+      return await admissionResponse.json();
     }
-  };
+
+    // Update local state
+    setEnquiries((prev) =>
+      prev.map((e) => (e._id === enquiryId ? updatedEnquiry : e))
+    );
+
+    return updatedEnquiry;
+  } catch (error) {
+    console.error("Status update error:", error);
+    throw error;
+  }
+};
 
   const totalPages = Math.ceil(filteredEnquiries.length / 10);
   const paginatedEnquiries = filteredEnquiries.slice(
@@ -716,7 +733,7 @@ const EnquiriesLeads = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
         {/* Stats Grid */}
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 ">
             <div className="flex items-center justify-between">
               <div>
@@ -736,9 +753,9 @@ const EnquiriesLeads = () => {
           <div className=" bg-gradient-to-br from-green-100 to-green-200 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium">Contacted</p>
+                <p className="text-sm text-gray-600 font-medium">In Progress</p>
                 <p className="text-2xl font-bold text-gray-900 mb-1">
-                  {contacted}
+                  {inProgress}
                 </p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
