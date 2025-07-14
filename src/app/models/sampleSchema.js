@@ -2,23 +2,22 @@
 
 import mongoose from 'mongoose';
 
-const studentSchema = new mongoose.Schema(
+const sampleSchema = new mongoose.Schema(
   {
     studentId: {
       type: String,
       required: true,
       unique: true,
     },
-    admissionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'admission',
-      required: true,
-      unique: true,
-    },
+
     fullName: { type: String },
+
     email: { type: String },
+
     mobileNumber: { type: String },
+
     dateOfBirth: { type: Date },
+
     address: {
       addressLine: String,
       city: String,
@@ -26,18 +25,14 @@ const studentSchema = new mongoose.Schema(
       pincode: String,
       country: String,
     },
-    status: {
-      type: String,
-      enum: ['active', 'inactive', 'alumni', 'suspended'],
-      default: 'active',
-    },
+    departmentName:{type:String},
   },
   { timestamps: true }
 );
 
-delete mongoose.models.student
+delete mongoose.models.sample
 
-const student = mongoose.models.student || mongoose.model('student', studentSchema);
+const sample = mongoose.models.sample || mongoose.model('sample', sampleSchema);
 
-export default student;
+export default sample;
 

@@ -1,53 +1,50 @@
-// src/app/api/teachers/[id]/dashboard/route.js
-//GET handler to fetch teacher data based on id to show on dashboard
-import { connectToDatabase } from '../../../../lib/mongodb';
-import academicSchema from '../../../../models/academicSchema';
-import teacherSchema from '../../../../models/teacherSchema';
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+//GET handler to fetch teacher data name and subjects based on id to show on dashboard
+
+import { connectToDatabase } from "../../../../lib/mongodb"
+import academicSchema from "../../../../models/academicSchema"
+import teacherSchema from "../../../../models/teacherSchema"
+import { NextResponse } from "next/server"
+import mongoose from "mongoose"
 
 export async function GET(req, { params }) {
   try {
     await connectToDatabase();
-    const { id } = params;
 
+    const { id } = params;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ 
-        error: 'Invalid or missing teacher ID' 
-      }, { 
-        status: 400 
-      });
+      return NextResponse.json({ error: 'Invalid or missing teacher ID' }, { status: 400 });
     }
 
-    // Fetch teacher details
+    // Get teacher details
     const teacher = await teacherSchema.findById(id).select('-password');
     if (!teacher) {
-      return NextResponse.json({ 
-        error: 'Teacher not found' 
-      }, { 
-        status: 404 
-      });
+      return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
 
-    // Fetch all academic records where this teacher is assigned
+    // Get academic records that reference the teacher
     const academicRecords = await academicSchema.find({
-      'divisions.subjects.teacher': id,
+      'years.divisions.subjects.teacher': id,
     }).lean();
 
-    const assignments = [];
+    const mySubjects = [];
 
     for (const record of academicRecords) {
-      for (const division of record.divisions) {
-        const subjectsTaught = division.subjects.filter(
-          (subject) => subject.teacher.toString() === id
-        );
+      for (const yearObj of record.years) {
+        const { year, semester, divisions } = yearObj;
 
-        if (subjectsTaught.length > 0) {
-          assignments.push({
-            year: record.year,
-            division: division.name,
-            subjects: subjectsTaught.map((s) => s.name),
-          });
+        for (const division of divisions) {
+          const subjectsTaught = division.subjects.filter(
+            (subject) => subject.teacher.toString() === id
+          );
+
+          if (subjectsTaught.length > 0) {
+            mySubjects.push({
+              year,
+              semester,
+              division: division.name,
+              subjects: subjectsTaught.map((s) => s.name),
+            });
+          }
         }
       }
     }
@@ -55,19 +52,12 @@ export async function GET(req, { params }) {
     return NextResponse.json(
       {
         teacher,
-        assignments,
+        mySubjects,
       },
-      { 
-        status: 200 
-      }
+      { status: 200 }
     );
-
   } catch (error) {
     console.error('Error fetching teacher dashboard:', error);
-    return NextResponse.json({ 
-      error: 'Internal Server Error' 
-    }, { 
-      status: 500 
-    });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
