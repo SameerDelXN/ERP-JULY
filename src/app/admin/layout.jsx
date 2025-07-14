@@ -139,20 +139,20 @@ const Layout = ({ children }) => {
                     <p className="font-medium">{user?.username || "Admin User"}</p>
                     <p className="text-xs text-gray-500">{user?.email || ""}</p>
                   </div>
-                  <button
+                  {/* <button
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    // onClick={() => router.push('/admin/profile')}
+                    onClick={() => router.push('/admin/profile')}
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profile
                   </button>
                   <button
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    // onClick={() => router.push('/admin/settings')}
+                    onClick={() => router.push('/admin/settings')}
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
-                  </button>
+                  </button> */}
                   <button
                     className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 border-t border-gray-100"
                     onClick={handleLogout}

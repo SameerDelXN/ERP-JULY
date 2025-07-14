@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { useForm, Controller } from "react-hook-form";
-import { toast,Toaster } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import LoadingComponent from "@/components/Loading";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -410,7 +410,7 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
                     key={index}
                     icon={<FileTextIcon className="w-5 h-5" />}
                     label={doc.type || `Document ${index + 1}`}
-                    value={doc.fileName}
+                    value={doc.type}
                     fileUrl={doc.fileUrl}
                     bgColor="bg-purple-50"
                     viewIcon={<Eye className="w-4 h-4" />}
@@ -444,7 +444,7 @@ const FormField = ({
   min = null,
   max = null,
   validate = null,
-   alphaOnly = false,
+  alphaOnly = false,
   numericOnly = false,
   maxDate = null,
   ...props
@@ -1016,12 +1016,12 @@ const BackgroundDetailsStep = ({ control, errors }) => (
         type="text"
         error={errors.casteAsPerLC}
         alphaOnly={true}
-          minLength={2}
-          maxLength={20}
-          pattern={{
-            value: /^[a-zA-Z\s]*$/,
-            message: "Only alphabets are allowed",
-          }}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -1031,12 +1031,12 @@ const BackgroundDetailsStep = ({ control, errors }) => (
         type="text"
         error={errors.subCasteAsPerLC}
         alphaOnly={true}
-          minLength={2}
-          maxLength={20}
-          pattern={{
-            value: /^[a-zA-Z\s]*$/,
-            message: "Only alphabets are allowed",
-          }}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -1046,12 +1046,12 @@ const BackgroundDetailsStep = ({ control, errors }) => (
         type="text"
         error={errors.domicile}
         alphaOnly={true}
-          minLength={2}
-          maxLength={20}
-          pattern={{
-            value: /^[a-zA-Z\s]*$/,
-            message: "Only alphabets are allowed",
-          }}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -1061,12 +1061,13 @@ const BackgroundDetailsStep = ({ control, errors }) => (
         type="text"
         error={errors.nationality}
         alphaOnly={true}
-          minLength={2}
-          maxLength={20}
-          pattern={{
-            value: /^[a-zA-Z\s]*$/,
-            message: "Only alphabets are allowed",
-          }}
+        required
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -1076,12 +1077,12 @@ const BackgroundDetailsStep = ({ control, errors }) => (
         type="text"
         error={errors.religionAsPerLC}
         alphaOnly={true}
-          minLength={2}
-          maxLength={20}
-          pattern={{
-            value: /^[a-zA-Z\s]*$/,
-            message: "Only alphabets are allowed",
-          }}
+        minLength={2}
+        maxLength={20}
+        pattern={{
+          value: /^[a-zA-Z\s]*$/,
+          message: "Only alphabets are allowed",
+        }}
       />
 
       <FormField
@@ -1101,67 +1102,68 @@ const BackgroundDetailsStep = ({ control, errors }) => (
 );
 
 const DocumentUploadStep = ({
-  control,
-  errors,
-  watch,
-  uploadingFiles,
-  handleFileChange,
-}) => {
-  const renderFileStatus = (fieldName) => {
-    const value = watch(`documents.${fieldName}`);
-    const isUploading = uploadingFiles[fieldName];
+    control,
+    errors,
+    watch,
+    uploadingFiles,
+    handleFileChange,
+  }) => {
+    const renderFileStatus = (fieldName) => {
+      const value = watch(`documents.${fieldName}`);
+      const isUploading = uploadingFiles[fieldName];
 
-    if (isUploading) {
-      return (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Uploading...</span>
+      if (isUploading) {
+        return (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Uploading...</span>
+          </div>
+        );
+      }
+
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        return <span className="text-sm text-gray-500">No file uploaded</span>;
+      }
+
+      if (Array.isArray(value)) {
+        return (
+          <div className="flex flex-col gap-1">
+            {value.map((doc, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <File className="w-4 h-4 text-gray-500" />
+                <span className="text-sm">
+                  {doc.type || `Document ${index + 1}`}
+                </span>
+                <a
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline text-xs"
+                >
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+  return (
+        <div className="flex items-center gap-2">
+          <File className="w-4 h-4 text-gray-500" />
+          <span className="text-sm">{value.type}</span>
+          <a
+            href={value.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline text-xs"
+          >
+            View
+          </a>
         </div>
       );
-    }
+    };
 
-    if (!value || (Array.isArray(value) && value.length === 0)) {
-      return <span className="text-sm text-gray-500">No file uploaded</span>;
-    }
-
-    if (Array.isArray(value)) {
-      return (
-        <div className="flex flex-col gap-1">
-          {value.map((doc, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <File className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">
-                {doc.type || `Document ${index + 1}`}
-              </span>
-              <a
-                href={doc.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline text-xs"
-              >
-                View
-              </a>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center gap-2">
-        <File className="w-4 h-4 text-gray-500" />
-        <span className="text-sm">{value.type}</span>
-        <a
-          href={value.fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:underline text-xs"
-        >
-          View
-        </a>
-      </div>
-    );
-  };
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -1272,6 +1274,28 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
     },
   });
 
+   useEffect(() => {
+    if (admission?.documents) {
+      const existingDocs = admission.documents;
+      
+      // Group mark sheets separately
+      const markSheets = existingDocs.filter(doc => doc.type === "Mark Sheet");
+      
+      // Set individual documents
+      setValue('documents.aadharCard', 
+        existingDocs.find(doc => doc.type === "Aadhar Card") || null);
+      setValue('documents.lcCertificate', 
+        existingDocs.find(doc => doc.type === "LC Certificate") || null);
+      setValue('documents.tcCertificate', 
+        existingDocs.find(doc => doc.type === "TC Certificate") || null);
+      setValue('documents.incomeCertificate', 
+        existingDocs.find(doc => doc.type === "Income Certificate") || null);
+      setValue('documents.casteCertificate', 
+        existingDocs.find(doc => doc.type === "Caste Certificate") || null);
+      setValue('documents.markSheets', markSheets);
+    }
+  }, [admission, setValue]);
+
   const steps = [
     { id: 1, name: "Personal", icon: <User size={16} /> },
     { id: 2, name: "Family", icon: <Users size={16} /> },
@@ -1325,160 +1349,178 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
   };
 
   const handleFileChange = async (fieldName, e) => {
-  const fileList = e.target.files;
-  if (!fileList || fileList.length === 0) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-  // Check file sizes before proceeding
-  const files = Array.from(fileList);
-  const maxSize = 256 * 1024; // 256KB in bytes
-  const oversizedFiles = files.filter(file => file.size > maxSize);
+    // Check file sizes before proceeding
+    const files = Array.from(fileList);
+    const maxSize = 256 * 1024; // 256KB in bytes
+    const oversizedFiles = files.filter((file) => file.size > maxSize);
 
-  if (oversizedFiles.length > 0) {
-    toast.error(`Some files exceed 256KB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
-    return;
-  }
+    if (oversizedFiles.length > 0) {
+      toast.error(
+        `Some files exceed 256KB limit: ${oversizedFiles
+          .map((f) => f.name)
+          .join(", ")}`
+      );
+      return;
+    }
 
-  setUploadingFiles((prev) => ({ ...prev, [fieldName]: true }));
+    setUploadingFiles((prev) => ({ ...prev, [fieldName]: true }));
+
+    try {
+      const formData = new FormData();
+      const documentTypeMap = {
+        aadharCard: "Aadhar Card",
+        lcCertificate: "LC Certificate",
+        markSheets: "Mark Sheets",
+        tcCertificate: "TC Certificate",
+        incomeCertificate: "Income Certificate",
+        casteCertificate: "Caste Certificate",
+      };
+
+      if (fieldName !== "markSheets") {
+        // Single file upload
+        formData.append("files", files[0]);
+        formData.append("fieldName", fieldName);
+        formData.append("documentType", documentTypeMap[fieldName]);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error("Failed to upload file");
+        const result = await response.json();
+
+        console.log("Result : ",result);
+        
+
+        setValue(`documents.${fieldName}`, {
+          type: documentTypeMap[fieldName],
+          fileName: files[0].name,
+          fileUrl: result.documentUrl,
+          mimeType: files[0].type,
+        });
+      } else {
+        // Multiple files upload (markSheets)
+        files.forEach((file) => {
+          formData.append("files", file);
+        });
+        formData.append("fieldName", fieldName);
+        formData.append("documentType", "Mark Sheets");
+
+        const response = await fetch("/api/upload/multiple", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error("Failed to upload files");
+        const result = await response.json();
+
+        const markSheetDocuments = files.map((file, index) => ({
+          type: "Mark Sheet",
+          fileName: file.name,
+          fileUrl: result?.uploadedFiles[index].documentUrl,
+          mimeType: file.type,
+        }));
+
+        setValue("documents.markSheets", markSheetDocuments);
+      }
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      toast.error("Failed to upload files");
+    } finally {
+      setUploadingFiles((prev) => ({ ...prev, [fieldName]: false }));
+    }
+  };
+
+  const onSubmit = async (data) => {
+  setIsSubmitting(true);
 
   try {
-    const formData = new FormData();
-    const documentTypeMap = {
-      aadharCard: "Aadhar Card",
-      lcCertificate: "LC Certificate",
-      markSheets: "Mark Sheets",
-      tcCertificate: "TC Certificate",
-      incomeCertificate: "Income Certificate",
-      casteCertificate: "Caste Certificate",
+    const isUpdate = !!admission?._id;
+    const url = isUpdate
+      ? `/api/admission/${admission?._id}`
+      : "/api/admission";
+    const method = isUpdate ? "PUT" : "POST";
+
+    // Prepare documents array by collecting all uploaded documents
+    const documents = [];
+    
+    // Add all document types to the documents array
+    const documentTypes = [
+      'aadharCard',
+      'lcCertificate',
+      'tcCertificate',
+      'incomeCertificate',
+      'casteCertificate'
+    ];
+    
+    // Handle single-file documents
+    documentTypes.forEach(type => {
+      if (data.documents?.[type]) {
+        documents.push(data.documents[type]);
+      }
+    });
+    
+    // Handle markSheets (array of files)
+    if (data.documents?.markSheets && Array.isArray(data.documents.markSheets)) {
+      documents.push(...data.documents.markSheets);
+    }
+   
+    // Prepare the payload - create a new object without the nested documents structure
+    const payload = {
+      ...data,
+      documents, // Include the documents array
+      isForeignNational: data.isForeignNational === "true",
+      address: data.address || [{}],
     };
 
-    if (fieldName !== "markSheets") {
-      // Single file upload
-      formData.append("files", files[0]);
-      formData.append("fieldName", fieldName);
-      formData.append("documentType", documentTypeMap[fieldName]);
+    // Remove the nested documents structure from the copied data
+    delete payload.documents?.aadharCard;
+    delete payload.documents?.lcCertificate;
+    delete payload.documents?.tcCertificate;
+    delete payload.documents?.incomeCertificate;
+    delete payload.documents?.casteCertificate;
+    delete payload.documents?.markSheets;
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+    console.log("Final payload going to backend:", payload);
 
-      if (!response.ok) throw new Error("Failed to upload file");
-      const result = await response.json();
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-      setValue(`documents.${fieldName}`, {
-        type: documentTypeMap[fieldName],
-        fileName: files[0].name,
-        fileUrl: result.documentUrl,
-        mimeType: files[0].type,
-      });
-    } else {
-      // Multiple files upload (markSheets)
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
-      formData.append("fieldName", fieldName);
-      formData.append("documentType", "Mark Sheets");
-
-      const response = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Failed to upload files");
-      const result = await response.json();
-
-      const markSheetDocuments = files.map((file, index) => ({
-        type: "Mark Sheet",
-        fileName: file.name,
-        fileUrl: result?.uploadedFiles[index].documentUrl,
-        mimeType: file.type,
-      }));
-
-      setValue("documents.markSheets", markSheetDocuments);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message ||
+          (isUpdate
+            ? "Failed to update admission"
+            : "Failed to create admission")
+      );
     }
+
+    const result = await response.json();
+    onUpdate(isUpdate ? { ...admission, ...result.data } : result.data);
+    toast.success(
+      isUpdate
+        ? "Admission updated successfully"
+        : "Admission created successfully"
+    );
+    onClose();
   } catch (error) {
-    console.error("Error uploading files:", error);
-    toast.error("Failed to upload files");
+    console.error("Submission error:", error);
+    toast.error(error.message);
   } finally {
-    setUploadingFiles((prev) => ({ ...prev, [fieldName]: false }));
+    setIsSubmitting(false);
   }
 };
 
-  const onSubmit = async (data) => {
-    // console.log("Form data before processing:", data);
-    setIsSubmitting(true);
-
-    try {
-      const isUpdate = !!admission?._id;
-      const url = isUpdate
-        ? `/api/admission/${admission?._id}`
-        : "/api/admission";
-      const method = isUpdate ? "PUT" : "POST";
-
-      // Prepare documents array - FIXED VERSION
-      const documents = [];
-
-      // Handle aadharCard if it exists
-      if (data.documents?.aadharCard) {
-        documents.push(data.documents.aadharCard);
-      }
-
-      // Handle markSheets if they exist
-      if (
-        data.documents?.markSheets &&
-        Array.isArray(data.documents.markSheets)
-      ) {
-        documents.push(...data.documents.markSheets);
-      }
-
-      // Prepare the payload
-      const payload = {
-        ...data,
-        documents, // Now this will be a proper array
-        isForeignNational: data.isForeignNational === "true",
-        address: data.address || [{}],
-      };
-
-      // Remove the nested documents structure to avoid duplication
-      delete payload.documents.aadharCard;
-      delete payload.documents.markSheets;
-
-      // console.log("Final payload being sent:", payload);
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message ||
-            (isUpdate
-              ? "Failed to update admission"
-              : "Failed to create admission")
-        );
-      }
-
-      const result = await response.json();
-      onUpdate(isUpdate ? { ...admission, ...result.data } : result.data);
-      toast.success(
-        isUpdate
-          ? "Admission updated successfully"
-          : "Admission created successfully"
-      );
-      onClose();
-      alert(result.message)
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast.error(error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const nextStep = async () => {
     const isValid = await validateStep(currentStep);
@@ -1520,7 +1562,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <Toaster/>
+      <Toaster />
       <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl relative border border-gray-100 max-h-[96vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
           <div className="flex items-center gap-3">
@@ -1776,6 +1818,7 @@ const AdmissionApplications = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+    <Toaster />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex gap-4 pb-4 justify-end">
