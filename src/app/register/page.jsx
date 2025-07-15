@@ -25,7 +25,7 @@ const page = () => {
     }));
   };
 
-  const handleSubmit = async () => {
+  /* const handleSubmit = async () => {
     console.log("Signup data:", { ...formData, role: selectedRole });
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
@@ -59,7 +59,33 @@ const page = () => {
       alert(err.message);
       console.error("Registration error:", err);
     }
-  };
+  };  */
+
+  // src/app/register/page.jsx
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!name || !email || !password || !role) {
+    alert("All fields are required");
+    return;
+  }
+
+  const res = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, role }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Something went wrong");
+  }
+
+  alert("Registration successful! Please log in.");
+};
+
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 p-4">
       {/* Left Side - Logo and Branding */}
