@@ -69,6 +69,8 @@
                 |-- route.js
             |-- register
                 |-- route.js
+            |-- sample
+                |-- route.js
             |-- send-otp
                 |-- route.js
             |-- send-verification-email
@@ -78,11 +80,15 @@
                     |-- route.js
             |-- students
                 |-- [id]
+                    |-- academics
+                        |-- route.js
                     |-- route.js
             |-- teachers
                 |-- route.js
                 |-- [id]
                     |-- dashboard
+                        |-- attendance
+                            |-- route.js
                         |-- route.js
                     |-- route.js
             |-- upload
@@ -118,9 +124,11 @@
         |-- models
             |-- academicSchema.js
             |-- admissionSchema.js
+            |-- attendanceSchema.js
             |-- course.js
             |-- EmailVerification.js
             |-- enquirySchema.js
+            |-- sampleSchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
             |-- userSchema.js
@@ -146,11 +154,15 @@
             |-- grades
                 |-- page.jsx
             |-- layout.jsx
+            |-- myexams
+                |-- page.jsx
             |-- page.jsx
             |-- profile
                 |-- page.jsx
-            |-- schedule
+            |-- timetable
                 |-- page.jsx
+        |-- verification-failed
+            |-- page.jsx
         |-- verification-success
             |-- page.jsx
         |-- verify-email

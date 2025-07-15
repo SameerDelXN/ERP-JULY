@@ -1,3 +1,4 @@
+//get route to fetch particular student detail through id 
 import { connectToDatabase } from '../../../lib/mongodb';
 import studentSchema from '../../../models/studentSchema'; // adjust the import path if needed
 import { NextResponse } from 'next/server';
@@ -26,3 +27,5 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+
