@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-//sample
+
 const academicSchema = new mongoose.Schema({
   department: {
     type: String,
