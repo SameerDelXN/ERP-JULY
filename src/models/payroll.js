@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 
 const salarySchema = new mongoose.Schema({
    staffId: {
-    type: String, // ✅ This ensures it's a custom string like "STF010"
+    //type: String,  ✅ This ensures it's a custom string like "STF010"
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'Staff'
   },
