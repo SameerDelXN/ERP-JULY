@@ -20,6 +20,7 @@ const enquirySchema = new Schema({
   email: String,
 
   courseInterested: String,
+  ProgramType: String,
 
   source: {
     type: String,

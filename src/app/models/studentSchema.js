@@ -1,4 +1,45 @@
-//database schema for student
+// //database schema for student
+
+// import mongoose from 'mongoose';
+
+// const studentSchema = new mongoose.Schema(
+//   {
+//     studentId: {
+//       type: String,
+//       required: true,
+//       unique: true,
+//     },
+//     admissionId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: 'admission',
+//       required: true,
+//       unique: true,
+//     },
+//     fullName: { type: String },
+//     email: { type: String },
+//     mobileNumber: { type: String },
+//     dateOfBirth: { type: Date },
+//     address: {
+//       addressLine: String,
+//       city: String,
+//       state: String,
+//       pincode: String,
+//       country: String,
+//     },
+//     status: {
+//       type: String,
+//       enum: ['active', 'inactive', 'alumni', 'suspended'],
+//       default: 'active',
+//     },
+//   },
+//   { timestamps: true }
+// );
+
+// delete mongoose.models.student
+
+// const student = mongoose.models.student || mongoose.model('student', studentSchema);
+
+// export default student;
 
 import mongoose from 'mongoose';
 
@@ -11,14 +52,15 @@ const studentSchema = new mongoose.Schema(
     },
     admissionId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'admission',
+      ref: 'Admission',
       required: true,
       unique: true,
     },
-    fullName: { type: String },
-    email: { type: String },
-    mobileNumber: { type: String },
-    dateOfBirth: { type: Date },
+    fullName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    mobileNumber: { type: String, required: true },
+    dateOfBirth: { type: Date, required: true },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     address: {
       addressLine: String,
       city: String,
@@ -26,18 +68,27 @@ const studentSchema = new mongoose.Schema(
       pincode: String,
       country: String,
     },
+    programType: { 
+      type: String, 
+      enum: ['Diploma', 'UG', 'PG'], 
+      required: true 
+    },
+    branch: { type: String, required: true },
+    currentYear: { type: String,  },
+    division: { type: String },
     status: {
       type: String,
       enum: ['active', 'inactive', 'alumni', 'suspended'],
       default: 'active',
     },
+    prn: { type: String, unique: true },
+    counsellorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }
   },
   { timestamps: true }
 );
 
-delete mongoose.models.student
-
-const student = mongoose.models.student || mongoose.model('student', studentSchema);
-
-export default student;
-
+const Student = mongoose.models.Student || mongoose.model('Student', studentSchema);
+export default Student;

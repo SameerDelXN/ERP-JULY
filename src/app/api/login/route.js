@@ -24,7 +24,7 @@ export async function POST(req) {
     }
 
     // Validate role
-    const validRoles = ["admin", "student", "staff", "parents", "hod"];
+    const validRoles = ["admin", "student", "staff", "parents", "hod","teacher"];
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({
@@ -38,11 +38,11 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    if (role === "hod") {
+    if (role === "hod" || role === "teacher") {
       // Use findOne instead of find to get a single document
       const hodUser = await teacher.findOne({
         email,
-        role: "hod",
+        role,
       });
 
       console.log("HOD User:", hodUser);
@@ -50,7 +50,7 @@ export async function POST(req) {
       if (!hodUser) {
         return new Response(
           JSON.stringify({
-            message: "Invalid email or not authorized as HOD",
+            message: `Invalid email or not authorized as ${role}`,
           }),
           {
             status: 401,
@@ -99,7 +99,7 @@ export async function POST(req) {
             id: hodUser._id,
             fullName: hodUser.fullName,
             email: hodUser.email,
-            role: "hod",
+            role: hodUser.role,
             department: hodUser.department,
             teacherId: hodUser.teacherId,
           },

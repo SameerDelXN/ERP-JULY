@@ -30,7 +30,9 @@ import {
 import LoadingComponent from "@/components/Loading";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import toast,{Toaster} from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
+import { useSession } from "@/context/SessionContext";
+
 
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
@@ -424,7 +426,6 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
 };
 
 const AdmissionApplications = () => {
-  const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -435,21 +436,26 @@ const AdmissionApplications = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
+const { user } = useSession();
   const calculateGrowth = () => {
     if (admission.length < 2) return 0;
-    
-    const currentMonthCount = admission.filter(app => {
+
+    const currentMonthCount = admission.filter((app) => {
       const appDate = new Date(app.createdAt);
       const currentDate = new Date();
-      return appDate.getMonth() === currentDate.getMonth() && 
-             appDate.getFullYear() === currentDate.getFullYear();
+      return (
+        appDate.getMonth() === currentDate.getMonth() &&
+        appDate.getFullYear() === currentDate.getFullYear()
+      );
     }).length;
 
-    const prevMonthCount = admission.filter(app => {
+    const prevMonthCount = admission.filter((app) => {
       const appDate = new Date(app.createdAt);
       const currentDate = new Date();
-      return appDate.getMonth() === currentDate.getMonth() - 1 && 
-             appDate.getFullYear() === currentDate.getFullYear();
+      return (
+        appDate.getMonth() === currentDate.getMonth() - 1 &&
+        appDate.getFullYear() === currentDate.getFullYear()
+      );
     }).length;
 
     if (prevMonthCount === 0) return 100; // Handle division by zero
@@ -457,60 +463,64 @@ const AdmissionApplications = () => {
   };
 
   const getAverageProcessingTime = () => {
-    const processedApps = admission.filter(app => 
-      app.status === 'approved' || app.status === 'rejected'
+    const processedApps = admission.filter(
+      (app) => app.status === "approved" || app.status === "rejected"
     );
-    
-    if (processedApps.length === 0) return 'N/A';
-    
+
+    if (processedApps.length === 0) return "N/A";
+
     const totalDays = processedApps.reduce((sum, app) => {
       const created = new Date(app.createdAt);
       const updated = new Date(app.updatedAt);
       return sum + Math.ceil((updated - created) / (1000 * 60 * 60 * 24));
     }, 0);
-    
+
     return `${Math.round(totalDays / processedApps.length)} days`;
   };
 
   const getTopProgram = () => {
     const programCounts = {};
-    admission.forEach(app => {
-      programCounts[app.programType] = (programCounts[app.programType] || 0) + 1;
+    admission.forEach((app) => {
+      programCounts[app.programType] =
+        (programCounts[app.programType] || 0) + 1;
     });
-    
-    const topProgram = Object.entries(programCounts).sort((a, b) => b[1] - a[1])[0];
-    return topProgram ? `${topProgram[0]} (${topProgram[1]})` : 'N/A';
+
+    const topProgram = Object.entries(programCounts).sort(
+      (a, b) => b[1] - a[1]
+    )[0];
+    return topProgram ? `${topProgram[0]} (${topProgram[1]})` : "N/A";
   };
 
   const getConversionRate = () => {
-    const approvedCount = admission.filter(app => app.status === 'approved').length;
-    return admission.length > 0 
-      ? `${Math.round((approvedCount / admission.length) * 100)}%` 
-      : 'N/A';
+    const approvedCount = admission.filter(
+      (app) => app.status === "approved"
+    ).length;
+    return admission.length > 0
+      ? `${Math.round((approvedCount / admission.length) * 100)}%`
+      : "N/A";
   };
 
+  const fetchAdmission = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admission");
+      if (!res.ok) throw new Error("Failed to fetch Admissions");
+      const admissionData = await res.json();
+
+      // Sort by createdAt date in descending order (newest first)
+      const sortedAdmissions = admissionData.data.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      setAdmission(sortedAdmissions);
+    } catch (error) {
+      setError(error.message);
+      console.error("Failed to fetch admissions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchAdmission = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/admission");
-        if (!res.ok) throw new Error("Failed to fetch Admissions");
-        const admissionData = await res.json();
-
-        // Sort by createdAt date in descending order (newest first)
-        const sortedAdmissions = admissionData.data.sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        });
-
-        setAdmission(sortedAdmissions);
-      } catch (error) {
-        setError(error.message);
-        console.error("Failed to fetch admissions:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAdmission();
   }, []);
 
@@ -548,6 +558,7 @@ const AdmissionApplications = () => {
     indexOfFirstItem,
     indexOfLastItem
   );
+
   const totalPages =
     Math.ceil(filteredApplications?.length / itemsPerPage) || 1;
 
@@ -574,6 +585,7 @@ const AdmissionApplications = () => {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("counsellorId", user.id);
 
     try {
       setImportLoading(true);
@@ -582,11 +594,13 @@ const AdmissionApplications = () => {
         body: formData,
       });
 
-      if (!response.ok) {
+      console.log(response);
       
+
+      if (!response.ok) {
         throw new Error("Failed to import file");
       }
-      
+
       const result = await response.json();
       // Refresh the admission data
       const res = await fetch("/api/admission");
@@ -594,18 +608,84 @@ const AdmissionApplications = () => {
       setAdmission(admissionData.data);
 
       console.log(admissionData.data);
-
       // Show success message
-      toast.success("File Imported Successfully!")
+      toast.success("File Imported Successfully!");
+      fetchAdmission();
     } catch (error) {
-       toast.error("Something went wrong!Please check format of your Excel File")
+      toast.error(
+        "Something went wrong!Please check format of your Excel File"
+      );
       console.error("Error importing file:", error);
-      
     } finally {
       setImportLoading(false);
       // Reset the file input
       e.target.value = "";
     }
+  };
+
+  const handleExportToExcelSample = () => {
+    const exportData = [
+      {
+        DTEApplicationNumber: "",
+        FirstName: "",
+        MiddleName: "",
+        LastName: "",
+        FullName: "",
+        NameAsPerAadhar: "",
+        Email: "",
+        StudentWhatsappNo: "",
+        Branch: "",
+        ProgramType: "",
+        Year: "",
+        Round: "",
+        SeatType: "",
+        Shift: "",
+        Round: "",
+        Quota: "",
+        SeatType: "",
+        AdmissionCategory: "",
+        Gender: "",
+        MotherName: "",
+        FatherGuardianWhatsAppMobileNo: "",
+        CastAsPerLC: "",
+        Domicile: "",
+        Nationality: "",
+        FamilyIncome: "",
+        AdmissionYear: "",
+        PRN: "",
+        DateOfBirth: "",
+        Status: "",
+        AddressLine: "",
+        City: "",
+        State: "",
+        Pincode: "",
+        Country: "",
+        FeesCategory: "",
+        AdmissionType: "",
+        SubCastAsPerLC: "",
+        ReligionAsPerLC: "",
+        FamilyIncome: "",
+        MothersMobileNo: "",
+        IsForeignNational: "",
+        CreatedAt: "",
+        UpdatedAt: "",
+      },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(data, "admissionSample.xlsx");
   };
 
   const handleExportToExcel = () => {
@@ -615,19 +695,28 @@ const AdmissionApplications = () => {
     }
 
     const exportData = admission.map((app) => ({
+      DTEApplicationNumber: app.dteApplicationNumber || "",
+      FirstName: app.firstName || "",
+      MiddleName: app.middleName || "",
+      LastName: app.lastName || "",
       FullName: app.fullName || "",
+      NameAsPerAadhar: app.nameAsPerAadhar || "",
       Email: app.email || "",
-      WhatsApp: app.studentWhatsappNumber || "",
+      StudentWhatsappNo: app.studentWhatsappNumber || "",
       Branch: app.branch || "",
       ProgramType: app.programType || "",
       Year: app.year || "",
       Round: app.round || "",
       SeatType: app.seatType || "",
+      Shift: app.shift || "",
+      Round: app.round || "",
+      Quota: app.quota || "",
+      SeatType: app.seatType || "",
       AdmissionCategory: app.admissionCategoryDTE || "",
       Gender: app.gender || "",
       MotherName: app.motherName || "",
-      ParentWhatsApp: app.fatherGuardianWhatsappNumber || "",
-      Caste: app.casteAsPerLC || "",
+      FatherGuardianWhatsAppMobileNo: app.fatherGuardianWhatsappNumber || "",
+      CastAsPerLC: app.casteAsPerLC || "",
       Domicile: app.domicile || "",
       Nationality: app.nationality || "",
       FamilyIncome: app.familyIncome || "",
@@ -635,6 +724,18 @@ const AdmissionApplications = () => {
       PRN: app.prn || "",
       DateOfBirth: app.dateOfBirth || "",
       Status: app.status || "",
+      AddressLine: app.address?.[0]?.addressLine || "",
+      City: app.address?.[0]?.city || "",
+      State: app.address?.[0]?.state || "",
+      Pincode: app.address?.[0]?.pincode || "",
+      Country: app.address?.[0]?.country || "",
+      FeesCategory: app.feesCategory || "",
+      AdmissionType: app.admissionType || "",
+      SubCastAsPerLC: app.subCasteAsPerLC || "",
+      ReligionAsPerLC: app.religionAsPerLC || "",
+      FamilyIncome: app.familyIncome || "",
+      MothersMobileNo: app.motherMobileNumber || "",
+      IsForeignNational: app.isForeignNational || "",
       CreatedAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : "",
       UpdatedAt: app.updatedAt ? new Date(app.updatedAt).toLocaleString() : "",
     }));
@@ -657,7 +758,7 @@ const AdmissionApplications = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <Toaster/>
+      <Toaster />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex gap-4 pb-4 justify-end">
@@ -689,37 +790,44 @@ const AdmissionApplications = () => {
             <Upload className="w-4 h-4" />
             <span>Export</span>
           </button>
+          <button
+            onClick={handleExportToExcelSample}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Sample Formate</span>
+          </button>
         </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                Total Applications
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {admission.length}
-              </p>
-              <p className="text-xs mt-1 text-gray-500">
-                {calculateGrowth() > 0 ? (
-                  <span className="text-green-600">
-                    ↑ {Math.abs(calculateGrowth()).toFixed(1)}% this month
-                  </span>
-                ) : calculateGrowth() < 0 ? (
-                  <span className="text-red-600">
-                    ↓ {Math.abs(calculateGrowth()).toFixed(1)}% this month
-                  </span>
-                ) : (
-                  <span>No change</span>
-                )}
-              </p>
-            </div>
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
-              <FileText className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Applications
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {admission.length}
+                </p>
+                <p className="text-xs mt-1 text-gray-500">
+                  {calculateGrowth() > 0 ? (
+                    <span className="text-green-600">
+                      ↑ {Math.abs(calculateGrowth()).toFixed(1)}% this month
+                    </span>
+                  ) : calculateGrowth() < 0 ? (
+                    <span className="text-red-600">
+                      ↓ {Math.abs(calculateGrowth()).toFixed(1)}% this month
+                    </span>
+                  ) : (
+                    <span>No change</span>
+                  )}
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
-        </div>
           <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
@@ -761,60 +869,60 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-           <div className="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                Avg Processing Time
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {getAverageProcessingTime()}
-              </p>
-              <p className="text-xs mt-1 text-gray-500">
-                For completed applications
-              </p>
-            </div>
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
-              <Clock className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-         <div className="bg-gradient-to-br from-amber-100 to-amber-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                Most Popular Program
-              </p>
-              <p className="text-xl font-bold text-gray-900 truncate">
-                {getTopProgram()}
-              </p>
-              <p className="text-xs mt-1 text-gray-500">
-                By application volume
-              </p>
-            </div>
-            <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg">
-              <GraduationCap className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Avg Processing Time
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {getAverageProcessingTime()}
+                </p>
+                <p className="text-xs mt-1 text-gray-500">
+                  For completed applications
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
-        </div>
-         <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                Approval Rate
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {getConversionRate()}
-              </p>
-              <p className="text-xs mt-1 text-gray-500">
-                Of total applications
-              </p>
-            </div>
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-amber-100 to-amber-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Most Popular Program
+                </p>
+                <p className="text-xl font-bold text-gray-900 truncate">
+                  {getTopProgram()}
+                </p>
+                <p className="text-xs mt-1 text-gray-500">
+                  By application volume
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
-        </div>
+          <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Approval Rate
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {getConversionRate()}
+                </p>
+                <p className="text-xs mt-1 text-gray-500">
+                  Of total applications
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filters and Search */}

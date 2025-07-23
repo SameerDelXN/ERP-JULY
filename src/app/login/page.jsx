@@ -205,7 +205,7 @@ const Login = () => {
                 Access Level
               </label>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2gap-2">
                 {[
                   {
                     role: "admin",
@@ -222,6 +222,11 @@ const Login = () => {
                     label: "Staff Member",
                     icon: UserCheck,
                   },
+                  // {
+                  //   role: "teacher",
+                  //   label: "Teacher Member",
+                  //   icon: User,
+                  // },
                 ].map(({ role, label, icon: Icon }) => (
                   <button
                     key={role}
