@@ -85,7 +85,7 @@ export async function POST(request) {
       "programType",
       "year",
       "branch",
-      "dateOfBirth",
+      // "dateOfBirth",
       "studentWhatsappNumber",
     ];
 
