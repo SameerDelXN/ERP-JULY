@@ -1,10 +1,18 @@
 import mongoose from 'mongoose';
 
 const salarySchema = new mongoose.Schema({
+<<<<<<< HEAD
   staffId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Staff', 
     required: true 
+=======
+   staffId: {
+    //type: String,  ✅ This ensures it's a custom string like "STF010"
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Staff'
+>>>>>>> cfda5fd7224e3c95f1566146599b102b9cbff159
   },
   name: { type: String, required: true },
   baseSalary: { type: Number, required: true },

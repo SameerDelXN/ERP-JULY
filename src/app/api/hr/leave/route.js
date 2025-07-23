@@ -63,11 +63,8 @@ export async function GET() {
   await connectDB();
 
   try {
-    const leaves = await Leave.find()
-      .populate({
-        path: 'staffId',
-        select: 'name' // only show needed fields
-      });
+    const leaves = await Leave.find({})
+     
 
     return NextResponse.json({ success: true, data: leaves });
   } catch (error) {
