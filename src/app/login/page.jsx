@@ -205,7 +205,7 @@ const Login = () => {
                 Access Level
               </label>
 
-              <div className="grid grid-cols-2gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   {
                     role: "admin",
