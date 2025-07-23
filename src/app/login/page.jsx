@@ -222,6 +222,11 @@ const Login = () => {
                     label: "Staff Member",
                     icon: UserCheck,
                   },
+                  // {
+                  //   role: "teacher",
+                  //   label: "Teacher Member",
+                  //   icon: User,
+                  // },
                 ].map(({ role, label, icon: Icon }) => (
                   <button
                     key={role}

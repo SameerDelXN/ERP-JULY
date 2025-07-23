@@ -19,10 +19,13 @@
     |-- vercel.svg
     |-- Welcome.svg
     |-- window.svg
+|-- rds-combined-ca-bundle.pem
 |-- README.md
 |-- src
     |-- app
         |-- admin
+            |-- academic-configuration
+                |-- page.jsx
             |-- admission-applications
                 |-- page.jsx
             |-- courses
@@ -49,10 +52,10 @@
                 |-- route.js
             |-- courses
                 |-- route.js
-                |-- [id]
-                    |-- route.js
             |-- department
                 |-- route.js
+                |-- [id]
+                    |-- route.js
             |-- enquiry
                 |-- route.js
                 |-- [id]
@@ -91,6 +94,8 @@
                             |-- route.js
                         |-- route.js
                     |-- route.js
+                    |-- students
+                        |-- route.js
             |-- upload
                 |-- multiple
                     |-- route.js

@@ -202,7 +202,7 @@ const admissionSchema = new mongoose.Schema(
     // Contact details
     studentWhatsappNumber: { type: Number },
     fatherGuardianWhatsappNumber: { type: Number },
-    motherMobileNumber: { type: String, default: "" },
+    motherMobileNumber: { type: Number,  },
 
     //Address Details
     address: [
@@ -228,7 +228,8 @@ const admissionSchema = new mongoose.Schema(
     // Status
     status: {
       type: String,
-      enum: ["inProcess", "approved", "rejected"],
+      enum: ["inProcess", "approved", "rejected"], 
+      required: true,
       default: "inProcess",
     },
 
