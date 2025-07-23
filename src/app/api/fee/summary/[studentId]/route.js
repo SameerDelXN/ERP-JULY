@@ -5,10 +5,13 @@ import  Student  from '@/models/student';
 import { FeeStructure } from '@/models/feeStructure'; // your model may be named differently
 import mongoose from 'mongoose';
 
+//export async function GET(req, context) {
+//  const { studentId } = context.params;
+// await connectDB();
+
 export async function GET(req, context) {
-  const { studentId } = context.params;
+  const identifier = context.params.studentId; // could be ObjectId or staffId string
   await connectDB();
-  
 
   try {
     // Step 1: Get student info
@@ -32,9 +35,9 @@ export async function GET(req, context) {
     const finalPayable = feeStructure.totalFee || 0;
 
     // Step 3: Compute discounts/scholarship (use fields from student or other logic)
-    //const totalDiscount = student.discount || 0;
-    //const totalScholarship = student.scholarship || 0;
-    //const totalInstallment = 0; // (Optional: fetch from Installments model if applicable)
+    const totalDiscount = student.discount || 0;
+    const totalScholarship = student.scholarship || 0;
+    const totalInstallment = 0; // (Optional: fetch from Installments model if applicable)
 
     //const finalPayable = totalFee //- (totalDiscount + totalScholarship);
 

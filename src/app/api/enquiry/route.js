@@ -1,77 +1,60 @@
+//GET and POST handler to create neew enquiry and fetch all enquiry
+
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../lib/mongodb';
-import enquirySchema from '../../models/enquiryform';
+import enquirySchema from '../../models/enquirySchema';
 
-export async function POST(req) {
-  //await connectToDatabase();
-
+export async function GET() {
   try {
-    const body = await req.json();
-    const enquiry = new enquirySchema(body);
-    await enquiry.save();
-
-
     await connectToDatabase();
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Enquiry submitted successfully' 
-    }, { status: 201 });
+    const enquiries = await enquirySchema.find().sort({
+      createdAt: -1
+    }); // latest first
+    return NextResponse.json(enquiries, {
+      status: 200
+    });
   } catch (error) {
-    console.error('Error saving enquiry:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 400 });
+    console.error('Error fetching enquiries:', error);
+    return NextResponse.json({
+      message: 'Server error'
+    }, {
+      status: 500
+    });
   }
 }
 
+export async function POST(req) {
+  try {
+    await connectToDatabase();
+    const body = await req.json();
+    const {firstName,middleName,lastName,phone,email,course,source,notes}= body
+    const enquiry = new enquirySchema({
+      first : firstName,
+      middle : middleName,
+      last : lastName,
+      phone,
+      email,
+      courseInterested:course,
+      source,
+      notes,
 
-/*code to upload files--not working currently  */
+    });
+    await enquiry.save();
 
-// import { NextResponse } from 'next/server';
-// import { connectToDatabase } from '../../lib/mongodb';
-// import enquirySchema from '../../models/enquiryform';
-// import { uploadToGoogleDrive } from '../../lib/googleDriveUpload';
+    return NextResponse.json({
+      success: true,
+      message: 'Enquiry submitted successfully'
+    }, {
+      status: 201
+    });
 
-// export async function POST(req) {
-//   try {
-//     const formData = await req.formData();
-
-//     // Extract document files
-//     const birthCertificate = formData.get('birthCertificate');
-//     const parentIdProof = formData.get('parentIdProof');
-
-//     // Upload files to Google Drive
-//     const birthCertificateResult = await uploadToGoogleDrive(birthCertificate);
-//     const parentIdProofResult = await uploadToGoogleDrive(parentIdProof);
-
-//     // Build MongoDB payload from other fields
-//     const body = {};
-//     for (const [key, value] of formData.entries()) {
-//       if (key !== 'birthCertificate' && key !== 'parentIdProof') {
-//         body[key] = value;
-//       }
-//     }
-
-//     // Add document URLs to payload
-//     body.birthCertificateUrl = birthCertificateResult.fileUrl;
-//     body.parentIdProofUrl = parentIdProofResult.fileUrl;
-
-//     await connectToDatabase();
-//     const enquiry = new enquirySchema(body);
-//     await enquiry.save();
-
-//     return NextResponse.json({
-//       success: true,
-//       message: 'Enquiry submitted successfully'
-//     }, { status: 201 });
-
-//   } catch (error) {
-//     console.error('Error saving enquiry:', error);
-//     return NextResponse.json({
-//       success: false,
-//       error: error.message
-//     }, { status: 400 });
-//   }
-// }
+  } catch (error) {
+    console.error('Error creating enquiry:', error);
+    return NextResponse.json({
+      success: false,
+      message: error.message,
+    }, {
+      status: 400
+    });
+  }
+}

@@ -15,7 +15,7 @@ export async function POST(request) {
   }
 
   try {
-    const staff = await Staff.findOne({ staffId });
+    const staff = await Staff.findById(staffId);
 
     if (!staff) {
       return NextResponse.json({ success: false, error: 'Staff not found' }, { status: 404 });

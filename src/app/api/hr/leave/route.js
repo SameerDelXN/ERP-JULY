@@ -1,24 +1,50 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongoose';
 import Leave from '@/models/leave';
-import  Staff  from '@/models/staff';
-// Create leave request (POST)
+import Staff from '@/models/staff';
+
 export async function POST(req) {
+  await connectDB();
+
   try {
-    await connectDB();
     const body = await req.json();
+    const { staffId, fromDate, toDate, reason, type } = body;
 
-    const leave = await Leave.create(body);
+    // ✅ Find the staff using either ObjectId or staffId string
+    let staff = null;
 
-    return Response.json({ success: true, data: leave }, { status: 201 });
+    if (staffId && staffId.length === 24 && /^[a-fA-F0-9]{24}$/.test(staffId)) {
+      staff = await Staff.findById(staffId);
+    }
+
+    if (!staff) {
+      staff = await Staff.findOne({ staffId }); // Use "STF001"
+    }
+
+    if (!staff) {
+      return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
+    }
+
+    // ✅ Create the leave with ObjectId reference
+    const leave = await Leave.create({
+      staffId: staff._id, // Pass ObjectId not string
+      fromDate,
+      toDate,
+      reason,
+      type
+    });
+
+    return NextResponse.json({ success: true, message: 'Leave request submitted', data: leave }, { status: 201 });
+
   } catch (error) {
-    console.error("💥 Leave POST Error:", error); // log the error
-    return Response.json(
+    console.error("💥 Leave POST Error:", error);
+    return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
     );
   }
 }
+
 
 // Get all leave requests (GET)
 /*  export async function GET() {

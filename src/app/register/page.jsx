@@ -10,8 +10,6 @@ const page = () => {
     fullName: "",
     email: "",
     phone: "",
-    institution: "",
-    username: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
@@ -39,15 +37,19 @@ const page = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: formData.username,
+          fullName: formData.fullName,
           email: formData.email,
+          phone: formData.phone,
           password: formData.password,
-          role: selectedRole,
+          confirmPassword: formData.confirmPassword,
+          agreeToTerms: formData.agreeToTerms,
+          role: selectedRole.toLowerCase(),
         }),
       });
 
       const data = await res.json();
-
+      console.log(data);
+      
       if (!res.ok) {
         throw new Error(data.message || "Something went wrong");
       }
