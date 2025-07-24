@@ -96,7 +96,7 @@ export default function PayrollPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <Link
-                          href={`/hr/payslip/generate/${employee.staffId}`}
+                          href={`/hr/payslip/${employee.staffId}`}
                           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                         >
                           Generate Slip

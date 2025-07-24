@@ -90,6 +90,85 @@ import Staff from '@/models/staff';
 
 
 
+// export async function GET(req, { params }) {
+//   await connectDB(); // First await any async operations
+//   const identifier = params.staffid; // Then access params
+
+//   try {
+//     console.log('📥 Incoming identifier:', identifier);
+
+//     // 🔍 Find staff
+//     let staff;
+//     if (mongoose.Types.ObjectId.isValid(identifier)) {
+//       staff = await Staff.findById(identifier);
+//     }
+//     if (!staff) {
+//       staff = await Staff.findOne({ staffId: identifier });
+//     }
+
+//     if (!staff) {
+//       return NextResponse.json(
+//         { success: false, message: 'Staff not found' },
+//         { status: 404 }
+//       );
+//     }
+
+//     console.log('✅ Staff found:', staff.name);
+
+//     const payslips = await Payslip.find({ staffId: staff._id });
+
+//     if (payslips.length > 0) {
+//       return NextResponse.json({ success: true, data: payslips });
+//     }
+
+//     const salary = await Salary.findOne({ staffId: staff._id });
+//     if (!salary) {
+//       return NextResponse.json(
+//         { success: false, message: 'Salary not found' },
+//         { status: 404 }
+//       );
+//     }
+
+//     const gross = (salary.earnings.baseSalary || 0) + (salary.allowances || 0);
+//     const totalDeductions = (salary.deductions || 0) + (salary.leaveDeduction || 0);
+//     const net = gross - totalDeductions;
+
+//     const newPayslip = await Payslip.create({
+//       staffId: staff._id,
+//       month: new Date().toLocaleString('default', { month: 'long' }),
+//       year: new Date().getFullYear(),
+//       dateOfIssue: new Date(),
+//       earnings: {
+//         basic: salary.earnings.baseSalary,
+//         hra: salary.earnings.allowances || 0,
+//         da: 0,
+//         specialAllowance: 0,
+//         bonus: 0,
+//         other: 0
+//       },
+//       deductions: {
+//         pf: salary.deductions.pf || 0,
+//         tds: 0,
+//         loan: 0,
+//         leave: salary.deduction.leave || 0,
+//         other: 0
+//       },
+//       grossEarnings: gross,
+//       totalDeductions: totalDeductions,
+//       netSalary: net,
+//       paymentStatus: 'Pending'
+//     });
+
+//     return NextResponse.json({ success: true, data: [newPayslip] });
+//   } catch (error) {
+//     console.error('❌ Payslip generation error:', error);
+//     return NextResponse.json(
+//       { success: false, message: 'Server error', error: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
 export async function GET(req, { params }) {
   await connectDB(); // First await any async operations
   const identifier = params.staffid; // Then access params
@@ -99,11 +178,13 @@ export async function GET(req, { params }) {
 
     // 🔍 Find staff
     let staff;
-    if (mongoose.Types.ObjectId.isValid(identifier)) {
+    
+    // First try to find by staffId (string)
+    staff = await Staff.findOne({ staffId: identifier });
+    
+    // If not found by staffId, try by ObjectId
+    if (!staff && mongoose.Types.ObjectId.isValid(identifier)) {
       staff = await Staff.findById(identifier);
-    }
-    if (!staff) {
-      staff = await Staff.findOne({ staffId: identifier });
     }
 
     if (!staff) {
@@ -115,6 +196,7 @@ export async function GET(req, { params }) {
 
     console.log('✅ Staff found:', staff.name);
 
+    // Use staff._id (ObjectID) for all subsequent queries
     const payslips = await Payslip.find({ staffId: staff._id });
 
     if (payslips.length > 0) {
@@ -134,7 +216,7 @@ export async function GET(req, { params }) {
     const net = gross - totalDeductions;
 
     const newPayslip = await Payslip.create({
-      staffId: staff._id,
+      staffId: staff._id, // Using the ObjectID here
       month: new Date().toLocaleString('default', { month: 'long' }),
       year: new Date().getFullYear(),
       dateOfIssue: new Date(),
@@ -150,7 +232,7 @@ export async function GET(req, { params }) {
         pf: salary.deductions.pf || 0,
         tds: 0,
         loan: 0,
-        leave: salary.deduction.leave || 0,
+        leave: salary.deductions.leave || 0, // Fixed typo from 'deduction' to 'deductions'
         other: 0
       },
       grossEarnings: gross,

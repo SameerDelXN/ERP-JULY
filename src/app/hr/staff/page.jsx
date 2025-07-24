@@ -10,13 +10,14 @@ export default function StaffManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStaff, setCurrentStaff] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   // Form state
   const [formData, setFormData] = useState({
     staffId: '',
     fullName: '',
     email: '',
-    department: 'HR',
+    department: 'Select Department',
     position: '',
     salary: '',
     contactNumber: ''
@@ -126,12 +127,45 @@ export default function StaffManagement() {
     setIsModalOpen(true);
   };
 
+  // Add this function at the top of your component file
+const getInitials = (name) => {
+  if (!name) return '';
+  return name.split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
+
   if (loading) return <div className="text-center py-8">Loading staff data...</div>;
   console.log(filteredStaff)
   return (
-    <div className="p-6 text-gray-950">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Staff Management</h1>
+    <div className="p-6 m-6 text-gray-950 bg-white rounded-lg shadow overflow-hidden">
+      
+
+      {/* Search Bar */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search by name or ID..."
+              className="pl-10 pr-2 py-1.5 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select
+            className="ml-2 py-2 px-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+          >
+            <option value="all">All Role</option>
+            <option value="teaching">Teaching</option>
+            <option value="non-teaching">Non Teaching Staff</option>
+          </select>
+        </div>
         <button
           onClick={handleAddNew}
           className="flex items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -141,20 +175,13 @@ export default function StaffManagement() {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search by name or staff ID..."
-          className="pl-10 pr-4 py-2 w-full max-w-md border rounded-lg focus:ring-2 focus:ring-blue-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex justify-between items-center mb-6">
+        {/* <h1 className="text-2xl font-bold">Staff Management</h1> */}
+        
       </div>
 
       {/* Staff Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -162,7 +189,7 @@ export default function StaffManagement() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salary</th>
+         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salary</th> 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -173,7 +200,7 @@ export default function StaffManagement() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${person.salary.toLocaleString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{person.salary.toLocaleString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <button
                     onClick={() => handleEdit(person)}
@@ -192,67 +219,113 @@ export default function StaffManagement() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div> */}
+
+      {/* Staff Table */}
+<div className="bg-white rounded-lg shadow overflow-hidden">
+  <table className="min-w-full divide-y divide-gray-200">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white divide-y divide-gray-200">
+      {filteredStaff?.map((person) => (
+        <tr key={person._id}>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <div className="flex items-center">
+              <div className='flex-shrink-0 h-10 w-10 mr-2 rounded-full bg-gray-100 flex items-center justify-center text-gray-950 font-medium'>
+                {getInitials(person.name)}
+              </div>
+              <div className='flex flex-col'>
+                <span className="text-sm font-medium text-gray-900">{person.name}</span>
+              <span className="text-xs text-gray-500">{person.staffId}</span>
+              </div>
+              
+            </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department}</td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation}</td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <button
+              onClick={() => handleEdit(person)}
+              className="text-blue-600 hover:text-blue-900 mr-4"
+            >
+              <Edit size={16} />
+            </button>
+            <button
+              onClick={() => handleDelete(person._id)}
+              className="text-red-600 hover:text-red-900"
+            >
+              <Trash2 size={16} />
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
       {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-            <h2 className="text-xl font-bold mb-4">
-              {currentStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              {/* ... [keep your existing form fields] */}
-              <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      {/* Add/Edit Modal */}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg p-6 w-full max-w-2xl"> {/* Increased max-width */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">
+          {currentStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
+        </h2>
+        <button 
+          onClick={() => setIsModalOpen(false)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
+      </div>
+      
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> {/* Two-column grid */}
+          {/* Column 1 */}
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
-              <input
-                type="text"
-                name="staffId"
-                value={formData.staffId}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter full name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter email address"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
               <select
                 name="department"
                 value={formData.department}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
+                <option value="">Select Department</option>
                 <option value="HR">HR</option>
                 <option value="Finance">Finance</option>
                 <option value="IT">IT</option>
@@ -260,59 +333,71 @@ export default function StaffManagement() {
                 <option value="Marketing">Marketing</option>
               </select>
             </div>
+          </div>
+
+          {/* Column 2 */}
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
               <input
                 type="text"
                 name="position"
                 value={formData.position}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter position"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Salary *</label>
               <input
                 type="number"
                 name="salary"
                 value={formData.salary}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter salary"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
               <input
                 type="tel"
                 name="contactNumber"
                 value={formData.contactNumber}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter phone number"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
             </div>
           </div>
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 border rounded-md"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              {currentStaff ? 'Update' : 'Save'}
-            </button>
-          </div>
-        </form>
-            </form>
-          </div>
         </div>
-      )}
+
+        {/* Full-width buttons below the columns */}
+        <div className="flex justify-end space-x-3 pt-6 mt-4 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(false)}
+            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          >
+            {currentStaff ? 'Update Staff' : 'Add Staff'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
       
     </div>
   );

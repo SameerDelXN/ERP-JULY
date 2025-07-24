@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import {use} from 'react'
 import { useRouter } from 'next/navigation';
 import html2pdf from 'html2pdf.js';
 
 export default function GeneratePayslip({ params }) {
-  const { employeeId } = use(params);
+  const { staffId } = use(params); // param is staffId
   const router = useRouter();
   const [employee, setEmployee] = useState(null);
   const [payslip, setPayslip] = useState(null);
@@ -17,66 +16,49 @@ export default function GeneratePayslip({ params }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Fetch employee and payslip data
+  // Fetch staff data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Fetch employee details
-        const empRes = await fetch(`/api/hr/staff`);
+        // Fetch staff details
+        const empRes = await fetch(`/api/hr/staff/${staffId}`);
+        if (!empRes.ok) throw new Error('Failed to fetch staff');
         const empData = await empRes.json();
-        console.log("employee data",empData)
-        
-        if (!empData.success) {
-          throw new Error(empData.error || 'Failed to fetch employee');
-        }
-        
-        setEmployee(empData.data);
-        
-        // Fetch payslip if exists
-        const payslipRes = await fetch(`/api/hr/payslip/${employeeId}`);
-        const payslipData = await payslipRes.json();
-        console.log("payslipData", payslipData)
-        
-        if (payslipData.success) {
-          // Filter payslip by selected month and year
-          const filtered = payslipData.data.find(p => 
-            p.month.toLowerCase() === new Date(year, month - 1).toLocaleString('default', { month: 'long' }).toLowerCase() &&
-            p.year === year
-          );
-          setPayslip(filtered || null);
-        }
+        setEmployee(empData);
+        setPayslip(null); // reset payslip on staff change
       } catch (error) {
         setError(error.message);
-        setEmployee(null)
-        setPayslip(null)
+        setEmployee(null);
+        setPayslip(null);
       } finally {
         setIsLoading(false);
       }
     };
-    
     fetchData();
-  }, [employeeId, month, year]);
+  }, [staffId]);
+
+  // Fetch payslip for selected month/year (optional: if you want to show existing slip)
+  useEffect(() => {
+    setPayslip(null); // clear payslip when month/year changes
+  }, [month, year]);
 
   const handleGeneratePayslip = async () => {
     try {
       setIsGenerating(true);
-      const res = await fetch(`/api/hr/payslip/${employeeId}`, {
+      setError(null);
+      const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+      const res = await fetch(`/api/hr/payslip`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ month, year }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staffId, month: monthName, year }),
       });
-      
       const data = await res.json();
-      
-      if (data.success) {
-        setPayslip(data.data);
+      if (data.success && data.data && data.data.length > 0) {
+        setPayslip(data.data[0]);
       } else {
-        throw new Error(data.error || 'Failed to generate payslip');
+        throw new Error(data.message || 'Failed to generate payslip');
       }
     } catch (error) {
       setError(error.message);
@@ -150,7 +132,11 @@ export default function GeneratePayslip({ params }) {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Position</p>
-                <p className="font-medium">{employee.position}</p>
+                <p className="font-medium">{employee.designation}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Salary</p>
+                <p className="font-medium">{employee.salary}</p>
               </div>
             </div>
           </div>
