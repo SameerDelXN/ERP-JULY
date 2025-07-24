@@ -33,6 +33,10 @@ const adminSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "Admin"
+  },
+  password:{
+    type: String,
+    required: true
   }
 }, {
   timestamps: true

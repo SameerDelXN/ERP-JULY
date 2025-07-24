@@ -1,3 +1,4 @@
+//Google drive api 
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { Readable } from 'stream';
@@ -18,7 +19,9 @@ export async function POST(request) {
   try {
     // 1. Parse form data
     const formData = await request.formData();
-    const file = formData.get("file");
+    console.log(formData);
+    
+    const file = formData.get("files");
 
     if (!file) {
       return NextResponse.json(

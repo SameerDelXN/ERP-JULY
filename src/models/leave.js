@@ -4,8 +4,7 @@ const leaveSchema = new mongoose.Schema({
   staffId: {
   type: mongoose.Schema.Types.ObjectId,
   ref: 'Staff',
-  required: true,                   
-  unique: true
+  required: true,         
 },
 fromDate: {
     type: Date,

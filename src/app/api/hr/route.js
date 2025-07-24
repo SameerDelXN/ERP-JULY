@@ -1,7 +1,8 @@
 // /app/api/hr/route.js
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongoose';
-import HR from '@/models/hr'; // Make sure this model exists
+import HR from '@/models/hr'; 
+import Staff from '@/models/staff';
 
 export async function POST(request) {
   await connectDB();
@@ -9,8 +10,24 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
+    // 1. Create HR
     const hr = await HR.create(body);
 
+
+    // 2. Also add HR as Staff
+    const staffData = {
+      name: body.name,
+      staffId: body.staffId,
+      designation: body.designation || 'HR', // optional fallback
+      department: body.department,
+      email: body.email,
+      phone: body.phone || '',
+      salary: body.salary || 0,
+      joiningDate: body.joiningDate || new Date(),
+    };
+
+    await Staff.create(staffData);
+    
     return NextResponse.json({
       message: 'HR created successfully',
       hr

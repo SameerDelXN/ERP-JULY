@@ -1,97 +1,105 @@
 import {
   Users,
   GraduationCap,
-  Calendar,
-  DollarSign,
   BookOpen,
   TrendingUp,
-  Bell,
   Settings,
-  Search,
-  Filter,
-  Plus,
-  ChevronDown,
-  Eye,
-  Edit,
-  Trash2,
-  Download,
-  Upload,
-  Star,
-  Clock,
-  Award,
-  BarChart3,
-  PieChart,
   Home,
   UserCheck,
   FileText,
   CreditCard,
-  Building,
-  Menu,
-  X,
-  Activity,
-  Target,
   FileTextIcon,
+  BookImage,
+  DollarSign,
+  Award,
+  BookOpenCheck,
+  CalendarClock,
+  BookMarked
 } from "lucide-react";
-export const sidebarItems = [
+export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
-  { id: "enquiry", label: "Enquiry Forms", icon: FileTextIcon },
-  { id: "students", label: "Students", icon: Users },
-  { id: "teachers", label: "Teachers", icon: GraduationCap },
-  { id: "classes", label: "Classes", icon: BookOpen },
-  { id: "attendance", label: "Attendance", icon: UserCheck },
-  { id: "finance", label: "Finance", icon: CreditCard },
-  { id: "reports", label: "Reports", icon: FileText },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "manage-users", label: "Manage Users/Roles", icon: Users },
+  { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
+  { id: "admission-applications", label: "Admission Applications", icon: BookImage },
+  { id: "courses", label: "CRM Management", icon: BookImage },
+  // { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
+  // { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
+  // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
+  // { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
+  // { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
+  // { id: "staff-directory", label: "Staff Directory", icon: Users },
+  // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
+  // { id: "reports&analytics", label: "Reports & Analytics (basic)", icon: TrendingUp },
+];
+export const staffSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
+  // { id: "followup-tracker", label: "Follow-up Tracker", icon: FileTextIcon },
+  { id: "application-management", label: "Application Management", icon: BookImage },
+  // { id: "admission-test-scheduling", label: "Admission Test Scheduling", icon: BookImage },
+  // { id: "communication-logs", label: "Communication Logs (Email/SMS)", icon: BookImage },
 ];
 
-//    const stats = [
-//     { title: 'Total Students', value: '2,847', change: '+12%', icon: Users, color: 'bg-blue-500' },
-//     { title: 'Active Teachers', value: '154', change: '+3%', icon: GraduationCap, color: 'bg-green-500' },
-//     { title: 'Classes Today', value: '48', change: '+5%', icon: BookOpen, color: 'bg-purple-500' },
-//     { title: 'Revenue', value: '$124,590', change: '+18%', icon: DollarSign, color: 'bg-orange-500' },
-//   ];
+export const studentSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  { id: "profile", label: "Profile", icon: UserCheck },
+  { id: "attendance", label: "Attendance", icon: FileText },
+  { id: "myexams", label: "My Exams", icon: BookOpenCheck },
+  { id: "grades", label: "Grades", icon: GraduationCap },
+  { id: "assignments", label: "Assignments", icon: BookOpen },
+  { id: "timetable", label: "My Timetable", icon: CalendarClock },
+  { id: "certificates", label: "Certificates", icon: Award },
 
-//   const students = [
-//     { id: 1, name: 'Sarah Johnson', class: '10-A', grade: 'A+', attendance: '95%', status: 'Active' },
-//     { id: 2, name: 'Michael Chen', class: '10-B', grade: 'A', attendance: '88%', status: 'Active' },
-//     { id: 3, name: 'Emma Davis', class: '9-A', grade: 'B+', attendance: '92%', status: 'Active' },
-//     { id: 4, name: 'James Wilson', class: '11-C', grade: 'A-', attendance: '90%', status: 'Active' },
-//     { id: 5, name: 'Olivia Brown', class: '10-A', grade: 'A+', attendance: '97%', status: 'Active' },
-//   ];
-
-//   const recentActivities = [
-//     { id: 1, action: 'New student enrollment', user: 'Admin', time: '2 minutes ago', type: 'success' },
-//     { id: 2, action: 'Fee payment received', user: 'Sarah Johnson', time: '15 minutes ago', type: 'info' },
-//     { id: 3, action: 'Attendance marked', user: 'Mr. Smith', time: '1 hour ago', type: 'default' },
-//     { id: 4, action: 'Report generated', user: 'Admin', time: '2 hours ago', type: 'warning' },
-//   ];
-
-export const columns = [
-  { header: 'Reg.Id', accessor: 'Reg.Id' },
-  { header: 'First Name', accessor: 'name' },
-  { header: 'Last Name', accessor: 'name' },
-  { header: 'Date of Birth', accessor: 'name' },
-  { header: 'Gender', accessor: 'name' },
-  { header: 'Nationality', accessor: 'name' },
-  { header: 'Father’s Full Name', accessor: 'name' },
-  { header: 'Mother’s Full Name', accessor: 'name' },
-  { header: 'Mobile Number', accessor: 'name' },
-  { header: 'Email Address', accessor: 'name' },
-  { header: 'Address Line 1', accessor: 'name' },
-  { header: 'City', accessor: 'name' },
-  { header: 'State', accessor: 'name' },
-  { header: 'Postal/Zip Code', accessor: 'Postal/Zip Code' },
-  { header: 'Country', accessor: 'name' },
-  { header: 'Current School Name', accessor: 'name' },
-  { header: 'Current Class', accessor: 'name' },
-  { header: 'Applying For Class', accessor: 'name' },
-  { header: 'Academic Year Applying For', accessor: 'name' },
-  { header: 'Preferred Medium of Instruction', accessor: 'name' },
-  { header: 'Birth Certificate', accessor: 'name' },
-  { header: 'Parent Aadhaar or PAN Card', accessor: 'name' },
-  { header: 'Action', accessor: 'name' },
 ];
 
-export const data = [
 
+export const roles = [
+  // {
+  //   id: 1,
+  //   name: 'Super Admin',
+  //   description: 'Full system access with all permissions',
+  //   userCount: 2,
+  //   permissions: ['Full Access', 'User Management', 'System Settings', 'Reports', 'Financial Management'],
+  //   color: 'bg-red-500'
+  // },
+  {
+    id: 2,
+    name: 'Admin',
+    // description: 'Administrative access with limited system settings',
+    // userCount: 5,
+    // permissions: ['User Management', 'Student Management', 'Teacher Management', 'Reports', 'Fee Management'],
+    color: 'bg-blue-500'
+  },
+  {
+    id: 3,
+    name: 'Teacher',
+    // description: 'Teaching staff with classroom management access',
+    // userCount: 45,
+    // permissions: ['Student Management', 'Grade Management', 'Attendance', 'Assignment Management', 'Communication'],
+    color: 'bg-green-500'
+  },
+  {
+    id: 4,
+    name: 'Staff',
+    // description: 'Non-teaching staff with specific operational access',
+    // userCount: 23,
+    // permissions: ['Library Management', 'Transport Management', 'Inventory Management'],
+    color: 'bg-indigo-500'
+  },
+  {
+    id: 5,
+    name: 'HOD',
+    // description: 'HOD access to academic resources and information',
+    // userCount: 1247,
+    // permissions: ['View Profile', 'View Grades', 'Submit Assignments', 'View Schedule', 'Communication'],
+    color: 'bg-purple-500'
+  },
+  // {
+  //   id: 5,
+  //   name: 'Parent',
+  //   description: 'Parent access to monitor child progress',
+  //   userCount: 892,
+  //   permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
+  //   color: 'bg-yellow-500'
+  // },
 ];

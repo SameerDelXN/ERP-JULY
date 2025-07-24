@@ -1,11 +1,10 @@
 import mongoose from 'mongoose';
 
 const salarySchema = new mongoose.Schema({
-   staffId: {
-    //type: String,  ✅ This ensures it's a custom string like "STF010"
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'Staff'
+  staffId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Staff', 
+    required: true 
   },
   name: { type: String, required: true },
   baseSalary: { type: Number, required: true },
@@ -17,21 +16,43 @@ const salarySchema = new mongoose.Schema({
 );
 
 const payslipSchema = new mongoose.Schema({
-   staffId: {
-    type: String, // ✅ This ensures it's a custom string like "STF010"
-    required: true,
-    ref: 'Staff'
+  staffId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Staff', 
+    required: true 
   },
-  name: { type: String, required: true },
   month: { type: String, required: true },
-  year: { type: Number, required: true }, // ✅ Add this for clarity
-  generatedDate: { type: Date, default: Date.now },
-  baseSalary: Number,
-  allowances: Number,
-  deductions: Number,
-  leaveDeduction: { type: Number, default: 0 }, // ✅ NEW FIELD
-  netSalary: Number
+  year: { type: Number, required: true },
+  dateOfIssue: { type: Date, default: Date.now },
+
+  earnings: {
+    basic: Number,
+    hra: Number,
+    da: Number,
+    specialAllowance: Number,
+    bonus: Number,
+    other: Number
+  },
+
+  deductions: {
+    pf: Number,
+    tds: Number,
+    loan: Number,
+    leave: Number,
+    other: Number
+  },
+
+  grossEarnings: Number,
+  totalDeductions: Number,
+  netSalary: Number,
+
+  paymentStatus: {
+    type: String,
+    enum: ['Paid', 'Pending'],
+    default: 'Pending'
+  }
 }, { timestamps: true });
+
 
 export const Salary = mongoose.models.Salary || mongoose.model('Salary', salarySchema);
 export const Payslip = mongoose.models.Payslip || mongoose.model('Payslip', payslipSchema);
