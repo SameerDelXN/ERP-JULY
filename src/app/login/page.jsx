@@ -45,28 +45,58 @@ const Login = () => {
   };
 
   // Validate form whenever email or password changes
+  // useEffect(() => {
+  //   if (email && !validateEmail(email)) {
+  //     setEmailError("Please enter a valid email address");
+  //   } else {
+  //     setEmailError("");
+  //   }
+
+  //   if (password && !validatePassword(password)) {
+  //     setPasswordError(
+  //       "Password must be at least 8 characters"
+  //     );
+  //   } else {
+  //     setPasswordError("");
+  //   }
+
+  //   setFormValid(
+  //     validateEmail(email) &&
+  //     validatePassword(password) &&
+  //     email.trim() !== "" &&
+  //     password.trim() !== ""
+  //   );
+  // }, [email, password]);
+
   useEffect(() => {
-    if (email && !validateEmail(email)) {
-      setEmailError("Please enter a valid email address");
+    if (selectedRole === "student") {
+      // For students, just check non-empty
+      setEmailError(email.trim() === "" ? "Student ID is required" : "");
+      setPasswordError(password.trim() === "" ? "Student ID is required" : "");
+      setFormValid(email.trim() !== "" && password.trim() !== "");
     } else {
-      setEmailError("");
-    }
+      // For other roles, validate properly
+      if (email && !validateEmail(email)) {
+        setEmailError("Please enter a valid email address");
+      } else {
+        setEmailError("");
+      }
 
-    if (password && !validatePassword(password)) {
-      setPasswordError(
-        "Password must be at least 8 characters"
-      );
-    } else {
-      setPasswordError("");
-    }
+      if (password && !validatePassword(password)) {
+        setPasswordError("Password must be at least 8 characters");
+      } else {
+        setPasswordError("");
+      }
 
-    setFormValid(
-      validateEmail(email) &&
+      setFormValid(
+        validateEmail(email) &&
         validatePassword(password) &&
         email.trim() !== "" &&
         password.trim() !== ""
-    );
-  }, [email, password]);
+      );
+    }
+  }, [email, password, selectedRole]);
+
 
   // const handelForgotPassword = () =>{
   //   router.push('/forgot-password')
@@ -200,136 +230,142 @@ const Login = () => {
           <div className="space-y-5">
             {/* Role Selection */}
             <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Access Level
-              </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Access Level
+                </label>
 
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  {
-                    role: "admin",
-                    label: "Administrator",
-                    icon: Settings,
-                  },
-                  // {
-                  //   role: "hod",
-                  //   label: "HOD",
-                  //   icon: UserCheck,
-                  // },
-                  {
-                    role: "staff",
-                    label: "Staff Member",
-                    icon: UserCheck,
-                  },
-                ].map(({ role, label, icon: Icon }) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => setSelectedRole(role)}
-                    className={`p-3 rounded-lg border-2 transition-all duration-200 text-center ${
-                      selectedRole === role
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    {
+                      role: "admin",
+                      label: "Administrator",
+                      icon: Settings,
+                    },
+                    {
+                      role: "hod",
+                      label: "HOD",
+                      icon: UserCheck,
+                    },
+                    {
+                      role: "staff",
+                      label: "Staff Member",
+                      icon: UserCheck,
+                    },
+                    {
+                      role: "student",
+                      label: "Student",
+                      icon: User,
+                    },
+                  ].map(({ role, label, icon: Icon }) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setSelectedRole(role)}
+                      className={`p-3 rounded-lg border-2 transition-all duration-200 text-center ${selectedRole === role
                         ? "border-blue-500 bg-blue-50 text-blue-700"
                         : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 mx-auto mb-1" />
-                    <span className="font-medium text-xs">{label}</span>
-                  </button>
-                ))}
+                        }`}
+                    >
+                      <Icon className="w-4 h-4 mx-auto mb-1" />
+                      <span className="font-medium text-xs">{label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <User
-                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                    focusedField === "email" ? "text-blue-500" : "text-gray-400"
-                  }`}
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedField("email")}
-                  onBlur={() => setFocusedField("")}
-                  placeholder={`Enter your ${selectedRole} email`}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
-                  required
-                />
+              {/* Email Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <User
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${focusedField === "email" ? "text-blue-500" : "text-gray-400"
+                      }`}
+                  />
+                  <input
+                    type={selectedRole === "student" ? "text" : "email"}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField("")}
+                    placeholder={
+                      selectedRole === "student"
+                        ? "Enter your Student ID"
+                        : `Enter your ${selectedRole} email`
+                    }
+
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
+                    required
+                  />
+                </div>
+                {emailError && (
+                  <p className="mt-1 text-sm text-red-600">{emailError}</p>
+                )}
               </div>
-              {emailError && (
-                <p className="mt-1 text-sm text-red-600">{emailError}</p>
-              )}
-            </div>
 
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock
-                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                    focusedField === "password"
+              {/* Password Field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${focusedField === "password"
                       ? "text-blue-500"
                       : "text-gray-400"
-                  }`}
-                />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField("password")}
-                  onBlur={() => setFocusedField("")}
-                  placeholder="Enter your password"
-                  className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-200"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
+                      }`}
+                  />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setFocusedField("password")}
+                    onBlur={() => setFocusedField("")}
+                    placeholder="Enter your password"
+                    className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+                )}
               </div>
-              {passwordError && (
-                <p className="mt-1 text-sm text-red-600">{passwordError}</p>
-              )}
-            </div>
 
-            {/* Login Button */}
-            <button
-              type="submit"
-              
-              disabled={!formValid || loading}
-              className={`w-full py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center ${
-                formValid && !loading
+              {/* Login Button */}
+              <button
+                type="submit"
+
+                disabled={!formValid || loading}
+                className={`w-full py-2.5 px-4 bg-blue-600 text-white font-medium rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center ${formValid && !loading
                   ? "hover:bg-blue-700 hover:shadow-md"
                   : "opacity-50 cursor-not-allowed"
-              }`}
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  Signing In...
-                </>
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </>
-              )}
-            </button>
+                  }`}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                    Signing In...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </button>
             </form>
 
             {/* Additional Options */}

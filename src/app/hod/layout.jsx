@@ -1,7 +1,7 @@
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import React, { useState, useEffect } from "react";
-import { Bell, BookOpen, ChevronDown, LayoutDashboard } from "lucide-react";
+import { Bell, BookOpen, ChevronDown, LayoutDashboard, LogOut, User, Settings, HelpCircle} from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
@@ -27,15 +27,25 @@ const hodSidebarItems = [
       { id: "students", label: "Students" },
     ],
   },
+  {
+    id: "student-management",
+    label: "Student Management",
+    icon: LayoutDashboard, // You'll need to import or define this icon
+  },
 ];
 
 const HodLayout = ({ children }) => {
   const { user, loading } = useSession();
+  console.log("user----------------", user);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(hodSidebarItems[0]?.id || "overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  //-------------------------------------------------
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  //-------------------------------------------------
 
   useEffect(() => {
     if (loading) return;
@@ -63,6 +73,12 @@ const HodLayout = ({ children }) => {
       router.push(`/hod/${newTab}`);
     }
   };
+  //---------------------------------------------
+  const handleLogout = () => {
+    localStorage.removeItem("session"); // or use your context method
+    router.push("/login");
+  };
+  //--------------------------------------------
 
   const activeTabItem = hodSidebarItems.find((item) => item.id === activeTab);
 
@@ -109,25 +125,85 @@ const HodLayout = ({ children }) => {
 
             {/* User Profile Section */}
             <div className="flex items-center space-x-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer group">
-              {/* Avatar */}
+              {/* Avatar
               <div className="relative">
                 <Avatar name={user?.name || "HOD"} />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
 
-              {/* User Info */}
+              {/* User Info 
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
                   {user?.name || "HOD"}
                 </p>
                 <p className="text-xs text-gray-500">Head of Department</p>
-              </div>
+              </div> */}
 
               {/* Dropdown Arrow */}
-              <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors duration-200" />
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center space-x-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors duration-200 group"
+                >
+                  {/* Avatar */}
+                  <div className="relative">
+                    <Avatar name={user?.fullName || "HOD"} />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                  </div>
+
+                  {/* Name + Role */}
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
+                      {user?.fullName || "HOD"}
+                    </p>
+                    <p className="text-xs text-gray-500">Head of Department</p>
+                  </div>
+
+                  {/* Down arrow */}
+                  <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors duration-200" />
+                </button>
+
+                {/* Dropdown Menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-md z-50 overflow-hidden">
+                    <button
+                      onClick={() => router.push('/hod/profile')}
+                      className="flex items-center w-full gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>My Profile</span>
+                    </button>
+                    <button
+                      onClick={() => router.push('/hod/settings')}
+                      className="flex items-center w-full gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Settings</span>
+                    </button>
+                    <button
+                      onClick={() => router.push('/help')}
+                      className="flex items-center w-full gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      <span>Help & Support</span>
+                    </button>
+                    <div className="border-t border-gray-100" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+
             </div>
           </Header>
-        </div>  
+        </div>
 
         {/* Scrollable main area */}
         <main className="flex-1 overflow-y-auto pt-20 px-6">{children}</main>

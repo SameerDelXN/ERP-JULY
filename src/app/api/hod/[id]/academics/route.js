@@ -16,7 +16,7 @@ export async function GET(req, { params }) {
 
     // ✅ Find the HOD by ID and validate role
     const hod = await teacherSchema.findById(hodId);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json({
         error: 'HOD not found or invalid role'
       }, {
@@ -27,7 +27,7 @@ export async function GET(req, { params }) {
     const department = hod.department;
 
     // ✅ Get all academic data for the department
-    const academics = await academicSchema.find({ department });
+    const academics = await academicSchema.find({ department })
 
     return NextResponse.json({
       message: 'Academic data fetched successfully',
@@ -55,7 +55,7 @@ export async function POST(request, { params }) {
 
     const { id } = params;
     const { academicId, years } = await request.json();
-    console.log(academicId,years)
+    console.log(academicId, years)
     // Validate input
     if (!academicId || !Array.isArray(years) || years.length === 0) {
       return NextResponse.json(
@@ -69,7 +69,7 @@ export async function POST(request, { params }) {
     }
 
     const hod = await teacherSchema.findById(id);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json({ error: 'Unauthorized: Not an HOD' }, { status: 403 });
     }
 
@@ -185,7 +185,7 @@ export async function PUT(request) {
     await connectToDatabase();
 
     const { academicId, years } = await request.json();
-    console.log(academicId,years)
+    console.log(academicId, years)
     if (!academicId || !Array.isArray(years)) {
       return NextResponse.json(
         {
@@ -256,7 +256,7 @@ export async function DELETE(request, { params }) {
 
     // ✅ Verify HOD
     const hod = await teacherSchema.findById(hodId);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json(
         { error: 'Unauthorized: Not a valid HOD' },
         { status: 403 }

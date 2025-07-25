@@ -3,11 +3,11 @@ import { Shield, ArrowLeft, Home, Mail } from 'lucide-react';
 
 const UnauthorizedPage = () => {
   const handleGoBack = () => {
-    window.history.back();
+    window.location.href = '/login';
   };
 
   const handleGoHome = () => {
-    window.location.href = '/';
+     window.location.href = 'http://localhost:3000';
   };
 
   return (

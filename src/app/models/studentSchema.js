@@ -31,6 +31,9 @@ const studentSchema = new mongoose.Schema(
       enum: ['active', 'inactive', 'alumni', 'suspended'],
       default: 'active',
     },
+     sessionToken:{
+      type:String
+    }
   },
   { timestamps: true }
 );
@@ -40,4 +43,3 @@ delete mongoose.models.student
 const student = mongoose.models.student || mongoose.model('student', studentSchema);
 
 export default student;
-
