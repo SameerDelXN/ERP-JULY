@@ -77,8 +77,8 @@ export async function GET() {
       return Response.json({ user: null }, { status: 200 });
     }
 
-    // ✅ HOD logic (unchanged)
-    if (role === 'hod') {
+    // If HOD, search in teacher schema
+    if (role === 'hod' || role === "teacher") {
       const hod = await teacherSchema.findOne({ sessionToken }).select('-password');
       if (!hod) {
         return Response.json({ user: null }, { status: 404 });
@@ -89,7 +89,7 @@ export async function GET() {
           id: hod._id.toString(),
           fullName: hod.fullName,
           email: hod.email,
-          role: 'hod',
+          role: hod.role,
           department: hod.department,
           teacherId: hod.teacherId,
           isHod: true,

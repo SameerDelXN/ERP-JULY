@@ -1,397 +1,3 @@
-// 'use client';
-
-// import { useState, useMemo } from 'react';
-// import { Search, Filter, Download, TrendingUp, Users, BookOpen, Award } from 'lucide-react';
-
-// const dummyData = {
-//   "1st Year": [
-//     {
-//       division: 'A',
-//       students: [
-//         {
-//           name: 'Alice Johnson',
-//           roll: '101',
-//           email: 'alice.j@college.edu',
-//           attendance: {
-//             Mathematics: 85,
-//             Physics: 78,
-//             Chemistry: 92,
-//             English: 88,
-//             Programming: 90
-//           }
-//         },
-//         {
-//           name: 'Bob Smith',
-//           roll: '102',
-//           email: 'bob.s@college.edu',
-//           attendance: {
-//             Mathematics: 75,
-//             Physics: 82,
-//             Chemistry: 88,
-//             English: 79,
-//             Programming: 85
-//           }
-//         },
-//         {
-//           name: 'Carol Williams',
-//           roll: '103',
-//           email: 'carol.w@college.edu',
-//           attendance: {
-//             Mathematics: 92,
-//             Physics: 88,
-//             Chemistry: 85,
-//             English: 91,
-//             Programming: 87
-//           }
-//         }
-//       ]
-//     },
-//     {
-//       division: 'B',
-//       students: [
-//         {
-//           name: 'Charlie Brown',
-//           roll: '201',
-//           email: 'charlie.b@college.edu',
-//           attendance: {
-//             Mathematics: 80,
-//             Physics: 70,
-//             Chemistry: 85,
-//             English: 83,
-//             Programming: 78
-//           }
-//         },
-//         {
-//           name: 'Diana Prince',
-//           roll: '202',
-//           email: 'diana.p@college.edu',
-//           attendance: {
-//             Mathematics: 88,
-//             Physics: 85,
-//             Chemistry: 90,
-//             English: 87,
-//             Programming: 92
-//           }
-//         }
-//       ]
-//     }
-//   ],
-//   "2nd Year": [
-//     {
-//       division: 'A',
-//       students: [
-//         {
-//           name: 'David Wilson',
-//           roll: '301',
-//           email: 'david.w@college.edu',
-//           attendance: {
-//             'Advanced Math': 88,
-//             'Data Structures': 90,
-//             'Database Systems': 86,
-//             'Web Development': 92,
-//             'Software Engineering': 85
-//           }
-//         },
-//         {
-//           name: 'Emma Davis',
-//           roll: '302',
-//           email: 'emma.d@college.edu',
-//           attendance: {
-//             'Advanced Math': 91,
-//             'Data Structures': 88,
-//             'Database Systems': 89,
-//             'Web Development': 87,
-//             'Software Engineering': 90
-//           }
-//         }
-//       ]
-//     }
-//   ],
-//   "3rd Year": [
-//     {
-//       division: 'A',
-//       students: [
-//         {
-//           name: 'Frank Miller',
-//           roll: '401',
-//           email: 'frank.m@college.edu',
-//           attendance: {
-//             'Machine Learning': 85,
-//             'Cloud Computing': 88,
-//             'Mobile Development': 82,
-//             'Project Management': 90,
-//             'Internship': 95
-//           }
-//         }
-//       ]
-//     }
-//   ]
-// };
-
-// export default function StudentManagementDashboard() {
-//   const [activeTab, setActiveTab] = useState('1st Year');
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [attendanceFilter, setAttendanceFilter] = useState('all');
-//   const [selectedDivision, setSelectedDivision] = useState('all');
-
-//   const calculateOverall = (attendanceObj) => {
-//     const values = Object.values(attendanceObj);
-//     const sum = values.reduce((a, b) => a + b, 0);
-//     return (sum / values.length).toFixed(1);
-//   };
-
-//   const getAttendanceStatus = (percentage) => {
-//     if (percentage >= 90) return { status: 'Excellent', color: 'text-green-600 bg-green-50' };
-//     if (percentage >= 80) return { status: 'Good', color: 'text-blue-600 bg-blue-50' };
-//     if (percentage >= 75) return { status: 'Average', color: 'text-yellow-600 bg-yellow-50' };
-//     return { status: 'Poor', color: 'text-red-600 bg-red-50' };
-//   };
-
-//   const filteredData = useMemo(() => {
-//     if (!dummyData[activeTab]) return [];
-
-//     return dummyData[activeTab]
-//       .filter(divData => selectedDivision === 'all' || divData.division === selectedDivision)
-//       .map(divData => ({
-//         ...divData,
-//         students: divData.students.filter(student => {
-//           const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//                                student.roll.includes(searchTerm);
-
-//           const overallAttendance = parseFloat(calculateOverall(student.attendance));
-//           const matchesFilter = attendanceFilter === 'all' ||
-//                                (attendanceFilter === 'excellent' && overallAttendance >= 90) ||
-//                                (attendanceFilter === 'good' && overallAttendance >= 80 && overallAttendance < 90) ||
-//                                (attendanceFilter === 'average' && overallAttendance >= 75 && overallAttendance < 80) ||
-//                                (attendanceFilter === 'poor' && overallAttendance < 75);
-
-//           return matchesSearch && matchesFilter;
-//         })
-//       }))
-//       .filter(divData => divData.students.length > 0);
-//   }, [activeTab, searchTerm, attendanceFilter, selectedDivision]);
-
-//   const yearStats = useMemo(() => {
-//     const allStudents = dummyData[activeTab]?.flatMap(div => div.students) || [];
-//     const totalStudents = allStudents.length;
-//     const avgAttendance = totalStudents > 0 
-//       ? (allStudents.reduce((sum, student) => sum + parseFloat(calculateOverall(student.attendance)), 0) / totalStudents).toFixed(1)
-//       : 0;
-//     const excellentCount = allStudents.filter(student => parseFloat(calculateOverall(student.attendance)) >= 90).length;
-
-//     return { totalStudents, avgAttendance, excellentCount };
-//   }, [activeTab]);
-
-//   const availableDivisions = dummyData[activeTab]?.map(div => div.division) || [];
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
-//       <div className="max-w-7xl mx-auto"> 
-//         {/* Stats Cards */}
-//         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-//           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-//             <div className="flex items-center justify-between">
-//               <div>
-//                 <p className="text-sm font-medium text-gray-600">Total Students</p>
-//                 <p className="text-2xl font-bold text-gray-900">{yearStats.totalStudents}</p>
-//               </div>
-//               <Users className="h-8 w-8 text-blue-600" />
-//             </div>
-//           </div>
-
-//           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-//             <div className="flex items-center justify-between">
-//               <div>
-//                 <p className="text-sm font-medium text-gray-600">Avg Attendance</p>
-//                 <p className="text-2xl font-bold text-gray-900">{yearStats.avgAttendance}%</p>
-//               </div>
-//               <TrendingUp className="h-8 w-8 text-green-600" />
-//             </div>
-//           </div>
-
-//           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-//             <div className="flex items-center justify-between">
-//               <div>
-//                 <p className="text-sm font-medium text-gray-600">Excellent (90%+)</p>
-//                 <p className="text-2xl font-bold text-gray-900">{yearStats.excellentCount}</p>
-//               </div>
-//               <Award className="h-8 w-8 text-yellow-600" />
-//             </div>
-//           </div>
-
-//           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-//             <div className="flex items-center justify-between">
-//               <div>
-//                 <p className="text-sm font-medium text-gray-600">Active Year</p>
-//                 <p className="text-2xl font-bold text-gray-900">{activeTab}</p>
-//               </div>
-//               <BookOpen className="h-8 w-8 text-purple-600" />
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Year Tabs */}
-//         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-6">
-//           <div className="flex gap-2">
-//             {Object.keys(dummyData).map((year) => (
-//               <button
-//                 key={year}
-//                 onClick={() => setActiveTab(year)}
-//                 className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-//                   activeTab === year 
-//                     ? 'bg-blue-600 text-white shadow-md' 
-//                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-//                 }`}
-//               >
-//                 {year}
-//               </button>
-//             ))}
-//           </div>
-//         </div>
-
-//         {/* Filters */}
-//         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-//           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-//             {/* Search */}
-//             <div className="relative">
-//               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-//               <input
-//                 type="text"
-//                 placeholder="Search by name or roll number..."
-//                 value={searchTerm}
-//                 onChange={(e) => setSearchTerm(e.target.value)}
-//                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-//               />
-//             </div>
-
-//             {/* Division Filter */}
-//             <div className="relative">
-//               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-//               <select
-//                 value={selectedDivision}
-//                 onChange={(e) => setSelectedDivision(e.target.value)}
-//                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-//               >
-//                 <option value="all">All Divisions</option>
-//                 {availableDivisions.map(div => (
-//                   <option key={div} value={div}>Division {div}</option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             {/* Attendance Filter */}
-//             <div>
-//               <select
-//                 value={attendanceFilter}
-//                 onChange={(e) => setAttendanceFilter(e.target.value)}
-//                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-//               >
-//                 <option value="all">All Students</option>
-//                 <option value="excellent">Excellent (90%+)</option>
-//                 <option value="good">Good (80-89%)</option>
-//                 <option value="average">Average (75-79%)</option>
-//                 <option value="poor">Poor (&lt;75%)</option>
-//               </select>
-//             </div>
-
-//             {/* Export Button */}
-//             <button className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
-//               <Download className="h-4 w-4" />
-//               Export Data
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* Division-wise Tables */}
-//         {filteredData.length === 0 ? (
-//           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-//             <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-//             <p className="text-gray-600 text-lg">No students found matching your criteria.</p>
-//             <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter settings.</p>
-//           </div>
-//         ) : (
-//           filteredData.map((divisionData, divIndex) => (
-//             <div key={divIndex} className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-//               <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-//                 <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-//                   <Users className="h-5 w-5" />
-//                   Division {divisionData.division}
-//                   <span className="ml-auto text-blue-100 text-sm">
-//                     {divisionData.students.length} students
-//                   </span>
-//                 </h2>
-//               </div>
-
-//               <div className="overflow-x-auto">
-//                 <table className="w-full">
-//                   <thead className="bg-gray-50">
-//                     <tr>
-//                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-//                       {Object.keys(divisionData.students[0]?.attendance || {}).map((subject, idx) => (
-//                         <th key={idx} className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                           {subject}
-//                         </th>
-//                       ))}
-//                       <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                         Overall
-//                       </th>
-//                       <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                         Status
-//                       </th>
-//                     </tr>
-//                   </thead>
-//                   <tbody className="bg-white divide-y divide-gray-200">
-//                     {divisionData.students.map((student, stuIndex) => {
-//                       const overallAttendance = parseFloat(calculateOverall(student.attendance));
-//                       const attendanceStatus = getAttendanceStatus(overallAttendance);
-
-//                       return (
-//                         <tr key={stuIndex} className="hover:bg-gray-50 transition-colors duration-150">
-//                           <td className="px-6 py-4 whitespace-nowrap">
-//                             <div>
-//                               <div className="text-sm font-medium text-gray-900">{student.name}</div>
-//                               <div className="text-sm text-gray-500">Roll: {student.roll}</div>
-//                               {student.email && (
-//                                 <div className="text-xs text-gray-400">{student.email}</div>
-//                               )}
-//                             </div>
-//                           </td>
-//                           {Object.values(student.attendance).map((percent, index) => (
-//                             <td key={index} className="px-6 py-4 whitespace-nowrap text-center">
-//                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-//                                 percent >= 90 ? 'bg-green-100 text-green-800' :
-//                                 percent >= 80 ? 'bg-blue-100 text-blue-800' :
-//                                 percent >= 75 ? 'bg-yellow-100 text-yellow-800' :
-//                                 'bg-red-100 text-red-800'
-//                               }`}>
-//                                 {percent}%
-//                               </span>
-//                             </td>
-//                           ))}
-//                           <td className="px-6 py-4 whitespace-nowrap text-center">
-//                             <span className="text-lg font-bold text-gray-900">
-//                               {overallAttendance}%
-//                             </span>
-//                           </td>
-//                           <td className="px-6 py-4 whitespace-nowrap text-center">
-//                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${attendanceStatus.color}`}>
-//                               {attendanceStatus.status}
-//                             </span>
-//                           </td>
-//                         </tr>
-//                       );
-//                     })}
-//                   </tbody>
-//                 </table>
-//               </div>
-//             </div>
-//           ))
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -672,222 +278,225 @@ export default function StudentManagementDashboard({ hodId }) {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
-            <div className="max-w-7xl mx-auto">
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Students</p>
-                                <p className="text-2xl font-bold text-gray-900">{yearStats.totalStudents}</p>
-                            </div>
-                            <Users className="h-8 w-8 text-blue-600" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Avg Attendance</p>
-                                <p className="text-2xl font-bold text-gray-900">{yearStats.avgAttendance}%</p>
-                            </div>
-                            <TrendingUp className="h-8 w-8 text-green-600" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Excellent (90%+)</p>
-                                <p className="text-2xl font-bold text-gray-900">{yearStats.excellentCount}</p>
-                            </div>
-                            <Award className="h-8 w-8 text-yellow-600" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Active Year</p>
-                                <p className="text-2xl font-bold text-gray-900">{activeTab}</p>
-                            </div>
-                            <BookOpen className="h-8 w-8 text-purple-600" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Year Tabs */}
-                {availableYears.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-6">
-                        <div className="flex gap-2 flex-wrap">
-                            {availableYears.map((year) => (
-                                <button
-                                    key={year}
-                                    onClick={() => setActiveTab(year)}
-                                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === year
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                        }`}
-                                >
-                                    {year}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Filters */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {/* Search */}
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <input
-                                type="text"
-                                placeholder="Search by name or roll number..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                        </div>
-
-                        {/* Division Filter */}
-                        <div className="relative">
-                            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <select
-                                value={selectedDivision}
-                                onChange={(e) => setSelectedDivision(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                            >
-                                <option value="all">All Divisions</option>
-                                {availableDivisions.map(div => (
-                                    <option key={div} value={div}>Division {div}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Attendance Filter */}
-                        <div>
-                            <select
-                                value={attendanceFilter}
-                                onChange={(e) => setAttendanceFilter(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="all">All Students</option>
-                                <option value="excellent">Excellent (90%+)</option>
-                                <option value="good">Good (80-89%)</option>
-                                <option value="average">Average (75-79%)</option>
-                                <option value="poor">Poor (&lt;75%)</option>
-                            </select>
-                        </div>
-
-                        {/* Export Button */}
-                        <button
-                            onClick={handleExport}
-                            disabled={filteredData.length === 0}
-                            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                            <Download className="h-4 w-4" />
-                            Export Data
-                        </button>
-                    </div>
-                </div>
-
-                {/* Division-wise Tables */}
-                {filteredData.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                        <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600 text-lg">No students found matching your criteria.</p>
-                        <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter settings.</p>
-                    </div>
-                ) : (
-                    filteredData.map((divisionData, divIndex) => (
-                        <div key={divIndex} className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-                            {/* Header with Collapse Toggle */}
-                            <div
-                                className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 cursor-pointer flex items-center justify-between"
-                                onClick={() =>
-                                    setCollapsedDivisions(prev => ({
-                                        ...prev,
-                                        [divisionData.division]: !prev[divisionData.division]
-                                    }))
-                                }
-                            >
-                                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                                    <Users className="h-5 w-5" />
-                                    Division {divisionData.division}
-                                </h2>
-                                <div className="flex items-center gap-2 text-blue-100 text-sm">
-                                    {divisionData.students.length} students
-                                    <span className="transition-transform">
-                                        {collapsedDivisions[divisionData.division] ? '▼' : '▲'}
-                                    </span>
+        <div className="scale-90 origin-top-left">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
+                <div className="max-w-7xl mx-auto">
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Total Students</p>
+                                    <p className="text-2xl font-bold text-gray-900">{yearStats.totalStudents}</p>
                                 </div>
+                                <Users className="h-8 w-8 text-blue-600" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Avg Attendance</p>
+                                    <p className="text-2xl font-bold text-gray-900">{yearStats.avgAttendance}%</p>
+                                </div>
+                                <TrendingUp className="h-8 w-8 text-green-600" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Excellent (90%+)</p>
+                                    <p className="text-2xl font-bold text-gray-900">{yearStats.excellentCount}</p>
+                                </div>
+                                <Award className="h-8 w-8 text-yellow-600" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Active Year</p>
+                                    <p className="text-2xl font-bold text-gray-900">{activeTab}</p>
+                                </div>
+                                <BookOpen className="h-8 w-8 text-purple-600" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Year Tabs */}
+                    {availableYears.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-6">
+                            <div className="flex gap-2 flex-wrap">
+                                {availableYears.map((year) => (
+                                    <button
+                                        key={year}
+                                        onClick={() => setActiveTab(year)}
+                                        className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === year
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        {year}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Filters */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name or roll number..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
                             </div>
 
-                            {/* Table only if expanded */}
-                            {!collapsedDivisions[divisionData.division] && (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                                                {Object.keys(divisionData.students[0]?.attendance || {}).map((subject, idx) => (
-                                                    <th key={idx} className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        {subject}
-                                                    </th>
-                                                ))}
-                                                <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall</th>
-                                                <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {divisionData.students.map((student, stuIndex) => {
-                                                const overallAttendance = parseFloat(calculateOverall(student.attendance));
-                                                const attendanceStatus = getAttendanceStatus(overallAttendance);
+                            {/* Division Filter */}
+                            <div className="relative">
+                                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <select
+                                    value={selectedDivision}
+                                    onChange={(e) => setSelectedDivision(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                                >
+                                    <option value="all">All Divisions</option>
+                                    {availableDivisions.map(div => (
+                                        <option key={div} value={div}>Division {div}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                                                return (
-                                                    <tr key={student.id || stuIndex} className="hover:bg-gray-50 transition-colors duration-150">
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <div>
-                                                                <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                                                <div className="text-sm text-gray-500">Roll: {student.roll}</div>
-                                                                {student.email && <div className="text-xs text-gray-400">{student.email}</div>}
-                                                            </div>
-                                                        </td>
-                                                        {Object.values(student.attendance).map((percent, index) => (
-                                                            <td key={index} className="px-6 py-4 whitespace-nowrap text-center">
-                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${percent >= 90 ? 'bg-green-100 text-green-800' :
-                                                                    percent >= 80 ? 'bg-blue-100 text-blue-800' :
-                                                                        percent >= 75 ? 'bg-yellow-100 text-yellow-800' :
-                                                                            'bg-red-100 text-red-800'
-                                                                    }`}>
-                                                                    {percent}%
+                            {/* Attendance Filter */}
+                            <div>
+                                <select
+                                    value={attendanceFilter}
+                                    onChange={(e) => setAttendanceFilter(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="all">All Students</option>
+                                    <option value="excellent">Excellent (90%+)</option>
+                                    <option value="good">Good (80-89%)</option>
+                                    <option value="average">Average (75-79%)</option>
+                                    <option value="poor">Poor (&lt;75%)</option>
+                                </select>
+                            </div>
+
+                            {/* Export Button */}
+                            <button
+                                onClick={handleExport}
+                                disabled={filteredData.length === 0}
+                                className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                <Download className="h-4 w-4" />
+                                Export Data
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Division-wise Tables */}
+                    {filteredData.length === 0 ? (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 text-lg">No students found matching your criteria.</p>
+                            <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter settings.</p>
+                        </div>
+                    ) : (
+                        filteredData.map((divisionData, divIndex) => (
+                            <div key={divIndex} className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
+                                {/* Header with Collapse Toggle */}
+                                <div
+                                    className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 cursor-pointer flex items-center justify-between"
+                                    onClick={() =>
+                                        setCollapsedDivisions(prev => ({
+                                            ...prev,
+                                            [divisionData.division]: !prev[divisionData.division]
+                                        }))
+                                    }
+                                >
+                                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                                        <Users className="h-5 w-5" />
+                                        Division {divisionData.division}
+                                    </h2>
+                                    <div className="flex items-center gap-2 text-blue-100 text-sm">
+                                        {divisionData.students.length} students
+                                        <span className="transition-transform">
+                                            {collapsedDivisions[divisionData.division] ? '▼' : '▲'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Table only if expanded */}
+                                {!collapsedDivisions[divisionData.division] && (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                                    {Object.keys(divisionData.students[0]?.attendance || {}).map((subject, idx) => (
+                                                        <th key={idx} className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            {subject}
+                                                        </th>
+                                                    ))}
+                                                    <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall</th>
+                                                    <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {divisionData.students.map((student, stuIndex) => {
+                                                    const overallAttendance = parseFloat(calculateOverall(student.attendance));
+                                                    const attendanceStatus = getAttendanceStatus(overallAttendance);
+
+                                                    return (
+                                                        <tr key={student.id || stuIndex} className="hover:bg-gray-50 transition-colors duration-150">
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <div>
+                                                                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                                                                    <div className="text-sm text-gray-500">Roll: {student.roll}</div>
+                                                                    {student.email && <div className="text-xs text-gray-400">{student.email}</div>}
+                                                                </div>
+                                                            </td>
+                                                            {Object.values(student.attendance).map((percent, index) => (
+                                                                <td key={index} className="px-6 py-4 whitespace-nowrap text-center">
+                                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${percent >= 90 ? 'bg-green-100 text-green-800' :
+                                                                        percent >= 80 ? 'bg-blue-100 text-blue-800' :
+                                                                            percent >= 75 ? 'bg-yellow-100 text-yellow-800' :
+                                                                                'bg-red-100 text-red-800'
+                                                                        }`}>
+                                                                        {percent}%
+                                                                    </span>
+                                                                </td>
+                                                            ))}
+                                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                                <span className="text-lg font-bold text-gray-900">
+                                                                    {overallAttendance}%
                                                                 </span>
                                                             </td>
-                                                        ))}
-                                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                            <span className="text-lg font-bold text-gray-900">
-                                                                {overallAttendance}%
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${attendanceStatus.color}`}>
-                                                                {attendanceStatus.status}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                    ))
-                )}
+                                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${attendanceStatus.color}`}>
+                                                                    {attendanceStatus.status}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
 }
+

@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 //     await connectToDatabase();
 //     const updateData = await req.json();
 //     const { id: admissionId } = params;
+
 //     console.log(updateData)
 //     if (!admissionId || !updateData || typeof updateData !== 'object') {
 //       return new Response(JSON.stringify({
@@ -107,7 +108,6 @@ import { NextResponse } from 'next/server';
 //   }
 // }
 
-
 // // DELETE - Delete admission by ID (from params)
 // export async function DELETE(req, { params }) {
 //   try {
@@ -150,27 +150,22 @@ import { NextResponse } from 'next/server';
 //   }
 // }
 
-// import { connectToDatabase } from '../../../lib/mongodb';
-// import admissionSchema from '../../../models/admissionSchema';
-// import studentSchema from '../../../models/studentSchema';
-// import academicSchema from '../../../models/academicSchema';
-// import { NextResponse } from 'next/server';
+import { connectToDatabase } from '../../../lib/mongodb';
+import admissionSchema from '../../../models/admissionSchema';
+import studentSchema from '../../../models/studentSchema';
+import academicSchema from '../../../models/academicSchema';
 
-
-//  chaitanya
 export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
     const { id: admissionId } = params;
     const updateData = await req.json();
 
-    console.log(updateData);
+    const { id: admissionId } = params;
+    console.log(updateData)
+    
 
-    if (
-      !updateData ||
-      typeof updateData !== "object" ||
-      Object.keys(updateData).length === 0
-    ) {
+    if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
       return Response.json(
         { success: false, message: "Missing or invalid update data" },
         { status: 400 }
@@ -178,13 +173,12 @@ export async function PUT(req, { params }) {
     }
 
     // Prevent updating certain fields
-    const restrictedFields = ["_id", "enquiryId", "counsellorId", "createdAt"];
+    const restrictedFields = ['_id', 'enquiryId', 'counsellorId', 'createdAt'];
     for (const field of restrictedFields) {
       if (field in updateData) {
         delete updateData[field];
       }
     }
-    console.log("Update Data : ", updateData);
 
     // Update admission record
     const updatedAdmission = await admissionSchema
@@ -199,136 +193,133 @@ export async function PUT(req, { params }) {
 
     if (!updatedAdmission) {
       return Response.json(
-        { success: false, message: "Admission not found" },
+        { success: false, message: 'Admission not found' },
         { status: 404 }
       );
     }
 
     // Handle status change to 'approved'
-    if (updateData.status === "approved") {
-      await handleApprovedStatus(updatedAdmission, admissionId);
+    if (updateData.status === 'approved') {
+      const { 
+        programType, 
+        year, 
+        branch,
+        fullName,
+        email,
+        studentWhatsappNumber,
+        dateOfBirth,
+        address,
+        isForeignNational,
+        nationality
+      } = updatedAdmission;
+
+      // Validate required fields for student creation
+      if (!programType || !year || !branch) {
+        return Response.json(
+          { 
+            success: false, 
+            message: 'Missing academic details (programType, year, or branch) required for student creation' 
+          },
+          { status: 400 }
+        );
+      }
+
+      // Check/create student record
+      let student = await studentSchema.findOne({ admissionId });
+
+      if (!student) {
+        const studentCount = await studentSchema.countDocuments();
+        const studentId = `SCH${new Date().getFullYear()}-${String(studentCount + 1).padStart(4, '0')}`;
+
+        student = await studentSchema.create({
+          studentId,
+          admissionId,
+          fullName,
+          email: email.toLowerCase(),
+          mobileNumber: studentWhatsappNumber,
+          dateOfBirth,
+          address: address?.[0] || {}, // Take first address if array exists
+          nationality,
+          isForeignNational: isForeignNational || false,
+          status: 'active',
+          academicDetails: {
+            programType,
+            currentYear: year,
+            branch
+          }
+        });
+      }
+
+      // Update academic record
+      const academicUpdate = await academicSchema.findOneAndUpdate(
+        { 
+          department: branch,
+          'years.year': year
+        },
+        { 
+          $addToSet: { 
+            'years.$[yearElem].divisions.$[div].students': student._id 
+          } 
+        },
+        { 
+          arrayFilters: [
+            { 'yearElem.year': year },
+            { 'div.students': { $size: { $lt: 50 } } } // Only divisions with < 50 students
+          ],
+          new: true
+        }
+      );
+
+      if (!academicUpdate) {
+        console.warn(`No available division found for branch ${branch} and year ${year}`);
+      }
     }
 
-    return Response.json({
-      success: true,
-      message: "Admission updated successfully",
-      data: updatedAdmission,
-    });
+    return Response.json(
+      {
+        success: true,
+        message: 'Admission updated successfully',
+        data: updatedAdmission
+      },
+      { status: 200 }
+    );
+
   } catch (error) {
-    console.error("Admission PUT error:", error);
-
+    console.error('Admission PUT error:', error);
+    
     // Handle specific error cases
-    let status = 500;
-    let message = "Server error during update";
-    let errors = null;
-
-    if (error.name === "ValidationError") {
-      status = 400;
-      message = "Validation failed";
-      errors = Object.values(error.errors).map((err) => err.message);
-    } else if (error.code === 11000) {
-      status = 409;
-      message = "Duplicate value error";
+    if (error.name === 'ValidationError') {
+      return Response.json(
+        { 
+          success: false,
+          message: 'Validation failed',
+          errors: Object.values(error.errors).map(err => err.message)
+        },
+        { status: 400 }
+      );
     }
 
-    return Response.json({ success: false, message, errors }, { status });
-  }
-}
+    if (error.code === 11000) {
+      return Response.json(
+        { 
+          success: false,
+          message: 'Duplicate value error',
+          field: Object.keys(error.keyPattern)[0]
+        },
+        { status: 409 }
+      );
+    }
 
-async function handleApprovedStatus(admission, admissionId) {
-  const {
-    programType,
-    year,
-    branch,
-    fullName,
-    email,
-    studentWhatsappNumber,
-    dateOfBirth,
-    address,
-    isForeignNational,
-    nationality,
-  } = admission;
-  console.log("address ",address)
-  // Validate required fields for student creation
-  if (!programType || !year || !branch) {
-    throw new Error(
-      "Missing academic details (programType, year, or branch) required for student creation"
+    return Response.json(
+      {
+        success: false,
+        message: 'Server error during update',
+        error: error.message
+      },
+      { status: 500 }
     );
   }
-
-  // Check/create student record
-  let student = await studentSchema.findOne({ admissionId });
-
-  if (!student) {
-    const studentCount = await studentSchema.countDocuments();
-    const studentId = `SCH${new Date().getFullYear()}-${String(
-      studentCount + 1
-    ).padStart(4, "0")}`;
-
-    student = await studentSchema.create({
-      studentId,
-      admissionId,
-      fullName,
-      email: email?.toLowerCase(),
-      mobileNumber: studentWhatsappNumber,
-      dateOfBirth,
-      address: address?.[0] || {},
-      nationality,
-      isForeignNational: isForeignNational || false,
-      status: "active",
-      academicDetails: {
-        programType,
-        currentYear: year,
-        branch,
-      },
-    });
-  }
-  
-
-  // Update academic record
-  const academic = await academicSchema.findOne({
-    department: branch,
-    "years.year": year,
-  });
-
-  if (!academic) {
-    console.warn("Academic structure not found");
-    return;
-  }
-
-  const yearBlock = academic.years.find(y => y.year === year);
-  const targetDiv = yearBlock.divisions.find(div => div.students.length < 50);
-
-  if (!targetDiv) {
-    console.warn("No division with < 50 students found");
-    return;
-  }
-
-  // Now update that specific division:
-  await academicSchema.updateOne(
-    {
-      department: branch,
-      "years.year": year,
-      "years.divisions.divisionName": targetDiv.divisionName,
-    },
-    {
-      $addToSet: {
-        "years.$[yearElem].divisions.$[div].students": student._id,
-      },
-    },
-    {
-      arrayFilters: [
-        { "yearElem.year": year },
-        { "div.divisionName": targetDiv.divisionName }
-      ],
-    }
-  );
-
-
-
 }
-
-
 
 export async function DELETE(req, { params }) {
   try {
@@ -338,7 +329,7 @@ export async function DELETE(req, { params }) {
     // Validate admission ID
     if (!mongoose.Types.ObjectId.isValid(admissionId)) {
       return Response.json(
-        { success: false, message: 'Invalid admission ID format' },
+        { success: false, message: "Invalid admission ID format" },
         { status: 400 }
       );
     }
@@ -349,19 +340,21 @@ export async function DELETE(req, { params }) {
       return Response.json(
         {
           success: false,
-          message: 'Cannot delete admission - student record exists',
-          studentId: existingStudent.studentId
+          message: "Cannot delete admission - student record exists",
+          studentId: existingStudent.studentId,
         },
         { status: 400 }
       );
     }
 
     // Perform deletion
-    const deletedAdmission = await admissionSchema.findByIdAndDelete(admissionId);
+    const deletedAdmission = await admissionSchema.findByIdAndDelete(
+      admissionId
+    );
 
     if (!deletedAdmission) {
       return Response.json(
-        { success: false, message: 'Admission not found' },
+        { success: false, message: "Admission not found" },
         { status: 404 }
       );
     }
@@ -369,51 +362,24 @@ export async function DELETE(req, { params }) {
     return Response.json(
       {
         success: true,
-        message: 'Admission deleted successfully',
+        message: "Admission deleted successfully",
         data: {
           _id: deletedAdmission._id,
           fullName: deletedAdmission.fullName,
-          status: deletedAdmission.status
-        }
+          status: deletedAdmission.status,
+        },
       },
       { status: 200 }
     );
-
   } catch (error) {
-    console.error('Admission DELETE error:', error);
+    console.error("Admission DELETE error:", error);
     return Response.json(
       {
         success: false,
-        message: 'Server error during deletion',
-        error: error.message
+        message: "Server error during deletion",
+        error: error.message,
       },
       { status: 500 }
     );
-  }
-}
-
-
-
-
-
-export async function GET(req, { params }) {
-  try {
-    await connectToDatabase();
-
-    const { id } = await params;
-
-    const admissionDetails = await admissionSchema.findById(id)
-    //.populate('enquiryId')         // Optional: populate related enquiry details
-    //.populate('counsellorId');     // Optional: populate related user/counsellor
-
-    if (!admissionDetails) {
-      return NextResponse.json({ message: 'Admission not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(admissionDetails, { status: 200 });
-
-  } catch (error) {
-    console.error('Error fetching admission by ID:', error);
-    return NextResponse.json({ message: 'Server error', error: error.message }, { status: 500 });
   }
 }

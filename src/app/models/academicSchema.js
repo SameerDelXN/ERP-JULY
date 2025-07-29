@@ -88,6 +88,19 @@ const academicSchema = new mongoose.Schema({
       ],
     },
   ],
+  isActive:{
+    type: Boolean,
+    default: true
+  }, 
+   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  programType:{
+    type: String,
+    required : true
+  },
+  description: {type: String}
 });
 
 delete mongoose.models.academic;

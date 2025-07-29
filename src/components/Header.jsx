@@ -16,7 +16,7 @@ const Header = ({ title, onMenuClick, children }) => {
           <div>
             <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
             <div className="text-xs text-gray-500 hidden sm:block">
-              Dashboard Overview
+              Dashboard {title}
             </div>
           </div>
         </div>

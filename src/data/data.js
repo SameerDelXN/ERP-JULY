@@ -14,7 +14,8 @@ import {
   Award,
   BookOpenCheck,
   CalendarClock,
-  BookMarked
+  BookMarked,
+  FileCheck
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -23,7 +24,7 @@ export const adminSidebarItems = [
   { id: "admission-applications", label: "Admission Applications", icon: BookImage },
   { id: "courses", label: "CRM Management", icon: BookImage },
   // { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
-  // { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
+  { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
   // { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   // { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
@@ -50,6 +51,15 @@ export const studentSidebarItems = [
   { id: "certificates", label: "Certificates", icon: Award },
 
 ];
+
+export const teacherSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  {id: "my-classes", label: "My Classes", icon: BookOpen},
+  {id: "attendance", label: "Mark Attendance", icon: UserCheck},
+  {id: "student-list", label: "Student List", icon: Users},
+  {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
+  {id: "marks", label: "Enter Marks", icon: FileCheck},
+]
 
 
 export const roles = [

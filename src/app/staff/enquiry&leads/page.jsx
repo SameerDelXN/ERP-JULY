@@ -196,6 +196,13 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               iconColor="text-orange-600"
             />
             <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Program Type"
+              value={enquiry.programType || "N/A"}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Enquiry Date"
               value={
@@ -385,9 +392,14 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
               <input
                 type="date"
                 value={formData.followUpDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, followUpDate: e.target.value })
-                }
+                onChange={(e) => {
+                  const selectedDate = e.target.value;
+                  const today = new Date().toISOString().split("T")[0];
+                  if (selectedDate >= today) {
+                    setFormData({ ...formData, followUpDate: selectedDate });
+                  }
+                }}
+                min={new Date().toISOString().split("T")[0]}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 font-medium"
                 required
               />
@@ -406,6 +418,7 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
                   setFormData({ ...formData, followUpNote: e.target.value })
                 }
                 rows="3"
+                maxLength={50}
                 placeholder="Add a note about this follow-up..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 resize-none"
                 required
@@ -575,130 +588,130 @@ const EnquiriesLeads = () => {
     setShowDetailsModal(true);
   };
 
-const handleChangeStatus = async (
-  enquiryId,
-  followUpDate,
-  followUpNote,
-  newStatus
-) => {
-  try {
-    // Validate inputs
-    if (!followUpDate) {
-      throw new Error("Follow-up date is required");
-    }
-
-    const followUpDateObj = new Date(followUpDate);
-    if (isNaN(followUpDateObj.getTime())) {
-      throw new Error("Invalid follow-up date format");
-    }
-
-    // 1. Update enquiry status
-    const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        counsellorId: user.id,
-        status: newStatus,
-        followUps: [
-          {
-            date: followUpDateObj.toISOString(),
-            note: followUpNote || `Status changed to ${newStatus}`,
-          },
-        ],
-      }),
-    });
-
-    if (!updateResponse.ok) {
-      const errorData = await updateResponse.json();
-      throw new Error(errorData.message || "Failed to update enquiry");
-    }
-
-    const updatedEnquiry = await updateResponse.json();
-
-    // 2. Create admission if converted
-    if (newStatus === "Converted") {
-      const requiredFields = [
-        "email",
-        "phone",
-        "courseInterested",
-        "first",
-        "last",
-      ];
-
-      const missingFields = requiredFields.filter(
-        (field) => !updatedEnquiry[field]
-      );
-
-      if (missingFields.length > 0) {
-        throw new Error(
-          `Cannot convert: Missing ${missingFields.join(", ")} in enquiry`
-        );
+  const handleChangeStatus = async (
+    enquiryId,
+    followUpDate,
+    followUpNote,
+    newStatus
+  ) => {
+    try {
+      // Validate inputs
+      if (!followUpDate) {
+        throw new Error("Follow-up date is required");
       }
 
-      // Prepare admission data according to the new schema
-      const admissionData = {
-        enquiryId: updatedEnquiry._id,
-        counsellorId: user?.id,
-        email: updatedEnquiry.email,
-        fullName: `${updatedEnquiry.first} ${updatedEnquiry.middle || ""} ${
-          updatedEnquiry.last
-        }`.trim(),
-        nameAsPerAadhar: `${updatedEnquiry.first} ${
-          updatedEnquiry.middle || ""
-        } ${updatedEnquiry.last}`.trim(),
-        firstName: updatedEnquiry.first,
-        middleName: updatedEnquiry.middle || "",
-        lastName: updatedEnquiry.last,
-        gender: updatedEnquiry.gender || "Other",
-        studentWhatsappNumber: updatedEnquiry.phone,
-        branch: updatedEnquiry.courseInterested,
-        programType: updatedEnquiry.programType || "",
-        nationality: updatedEnquiry.nationality || "Indian",
-        address: [
-          {
-            addressLine: updatedEnquiry.address || "Not specified",
-            city: updatedEnquiry.city || "Not specified",
-            state: updatedEnquiry.state || "Not specified",
-            pincode: updatedEnquiry.pincode || "000000",
-            country: updatedEnquiry.country || "India",
-          },
-        ],
-        motherName: updatedEnquiry.motherName || "Not specified",
-        dateOfBirth: updatedEnquiry.dateOfBirth || new Date("2000-01-01"),
-        status: "inProcess",
-      };
+      const followUpDateObj = new Date(followUpDate);
+      if (isNaN(followUpDateObj.getTime())) {
+        throw new Error("Invalid follow-up date format");
+      }
 
-      const admissionResponse = await fetch("/api/admission", {
-        method: "POST",
+      // 1. Update enquiry status
+      const updateResponse = await fetch(`/api/enquiry/${enquiryId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(admissionData),
+        body: JSON.stringify({
+          counsellorId: user.id,
+          status: newStatus,
+          followUps: [
+            {
+              date: followUpDateObj.toISOString(),
+              note: followUpNote || `Status changed to ${newStatus}`,
+            },
+          ],
+        }),
       });
 
-      if (!admissionResponse.ok) {
-        const error = await admissionResponse.json();
-        throw new Error(`Admission creation failed: ${error.message}`);
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.message || "Failed to update enquiry");
       }
-      
-      // Refresh the enquiries list
-      await fetchEnquiries();
-      return await admissionResponse.json();
+
+      const updatedEnquiry = await updateResponse.json();
+
+      // 2. Create admission if converted
+      if (newStatus === "Converted") {
+        const requiredFields = [
+          "email",
+          "phone",
+          "courseInterested",
+          "first",
+          "last",
+        ];
+
+        const missingFields = requiredFields.filter(
+          (field) => !updatedEnquiry[field]
+        );
+
+        if (missingFields.length > 0) {
+          throw new Error(
+            `Cannot convert: Missing ${missingFields.join(", ")} in enquiry`
+          );
+        }
+
+        // Prepare admission data according to the new schema
+        const admissionData = {
+          enquiryId: updatedEnquiry._id,
+          counsellorId: user?.id,
+          email: updatedEnquiry.email,
+          fullName: `${updatedEnquiry.first} ${updatedEnquiry.middle || ""} ${
+            updatedEnquiry.last
+          }`.trim(),
+          nameAsPerAadhar: `${updatedEnquiry.first} ${
+            updatedEnquiry.middle || ""
+          } ${updatedEnquiry.last}`.trim(),
+          firstName: updatedEnquiry.first,
+          middleName: updatedEnquiry.middle || "",
+          lastName: updatedEnquiry.last,
+          gender: updatedEnquiry.gender || "Other",
+          studentWhatsappNumber: updatedEnquiry.phone,
+          branch: updatedEnquiry.courseInterested,
+          programType: updatedEnquiry.programType || "",
+          nationality: updatedEnquiry.nationality || "Indian",
+          address: [
+            {
+              addressLine: updatedEnquiry.address || "Not specified",
+              city: updatedEnquiry.city || "Not specified",
+              state: updatedEnquiry.state || "Not specified",
+              pincode: updatedEnquiry.pincode || "000000",
+              country: updatedEnquiry.country || "India",
+            },
+          ],
+          motherName: updatedEnquiry.motherName || "Not specified",
+          dateOfBirth: updatedEnquiry.dateOfBirth || new Date("2000-01-01"),
+          status: "inProcess",
+        };
+
+        const admissionResponse = await fetch("/api/admission", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(admissionData),
+        });
+
+        if (!admissionResponse.ok) {
+          const error = await admissionResponse.json();
+          throw new Error(`Admission creation failed: ${error.message}`);
+        }
+
+        // Refresh the enquiries list
+        await fetchEnquiries();
+        return await admissionResponse.json();
+      }
+
+      // Update local state
+      setEnquiries((prev) =>
+        prev.map((e) => (e._id === enquiryId ? updatedEnquiry : e))
+      );
+
+      return updatedEnquiry;
+    } catch (error) {
+      console.error("Status update error:", error);
+      throw error;
     }
-
-    // Update local state
-    setEnquiries((prev) =>
-      prev.map((e) => (e._id === enquiryId ? updatedEnquiry : e))
-    );
-
-    return updatedEnquiry;
-  } catch (error) {
-    console.error("Status update error:", error);
-    throw error;
-  }
-};
+  };
 
   const totalPages = Math.ceil(filteredEnquiries.length / 10);
   const paginatedEnquiries = filteredEnquiries.slice(

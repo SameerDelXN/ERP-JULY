@@ -205,7 +205,8 @@ export async function POST(req) {
       );
     }
 
-    const validRoles = ["admin", "student", "staff", "parents", "hod"];
+    // Validate role
+    const validRoles = ["admin", "student", "staff", "parents", "hod","teacher"];
     if (!validRoles.includes(role)) {
       return new Response(JSON.stringify({ message: "Invalid role" }), {
         status: 400,
@@ -214,14 +215,23 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    // ✅ 1. HOD Login Logic (unchanged)
-    if (role === "hod") {
-      const hodUser = await teacherSchema.findOne({ email, role: "hod" });
+    if (role === "hod" || role === "teacher") {
+      // Use findOne instead of find to get a single document
+      const hodUser = await teacherSchema.findOne({
+        email,
+        role,
+      });
+
+      console.log("HOD User:", hodUser);
 
       if (!hodUser) {
         return new Response(
-          JSON.stringify({ message: "Invalid email or not authorized as HOD" }),
-          { status: 401 }
+          JSON.stringify({
+            message: `Invalid email or not authorized as ${role}`,
+          }),
+          {
+            status: 401,
+          }
         );
       }
 
@@ -260,7 +270,7 @@ export async function POST(req) {
             id: hodUser._id,
             fullName: hodUser.fullName,
             email: hodUser.email,
-            role: "hod",
+            role: hodUser.role,
             department: hodUser.department,
             teacherId: hodUser.teacherId,
           },

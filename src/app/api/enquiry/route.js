@@ -65,17 +65,20 @@ export async function POST(req) {
     await connectToDatabase();
 
     const body = await req.json();
-    const {
-      firstName,
-      middleName,
-      lastName,
+    const { firstName, middleName, lastName, phone, email, programType, course, source, notes } = body
+    console.log("prooooooooooo = ", body)
+    const enquiry = new enquirySchema({
+      first: firstName,
+      middle: middleName,
+      last: lastName,
       phone,
       email,
-      course,
+      programType: programType,
+      courseInterested: course,
       source,
       notes,
       counsellorId, // optional
-    } = body;
+    } = body);
 
     // Basic validation (you can enhance this)
     if (!firstName || !lastName || !phone) {
@@ -85,16 +88,13 @@ export async function POST(req) {
       );
     }
 
-    const newEnquiry = new enquirySchema({
-      first: firstName,
-      middle: middleName,
-      last: lastName,
-      phone,
-      email,
-      courseInterested: course,
-      source,
-      notes,
-      counsellorId,
+    console.log(enquiry);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Enquiry submitted successfully'
+    }, {
+      status: 201
     });
 
     await newEnquiry.save();
