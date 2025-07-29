@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Clock, BookOpenCheck, FileText, AlertCircle, CheckCircle, Filter, Search, Bell, Calendar } from 'lucide-react';
+import { CalendarDays, Clock, BookOpenCheck, FileText, AlertCircle, CheckCircle, Loader2, Filter, Search, Bell, Calendar, Eye } from 'lucide-react';
+import { useSession } from '@/context/SessionContext';
 
 function formatDate(isoDate) {
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -12,12 +13,12 @@ function getTimeUntilExam(examDate) {
   const now = new Date();
   const exam = new Date(examDate);
   const timeDiff = exam - now;
-  
+
   if (timeDiff < 0) return 'Past';
-  
+
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  
+
   if (days === 0) return `${hours}h remaining`;
   if (days === 1) return 'Tomorrow';
   if (days <= 7) return `${days} days`;
@@ -29,7 +30,7 @@ function getExamStatus(examDate) {
   const exam = new Date(examDate);
   const timeDiff = exam - now;
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  
+
   if (timeDiff < 0) return { status: 'past', color: 'gray', bgColor: 'bg-gray-100' };
   if (days <= 3) return { status: 'urgent', color: 'red', bgColor: 'bg-red-50' };
   if (days <= 7) return { status: 'soon', color: 'yellow', bgColor: 'bg-yellow-50' };
@@ -37,16 +38,18 @@ function getExamStatus(examDate) {
 }
 
 export default function ExamsPage() {
+  const { user } = useSession();
+  const studentId = user?.id;
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const studentId = '686cd25835e2bb6cdeda5ea2';
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
+        if (!studentId) return;
         const res = await fetch(`/api/students/${studentId}/academics`);
         const data = await res.json();
 
@@ -68,18 +71,44 @@ export default function ExamsPage() {
     fetchExams();
   }, []);
 
+
+   const LoadingSpinner = () => (
+    <div className="flex items-center justify-center p-8">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+    </div>
+  );
+
   const filteredExams = exams.filter(exam => {
     const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         exam.type.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      exam.type.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (filterStatus === 'all') return matchesSearch;
-    
+
     const status = getExamStatus(exam.date).status;
     return matchesSearch && status === filterStatus;
   });
 
   const upcomingCount = exams.filter(exam => getExamStatus(exam.date).status !== 'past').length;
   const urgentCount = exams.filter(exam => getExamStatus(exam.date).status === 'urgent').length;
+
+  const handleViewResult = (examId) => {
+    // Add your view result logic here
+    console.log('View result for exam:', examId);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Exams</h2>
+          <p className="text-gray-600">Please wait while we fetch your information...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -99,7 +128,7 @@ export default function ExamsPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-green-100 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -111,7 +140,7 @@ export default function ExamsPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-purple-100 rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -139,7 +168,7 @@ export default function ExamsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <div className="relative">
               <Filter className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
               <select
@@ -180,7 +209,7 @@ export default function ExamsPage() {
               {filteredExams.map((exam) => {
                 const examStatus = getExamStatus(exam.date);
                 const timeUntil = getTimeUntilExam(exam.date);
-                
+
                 return (
                   <div
                     key={exam._id}
@@ -197,13 +226,13 @@ export default function ExamsPage() {
                             <p className="text-gray-600 font-medium">{exam.type}</p>
                           </div>
                         </div>
-                        
+
                         <div className={`px-3 py-1 rounded-full text-xs font-semibold bg-${examStatus.color}-100 text-${examStatus.color}-800`}>
                           {timeUntil}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                         <div className="flex items-center gap-2 text-gray-700">
                           <CalendarDays className="w-4 h-4 text-gray-500" />
                           <span className="font-medium">{formatDate(exam.date)}</span>
@@ -212,6 +241,17 @@ export default function ExamsPage() {
                         <div className="flex items-center gap-2 text-gray-700">
                           <Clock className="w-4 h-4 text-gray-500" />
                           <span className="font-medium">Total Marks: {exam.totalMarks}</span>
+                        </div>
+
+                        {/* View Result Button */}
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleViewResult(exam._id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors duration-200 font-medium text-sm"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Result
+                          </button>
                         </div>
                       </div>
 

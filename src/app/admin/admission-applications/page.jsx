@@ -737,92 +737,196 @@ const AdmissionApplications = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("counsellorId", user.id);
-
+    // First validate the file structure before uploading
     try {
-      setImportLoading(true);
-      setImportProgress(0);
-      setShowImportModal(true);
-      setImportErrors([]);
+      // Read the file to check structure
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-      const xhr = new XMLHttpRequest();
+      // Check if file has data
+      if (jsonData.length < 2) {
+        // 1 header row + at least 1 data row
+        toast.error("File must contain at least one row of data");
+        e.target.value = "";
+        return;
+      }
 
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          setImportProgress(percent);
-        }
-      });
+      // Define required columns (match your backend expectations)
+      const requiredColumns = [
+        "DTEApplicationNumber",
+        "FirstName",
+        "LastName",
+        "Email",
+        "Gender",
+        "AdmissionYear",
+        "ProgramType",
+        "Year",
+        "Branch",
+        "DateOfBirth",
+        "StudentWhatsappNo",
+      ];
 
-      xhr.addEventListener("load", async () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const result = JSON.parse(xhr.response);
-            await fetchAdmission();
+      // Get header row (first row)
+      const headers = jsonData[0].map((h) => h.trim());
 
-            if (result.error === "Validation errors found") {
-              toast.error(
-                `${result.invalidRecords} records had validation errors`
-              );
-              setImportErrors(result.details);
-            } else if (result.error === "Partial import completed") {
-              toast.warning(result.message);
-              if (result.duplicates) {
-                setImportErrors(
-                  result.duplicates.map((dup) => ({
-                    row: "Unknown",
-                    errors: [dup.error],
-                    data: { dteApplicationNumber: dup.dteApplicationNumber },
-                  }))
-                );
-              }
-            } else {
-              toast.success("File imported successfully!");
-            }
-          } catch (error) {
-            toast.error("Error processing response");
-            console.error("Error:", error);
-          }
-        } else {
-          try {
-            const errorResponse = JSON.parse(xhr.response);
-            if (errorResponse.error === "Validation errors found") {
-              toast.error(
-                `${errorResponse.invalidRecords} records had validation errors`
-              );
-              setImportErrors(errorResponse.details);
-            } else {
-              toast.error(
-                `Import failed: ${errorResponse.error || xhr.statusText}`
-              );
-            }
-          } catch {
-            toast.error(`Import failed: ${xhr.statusText}`);
-          }
-        }
-        setImportLoading(false);
-      });
+      // Check if all required columns exist
+      const missingColumns = requiredColumns.filter(
+        (col) => !headers.includes(col)
+      );
 
-      xhr.addEventListener("error", () => {
-        toast.error("Network error occurred during import");
-        setImportLoading(false);
-        setShowImportModal(false);
-      });
+      if (missingColumns.length > 0) {
+        toast.error(`Missing required columns: ${missingColumns.join(", ")}`);
+        e.target.value = "";
+        return;
+      }
 
-      xhr.open("POST", "/api/importData");
-      xhr.send(formData);
+      // Proceed with upload if validation passes
+      startFileUpload(e, file);
     } catch (error) {
-      console.error("Error setting up file upload:", error);
-      toast.error("Failed to start file upload");
-      setImportLoading(false);
-      setShowImportModal(false);
-    } finally {
+      console.error("Error validating file:", error);
+      toast.error("Invalid file format. Please upload a valid Excel file.");
       e.target.value = "";
     }
   };
 
+  const startFileUpload = (e, file) => {
+    // Reset state for new upload
+    setImportLoading(true);
+    setImportProgress(0);
+    setShowImportModal(true);
+    setImportErrors([]);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("counsellorId", user.id);
+
+    const xhr = new XMLHttpRequest();
+
+    // Configure progress tracking
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setImportProgress(percent);
+      }
+    });
+
+    xhr.addEventListener("load", async () => {
+      try {
+        const result = JSON.parse(xhr.response);
+        await fetchAdmission();
+
+        if (xhr.status === 200) {
+          handleSuccessResponse(result);
+        } else if (xhr.status === 207) {
+          handlePartialSuccessResponse(result);
+        } else {
+          handleErrorResponse(xhr.status, result);
+        }
+      } catch (error) {
+        console.error("Error processing response:", error);
+        toast.error("Failed to process server response");
+        setImportErrors([
+          {
+            row: "Unknown",
+            errors: ["Failed to parse server response"],
+          },
+        ]);
+      } finally {
+        setImportLoading(false);
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      toast.error("Network error occurred during import");
+      setImportLoading(false);
+      setShowImportModal(false);
+    });
+
+    xhr.open("POST", "/api/importData");
+    xhr.send(formData);
+    e.target.value = "";
+
+    // Helper functions for response handling
+    function handleSuccessResponse(result) {
+      toast.success("Import completed successfully", {
+        description: `${
+          result.insertedCount || result.totalRecords || 0
+        } records imported`,
+        duration: 3000,
+      });
+    }
+
+    function handlePartialSuccessResponse(result) {
+      const importedCount = result.insertedCount || 0;
+      const duplicateCount = result.duplicates?.length || 0;
+      const errorCount = result.validationErrors?.length || 0;
+
+      let description = "";
+      if (importedCount > 0)
+        description += `${importedCount} records imported. `;
+      if (duplicateCount > 0)
+        description += `${duplicateCount} duplicates found. `;
+      if (errorCount > 0) description += `${errorCount} validation errors.`;
+
+      toast.warning("Partial import completed", {
+        description,
+        duration: 5000,
+      });
+
+      const allErrors = [];
+      if (result.duplicates) {
+        allErrors.push(
+          ...result.duplicates.map((dup) => ({
+            row: dup.rowNumber || "Unknown",
+            errors: [`Duplicate: ${dup.dteApplicationNumber}`],
+            data: dup,
+          }))
+        );
+      }
+      if (result.validationErrors) {
+        allErrors.push(
+          ...result.validationErrors.map((err) => ({
+            row: err.row,
+            errors: Array.isArray(err.errors) ? err.errors : [err.errors],
+            data: err.data || null,
+          }))
+        );
+      }
+      setImportErrors(allErrors);
+    }
+
+    function handleErrorResponse(status, errorResponse) {
+      if (errorResponse?.error === "All records are duplicates") {
+        toast.error("Import failed - All records are duplicates", {
+          description: `${errorResponse.duplicates.length} duplicate records found`,
+          duration: 5000,
+        });
+        setImportErrors(
+          errorResponse.duplicates.map((dup) => ({
+            row: dup.rowNumber || "Unknown",
+            errors: ["Duplicate record"],
+            data: dup,
+          }))
+        );
+      } else if (errorResponse?.error === "Validation errors found") {
+        toast.error("Import failed - Validation errors", {
+          description: `${errorResponse.invalidRecords} records had errors`,
+          duration: 5000,
+        });
+        setImportErrors(errorResponse.details || []);
+      } else {
+        const errorMessage =
+          errorResponse?.error ||
+          errorResponse?.message ||
+          `Server responded with status ${status}`;
+        toast.error(`Import failed: ${errorMessage}`, {
+          duration: 5000,
+        });
+      }
+    }
+  };
   const handleExportToExcelSample = () => {
     const exportData = [
       {
@@ -1093,6 +1197,7 @@ const AdmissionApplications = () => {
       toast.error("Export failed. Please try again.");
     }
   };
+
   if (loading) return <LoadingComponent />;
 
   if (error)
@@ -1151,283 +1256,289 @@ const AdmissionApplications = () => {
           {/* Import Modal */}
           {showImportModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-4xl">
+              <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
                 <h2 className="text-xl font-bold mb-4">
                   {importLoading ? "Uploading File..." : "Import Data"}
                 </h2>
 
-                {!importLoading && (
-                  <div className="space-y-8">
-                    {/* Supported Formats Section */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <FileSpreadsheet className="w-5 h-5 mr-2 text-blue-500" />
-                        Supported Formats
-                      </h3>
-                      <ul className="space-y-2">
-                        <li className="flex items-center text-gray-600">
-                          <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
-                          <span>.xlsx (Excel)</span>
-                        </li>
-                        <li className="flex items-center text-gray-600">
-                          <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
-                          <span>.xls (Excel 97-2003)</span>
-                        </li>
-                        <li className="flex items-center text-gray-600">
-                          <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
-                          <span>.csv (Comma Separated Values)</span>
-                        </li>
-                      </ul>
-                    </div>
-
-                    {/* Required Format Section */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                      <div className="flex justify-between items-start mb-6">
-                        <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                          <ClipboardCheck className="w-5 h-5 mr-2 text-blue-500" />
-                          Required Format
+                <div className="overflow-y-auto flex-1">
+                  {" "}
+                  {/* Added scrolling container */}
+                  {!importLoading && (
+                    <div className="space-y-8">
+                      {/* Supported Formats Section */}
+                      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                          <FileSpreadsheet className="w-5 h-5 mr-2 text-blue-500" />
+                          Supported Formats
                         </h3>
-                        <button
-                          onClick={handleExportToExcelSample}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Sample Template
-                        </button>
+                        <ul className="space-y-2">
+                          <li className="flex items-center text-gray-600">
+                            <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
+                            <span>.xlsx (Excel)</span>
+                          </li>
+                          <li className="flex items-center text-gray-600">
+                            <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
+                            <span>.xls (Excel 97-2003)</span>
+                          </li>
+                          <li className="flex items-center text-gray-600">
+                            <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
+                            <span>.csv (Comma Separated Values)</span>
+                          </li>
+                        </ul>
                       </div>
 
-                      <p className="text-gray-600 mb-6">
-                        Ensure your file has headers in the first row and data
-                        follows the specified format below.
-                      </p>
-
-                      <div className="relative rounded-xl border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                {[
-                                  "DTEApplicationNumber",
-                                  "FirstName",
-                                  "MiddleName",
-                                  "LastName",
-                                  "FullName",
-                                  "NameAsPerAadhar",
-                                  "Email",
-                                  "StudentWhatsappNo",
-                                  "Branch",
-                                  "ProgramType",
-                                  "Year",
-                                  "Round",
-                                  "SeatType",
-                                  "Shift",
-                                  "Quota",
-                                  "AdmissionCategory",
-                                  "Gender",
-                                  "MotherName",
-                                  "FatherGuardianWhatsAppMobileNo",
-                                  "CastAsPerLC",
-                                  "Domicile",
-                                  "Nationality",
-                                  "FamilyIncome",
-                                  "AdmissionYear",
-                                  "DateOfBirth",
-                                  "AddressLine",
-                                  "City",
-                                  "State",
-                                  "Pincode",
-                                  "Country",
-                                  "FeesCategory",
-                                  "AdmissionType",
-                                  "SubCastAsPerLC",
-                                  "ReligionAsPerLC",
-                                  "MothersMobileNo",
-                                  "IsForeignNational",
-                                ].map((header) => (
-                                  <th
-                                    key={header}
-                                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                                  >
-                                    {header}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              <tr className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  DTE1234567**
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  FirstName
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  MiddleName
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  LastName
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  FullName
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  NameAsPerAadhar
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  email@gmail.com
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  9988776655
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Information Technology
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Diploma/UG/PG
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  1st/2nd/3rd/4th
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  CAP1/CAP2/CAP3/Institute Level
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  GOV/MIN/Management/TFWS
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Morning/Afternoon/Evening
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Quota
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  CAP/Institute Level/Against CAP
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Gender
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  MotherName
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  9988776655
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  CastAsPerLC
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Maharashtra
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Indian
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  98765
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  2024-25
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  yyyy/mm/dd
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  AddressLine
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  City
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  State
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  123456
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Country
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  FeesCategory
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  AdmissionType
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  SubCastAsPerLC
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  ReligionAsPerLC
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  9988776655
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                  Yes/No
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                      {/* Required Format Section */}
+                      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div className="flex justify-between items-start mb-6">
+                          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                            <ClipboardCheck className="w-5 h-5 mr-2 text-blue-500" />
+                            Required Format
+                          </h3>
+                          <button
+                            onClick={handleExportToExcelSample}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Sample Template
+                          </button>
                         </div>
-                      </div>
 
-                      <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
-                        <div className="flex">
-                          <AlertCircle className="h-5 w-5 text-blue-400 mr-3" />
-                          <div>
-                            <h4 className="text-sm font-medium text-blue-800">
-                              Important Notes
-                            </h4>
-                            <p className="text-sm text-blue-700 mt-1">
-                              • DTEApplicationNumber, AdmissionYear, Email,
-                              FullName , Gender , ProgramType , Year , Branch ,
-                              DateOfBirth , StudentWhatsappNumber, these fields
-                              are required
-                              <br />
-                              • Date format should be yyyy/mm/dd
-                              <br />
-                            </p>
+                        <p className="text-gray-600 mb-6">
+                          Ensure your file has headers in the first row and data
+                          follows the specified format below.
+                        </p>
+
+                        <div className="relative rounded-xl border border-gray-200 overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  {[
+                                    "DTEApplicationNumber",
+                                    "FirstName",
+                                    "MiddleName",
+                                    "LastName",
+                                    "FullName",
+                                    "NameAsPerAadhar",
+                                    "Email",
+                                    "StudentWhatsappNo",
+                                    "Branch",
+                                    "ProgramType",
+                                    "Year",
+                                    "Round",
+                                    "SeatType",
+                                    "Shift",
+                                    "Quota",
+                                    "AdmissionCategory",
+                                    "Gender",
+                                    "MotherName",
+                                    "FatherGuardianWhatsAppMobileNo",
+                                    "CastAsPerLC",
+                                    "Domicile",
+                                    "Nationality",
+                                    "FamilyIncome",
+                                    "AdmissionYear",
+                                    "DateOfBirth",
+                                    "AddressLine",
+                                    "City",
+                                    "State",
+                                    "Pincode",
+                                    "Country",
+                                    "FeesCategory",
+                                    "AdmissionType",
+                                    "SubCastAsPerLC",
+                                    "ReligionAsPerLC",
+                                    "MothersMobileNo",
+                                    "IsForeignNational",
+                                  ].map((header) => (
+                                    <th
+                                      key={header}
+                                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                                    >
+                                      {header}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    DTE1234567**
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    FirstName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    MiddleName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    LastName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    FullName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    NameAsPerAadhar
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    email@gmail.com
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    9988776655
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Information Technology
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Diploma/UG/PG
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    1st/2nd/3rd/4th
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    CAP1/CAP2/CAP3/Institute Level
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    GOV/MIN/Management/TFWS
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Morning/Afternoon/Evening
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Quota
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    CAP/Institute Level/Against CAP
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Gender
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    MotherName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    9988776655
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    CastAsPerLC
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Maharashtra
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Indian
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    98765
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    2024-25
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    yyyy/mm/dd
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    AddressLine
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    City
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    State
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    123456
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Country
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    FeesCategory
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    AdmissionType
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    SubCastAsPerLC
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    ReligionAsPerLC
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    9988776655
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Yes/No
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
+                          <div className="flex">
+                            <AlertCircle className="h-5 w-5 text-blue-400 mr-3" />
+                            <div>
+                              <h4 className="text-sm font-medium text-blue-800">
+                                Important Notes
+                              </h4>
+                              <p className="text-sm text-blue-700 mt-1">
+                                • DTEApplicationNumber, AdmissionYear, Email,
+                                FullName , Gender , ProgramType , Year , Branch
+                                , DateOfBirth , StudentWhatsappNumber, these
+                                fields are required
+                                <br />
+                                • Date format should be yyyy/mm/dd
+                                <br />
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Error Display Section */}
-                    {importErrors.length > 0 && (
-                      <div className="bg-red-50 rounded-lg p-4 border border-red-100">
-                        <h3 className="text-lg font-semibold text-red-800 mb-2">
-                          Import Errors ({importErrors.length})
-                        </h3>
-                        <div className="max-h-60 overflow-y-auto">
-                          {importErrors.map((error, index) => (
-                            <div
-                              key={index}
-                              className="mb-3 p-3 bg-white rounded border border-red-100"
-                            >
-                              <p className="font-medium text-red-700">
-                                Row {error.row || "Unknown"}:
-                              </p>
-                              <ul className="list-disc list-inside text-red-600 mt-1">
-                                {error.errors?.map((err, i) => (
-                                  <li key={i}>{err}</li>
-                                ))}
-                              </ul>
-                              {error.data && (
-                                <div className="mt-2 text-xs text-gray-600">
-                                  <p>Data:</p>
-                                  <pre className="bg-gray-50 p-2 rounded overflow-x-auto">
-                                    {JSON.stringify(error.data, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                      {/* Error Display Section */}
+                      {importErrors.length > 0 && (
+                        <div className="bg-red-50 rounded-lg p-4 border border-red-100">
+                          <h3 className="text-lg font-semibold text-red-800 mb-2">
+                            Import Errors ({importErrors.length})
+                          </h3>
+                          <div className="max-h-60 overflow-y-auto">
+                            {importErrors.map((error, index) => (
+                              <div
+                                key={index}
+                                className="mb-3 p-3 bg-white rounded border border-red-100"
+                              >
+                                <p className="font-medium text-red-700">
+                                  Row {error.row || "Unknown"}:
+                                </p>
+                                <ul className="list-disc list-inside text-red-600 mt-1">
+                                  {error.errors?.map((err, i) => (
+                                    <li key={i}>{err}</li>
+                                  ))}
+                                </ul>
+                                {error.data && (
+                                  <div className="mt-2 text-xs text-gray-600">
+                                    <p>Data:</p>
+                                    <pre className="bg-gray-50 p-2 rounded overflow-x-auto">
+                                      {JSON.stringify(error.data, null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {importLoading ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 mt-4">
+                    {" "}
+                    {/* Moved outside scrollable area */}
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
                         className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
@@ -1449,6 +1560,8 @@ const AdmissionApplications = () => {
                   </div>
                 ) : (
                   <div className="flex justify-end gap-3 mt-4">
+                    {" "}
+                    {/* Moved outside scrollable area */}
                     <button
                       onClick={() => setShowImportModal(false)}
                       className="px-4 py-2 text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50"
@@ -1589,14 +1702,14 @@ const AdmissionApplications = () => {
                 >
                   Export Current Page
                 </button>
-                <div className="border-t border-gray-200"></div>
-                <button
+                {/* <div className="border-t border-gray-200"></div> */}
+                {/* <button
                   onClick={handlePrint}
                   className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   <Printer className="w-4 h-4 mr-2" />
                   Print
-                </button>
+                </button> */}
               </div>
             )}
           </div>
@@ -2048,7 +2161,7 @@ const AdmissionApplications = () => {
                             case "fullName":
                               return (
                                 <Link
-                                  href={`/admission-applications/${application._id}`}
+                                  href={`/admin/admission-applications/${application._id}`}
                                   className="flex items-center hover:text-blue-600 transition-colors"
                                 >
                                   <div className="flex-shrink-0 h-10 w-10">

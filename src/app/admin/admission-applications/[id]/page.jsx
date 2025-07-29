@@ -141,7 +141,7 @@ const AdmissionDetailPage = ({ params }) => {
         {/* Back button and header */}
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => router.push('/admission-applications')}
+            onClick={() => router.push('/admin/admission-applications')}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />

@@ -115,6 +115,10 @@
 
 // export default admission;
 
+
+//father name, blood group, aadhar number, physically handicapped, emergency contact number, 
+
+
 import mongoose from "mongoose";
 
 const admissionSchema = new mongoose.Schema(

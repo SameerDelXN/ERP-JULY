@@ -10,6 +10,7 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 mongoose.Promise = global.Promise;
 
 export async function POST(request) {
+  const validationErrors =[]
   try {
     // Connect to MongoDB
     await connectToDatabase();

@@ -16,7 +16,7 @@ export async function GET(req, { params }) {
 
     // ✅ Find the HOD by ID and validate role
     const hod = await teacherSchema.findById(hodId);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json({
         error: 'HOD not found or invalid role'
       }, {
@@ -27,7 +27,7 @@ export async function GET(req, { params }) {
     const department = hod.department;
 
     // ✅ Get all academic data for the department
-    const academics = await academicSchema.find({ department });
+    const academics = await academicSchema.find({ department })
 
     return NextResponse.json({
       message: 'Academic data fetched successfully',
@@ -55,7 +55,7 @@ export async function POST(request, { params }) {
 
     const { id } = params;
     const { academicId, years } = await request.json();
-    console.log(academicId,years)
+    console.log(academicId, years)
     // Validate input
     if (!academicId || !Array.isArray(years) || years.length === 0) {
       return NextResponse.json(
@@ -69,7 +69,7 @@ export async function POST(request, { params }) {
     }
 
     const hod = await teacherSchema.findById(id);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json({ error: 'Unauthorized: Not an HOD' }, { status: 403 });
     }
 
@@ -180,44 +180,85 @@ export async function POST(request, { params }) {
 
 //PUT route handler for HOD to update academics details 
 
-export async function PUT(request) {
+//PUT route handler for HOD to update academics details 
+export async function PUT(request, { params }) {
   try {
     await connectToDatabase();
 
+    const { id: hodId } = params;
     const { academicId, years } = await request.json();
-    console.log(academicId,years)
+    console.log(academicId, years);
+
+    // Validate input
     if (!academicId || !Array.isArray(years)) {
       return NextResponse.json(
-        {
-          error: 'academicId and years array are required'
-        },
-        {
-          status: 400
-        }
+        { error: 'academicId and years array are required' },
+        { status: 400 }
       );
     }
 
+    // Verify HOD
+    const hod = await teacherSchema.findById(hodId);
+    if (!hod || hod.role !== 'hod') {
+      return NextResponse.json(
+        { error: 'Unauthorized: Not a valid HOD' },
+        { status: 403 }
+      );
+    }
+
+    // Find academic record
     const academic = await academicSchema.findById(academicId);
     if (!academic) {
       return NextResponse.json(
-        {
-          error: 'Academic record not found'
-        },
-        {
-          status: 404
-        }
+        { error: 'Academic record not found' },
+        { status: 404 }
       );
     }
 
-    // Replace the entire years array
-    academic.years = years;
+    // Check HOD belongs to same department
+    if (academic.department !== hod.department) {
+      return NextResponse.json(
+        { error: 'HOD not authorized for this department' },
+        { status: 403 }
+      );
+    }
 
-    await academic.save();
+    // Validate each year object
+    for (const yearObj of years) {
+      if (!yearObj.year || !yearObj.semester) {
+        return NextResponse.json(
+          { error: 'Each year object must include year and semester' },
+          { status: 400 }
+        );
+      }
+
+      // Validate divisions if they exist
+      if (yearObj.divisions && Array.isArray(yearObj.divisions)) {
+        for (const division of yearObj.divisions) {
+          // Add your division validation logic here if needed
+        }
+      }
+    }
+
+    // Preserve required fields that might be missing in the update
+    const updatedAcademic = {
+      ...academic.toObject(),
+      years,
+      programType: academic.programType, // Make sure programType is preserved
+      department: academic.department,   // Preserve department
+    };
+
+    // Use findByIdAndUpdate to properly handle the update
+    const result = await academicSchema.findByIdAndUpdate(
+      academicId,
+      updatedAcademic,
+      { new: true }
+    );
 
     return NextResponse.json(
       {
         message: 'Years with semesters updated successfully',
-        updated: academic
+        updated: result
       },
       {
         status: 200
@@ -256,7 +297,7 @@ export async function DELETE(request, { params }) {
 
     // ✅ Verify HOD
     const hod = await teacherSchema.findById(hodId);
-    if (!hod || hod.role !== 'HOD') {
+    if (!hod || hod.role !== 'hod') {
       return NextResponse.json(
         { error: 'Unauthorized: Not a valid HOD' },
         { status: 403 }
