@@ -635,7 +635,6 @@ async function addStudentToAcademicStructure(student, branch, year, programType)
   }
 }
 
-// ... (keep your existing DELETE, POST, and GET methods)
 
 export async function DELETE(req, { params }) {
   try {
@@ -695,6 +694,33 @@ export async function DELETE(req, { params }) {
         message: "Server error during deletion",
         error: error.message,
       },
+      { status: 500 }
+    );
+  }
+}
+
+
+// New Added For API route to fetch individual admission records: CK
+
+export async function GET(request, { params }) {
+  try {
+    const { id } = params;
+
+    console.log("From ID page",id);
+    
+    
+    const admission = await admissionSchema.findById(id);
+    if (!admission) {
+      return NextResponse.json(
+        { success: false, error: "Admission not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: admission });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

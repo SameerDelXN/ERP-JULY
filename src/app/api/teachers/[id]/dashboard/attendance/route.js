@@ -26,6 +26,10 @@ export async function POST(req, { params }) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
+
+    console.log(department); 
+    
+
     const attendance = new attendanceSchema({
       date,
       department,
@@ -39,6 +43,8 @@ export async function POST(req, { params }) {
     });
 
     const saved = await attendance.save();
+    console.log("Data saved",saved);
+    
     return NextResponse.json({ message: "Attendance recorded", attendance: saved }, { status: 201 });
 
   } catch (error) {

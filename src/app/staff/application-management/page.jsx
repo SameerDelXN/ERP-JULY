@@ -2123,7 +2123,6 @@ const AdmissionApplications = () => {
       Nationality: app.nationality || "",
       FamilyIncome: app.familyIncome || "",
       AdmissionYear: app.admissionYear || "",
-      PRN: app.prn || "",
       DateOfBirth: app.dateOfBirth || "",
       Status: app.status || "",
       AddressLine: app.address?.[0]?.addressLine || "",
