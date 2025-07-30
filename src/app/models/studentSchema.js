@@ -85,10 +85,13 @@ const studentSchema = new mongoose.Schema(
     counsellorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+    },
+     sessionToken:{
+      type:String
     }
   },
   { timestamps: true }
 );
-
+delete mongoose.models.Student
 const Student = mongoose.models.Student || mongoose.model('Student', studentSchema);
 export default Student;

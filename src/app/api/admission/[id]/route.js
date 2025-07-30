@@ -1,16 +1,18 @@
-// import { connectToDatabase } from '../../../lib/mongodb';
-// import admissionSchema from '../../../models/admissionSchema';
+import { connectToDatabase } from '../../../lib/mongodb';
+import admissionSchema from '../../../models/admissionSchema';
 
-// // PUT - Update admission by ID (from params)
-// import studentSchema from '../../../models/studentSchema';
-// import academicSchema from '../../../models/academicSchema';
-
+// PUT - Update admission by ID (from params)
+import studentSchema from '../../../models/studentSchema';
+import academicSchema from '../../../models/academicSchema';
+import { NextResponse } from 'next/server';
+// kanika
 // export async function PUT(req, { params }) {
 //   try {
 //     await connectToDatabase();
 //     const updateData = await req.json();
 //     const { id: admissionId } = params;
 
+//     console.log(updateData)
 //     if (!admissionId || !updateData || typeof updateData !== 'object') {
 //       return new Response(JSON.stringify({
 //         message: 'Missing or invalid admissionId or update data'
@@ -23,17 +25,15 @@
 //       updateData,
 //       { new: true }
 //     );
-
+//     console.log(updatedAdmission)
 //     if (!updatedAdmission) {
 //       return new Response(JSON.stringify({ message: 'Admission not found' }), { status: 404 });
 //     }
 
 //     // 2. Only proceed if status is approved
 //     if (updateData.status === 'approved') {
-//       const department = updatedAdmission.courseName; // department = courseName
-//       const rawYear = updatedAdmission.yearOfAdmission; // e.g. "1st Year"
-//       const year = rawYear?.split(" ")[0]; // "1st", "2nd", etc.
-
+//       const department = updatedAdmission.branch; // department = courseName
+//       const year = updatedAdmission.year; // e.g. "1st Year"
 //       if (!department || !year) {
 //         return new Response(JSON.stringify({
 //           message: 'Cannot determine department or year from admission data'
@@ -150,184 +150,10 @@
 //   }
 // }
 
-// import { connectToDatabase } from "../../../lib/mongodb";
-// import admissionSchema from "../../../models/admissionSchema";
-// import studentSchema from "../../../models/studentSchema";
-// import academicSchema from "../../../models/academicSchema";
-
-// export async function PUT(req, { params }) {
-//   try {
-//     await connectToDatabase();
-//     const { id: admissionId } = params;
-//     const updateData = await req.json();
-
-//     console.log(updateData);
-
-//     if (
-//       !updateData ||
-//       typeof updateData !== "object" ||
-//       Object.keys(updateData).length === 0
-//     ) {
-//       return Response.json(
-//         { success: false, message: "Missing or invalid update data" },
-//         { status: 400 }
-//       );
-//     }
-
-//     // Prevent updating certain fields
-//     const restrictedFields = ["_id", "enquiryId", "counsellorId", "createdAt"];
-//     for (const field of restrictedFields) {
-//       if (field in updateData) {
-//         delete updateData[field];
-//       }
-//     }
-//     console.log("Update Data : ", updateData);
-
-//     // Update admission record
-//     const updatedAdmission = await admissionSchema
-//       .findByIdAndUpdate(
-//         admissionId,
-//         { $set: updateData },
-//         { new: true, runValidators: true }
-//       )
-//       .lean();
-
-//     console.log("Update Admission : ", updatedAdmission);
-
-//     if (!updatedAdmission) {
-//       return Response.json(
-//         { success: false, message: "Admission not found" },
-//         { status: 404 }
-//       );
-//     }
-
-//     // Handle status change to 'approved'
-//     if (updateData.status === "approved") {
-//       await handleApprovedStatus(updatedAdmission, admissionId);
-//     }
-
-//     return Response.json({
-//       success: true,
-//       message: "Admission updated successfully",
-//       data: updatedAdmission,
-//     });
-//   } catch (error) {
-//     console.error("Admission PUT error:", error);
-
-//     // Handle specific error cases
-//     let status = 500;
-//     let message = "Server error during update";
-//     let errors = null;
-
-//     if (error.name === "ValidationError") {
-//       status = 400;
-//       message = "Validation failed";
-//       errors = Object.values(error.errors).map((err) => err.message);
-//     } else if (error.code === 11000) {
-//       status = 409;
-//       message = "Duplicate value error";
-//     }
-
-//     return Response.json({ success: false, message, errors }, { status });
-//   }
-// }
-
-// async function handleApprovedStatus(admission, admissionId) {
-//   const {
-//     programType,
-//     year,
-//     branch,
-//     fullName,
-//     email,
-//     studentWhatsappNumber,
-//     dateOfBirth,
-//     address,
-//     isForeignNational,
-//     nationality,
-//   } = admission;
-
-//   // Validate required fields for student creation
-//   if (!programType || !year || !branch) {
-//     throw new Error(
-//       "Missing academic details (programType, year, or branch) required for student creation"
-//     );
-//   }
-
-//   // Check/create student record
-//   let student = await studentSchema.findOne({ admissionId });
-
-//   if (!student) {
-//     const studentCount = await studentSchema.countDocuments();
-//     const studentId = `SCH${new Date().getFullYear()}-${String(
-//       studentCount + 1
-//     ).padStart(4, "0")}`;
-
-//     student = await studentSchema.create({
-//       studentId,
-//       admissionId,
-//       fullName,
-//       email: email?.toLowerCase(),
-//       mobileNumber: studentWhatsappNumber,
-//       dateOfBirth,
-//       address: address?.[0] || {},
-//       nationality,
-//       isForeignNational: isForeignNational || false,
-//       status: "active",
-//       academicDetails: {
-//         programType,
-//         currentYear: year,
-//         branch,
-//       },
-//     });
-//   }
-
-//   // Update academic record
-//  const academic = await academicSchema.findOne({
-//   department: branch,
-//   "years.year": year,
-// });
-
-// if (!academic) {
-//   console.warn("Academic structure not found");
-//   return;
-// }
-
-// const yearBlock = academic.years.find(y => y.year === year);
-// const targetDiv = yearBlock.divisions.find(div => div.students.length < 50);
-
-// if (!targetDiv) {
-//   console.warn("No division with < 50 students found");
-//   return;
-// }
-
-// // Now update that specific division:
-// await academicSchema.updateOne(
-//   {
-//     department: branch,
-//     "years.year": year,
-//     "years.divisions.divisionName": targetDiv.divisionName,
-//   },
-//   {
-//     $addToSet: {
-//       "years.$[yearElem].divisions.$[div].students": student._id,
-//     },
-//   },
-//   {
-//     arrayFilters: [
-//       { "yearElem.year": year },
-//       { "div.divisionName": targetDiv.divisionName }
-//     ],
-//   }
-// );
-
- 
-// }
-
-import { connectToDatabase } from "../../../lib/mongodb";
-import admissionSchema from "../../../models/admissionSchema";
-import studentSchema from "../../../models/studentSchema";
-import academicSchema from "../../../models/academicSchema";
-import mongoose from 'mongoose';
+// import { connectToDatabase } from '../../../lib/mongodb';
+// import admissionSchema from '../../../models/admissionSchema';
+// import studentSchema from '../../../models/studentSchema';
+// import academicSchema from '../../../models/academicSchema';
 
 export async function PUT(req, { params }) {
   try {
@@ -335,16 +161,7 @@ export async function PUT(req, { params }) {
     const { id: admissionId } = params;
     const updateData = await req.json();
 
-    // Validate admission ID
-    if (!mongoose.Types.ObjectId.isValid(admissionId)) {
-      return Response.json(
-        { success: false, message: "Invalid admission ID format" },
-        { status: 400 }
-      );
-    }
-
-    // Validate update data
-    if (!updateData || typeof updateData !== "object" || Object.keys(updateData).length === 0) {
+    if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
       return Response.json(
         { success: false, message: "Missing or invalid update data" },
         { status: 400 }
@@ -352,290 +169,153 @@ export async function PUT(req, { params }) {
     }
 
     // Prevent updating certain fields
-    const restrictedFields = ["_id", "enquiryId", "counsellorId", "createdAt", "prn"];
+    const restrictedFields = ['_id', 'enquiryId', 'counsellorId', 'createdAt'];
     for (const field of restrictedFields) {
       if (field in updateData) {
         delete updateData[field];
       }
     }
 
-    // Check current admission status
-    const currentAdmission = await admissionSchema.findById(admissionId);
-    if (!currentAdmission) {
+    // Update admission record
+    const updatedAdmission = await admissionSchema
+      .findByIdAndUpdate(
+        admissionId,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      )
+      .lean();
+
+    console.log("Update Admission : ", updatedAdmission);
+
+    if (!updatedAdmission) {
       return Response.json(
-        { success: false, message: "Admission not found" },
+        { success: false, message: 'Admission not found' },
         { status: 404 }
       );
     }
 
-    // Prevent downgrading from approved/rejected to inProcess
-    if (updateData.status && 
-        (currentAdmission.status === 'approved' || currentAdmission.status === 'rejected') && 
-        updateData.status === 'inProcess') {
+    // Handle status change to 'approved'
+    if (updateData.status === 'approved') {
+      const { 
+        programType, 
+        year, 
+        branch,
+        fullName,
+        email,
+        studentWhatsappNumber,
+        dateOfBirth,
+        address,
+        isForeignNational,
+        nationality
+      } = updatedAdmission;
+
+      // Validate required fields for student creation
+      if (!programType || !year || !branch) {
+        return Response.json(
+          { 
+            success: false, 
+            message: 'Missing academic details (programType, year, or branch) required for student creation' 
+          },
+          { status: 400 }
+        );
+      }
+
+      // Check/create student record
+      let student = await studentSchema.findOne({ admissionId });
+
+      if (!student) {
+        const studentCount = await studentSchema.countDocuments();
+        const studentId = `SCH${new Date().getFullYear()}-${String(studentCount + 1).padStart(4, '0')}`;
+
+        student = await studentSchema.create({
+          studentId,
+          admissionId,
+          fullName,
+          email: email.toLowerCase(),
+          mobileNumber: studentWhatsappNumber,
+          dateOfBirth,
+          address: address?.[0] || {}, // Take first address if array exists
+          nationality,
+          isForeignNational: isForeignNational || false,
+          status: 'active',
+          academicDetails: {
+            programType,
+            currentYear: year,
+            branch
+          }
+        });
+      }
+
+      // Update academic record
+      const academicUpdate = await academicSchema.findOneAndUpdate(
+        { 
+          department: branch,
+          'years.year': year
+        },
+        { 
+          $addToSet: { 
+            'years.$[yearElem].divisions.$[div].students': student._id 
+          } 
+        },
+        { 
+          arrayFilters: [
+            { 'yearElem.year': year },
+            { 'div.students': { $size: { $lt: 50 } } } // Only divisions with < 50 students
+          ],
+          new: true
+        }
+      );
+
+      if (!academicUpdate) {
+        console.warn(`No available division found for branch ${branch} and year ${year}`);
+      }
+    }
+
+    return Response.json(
+      {
+        success: true,
+        message: 'Admission updated successfully',
+        data: updatedAdmission
+      },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Admission PUT error:', error);
+    
+    // Handle specific error cases
+    if (error.name === 'ValidationError') {
       return Response.json(
-        { success: false, message: "Cannot revert approved/rejected admission to inProcess" },
+        { 
+          success: false,
+          message: 'Validation failed',
+          errors: Object.values(error.errors).map(err => err.message)
+        },
         { status: 400 }
       );
     }
 
-    // Update admission record
-    const updatedAdmission = await admissionSchema.findByIdAndUpdate(
-      admissionId,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    ).lean();
-
-    // Handle status change to 'approved'
-    if (updateData.status === "approved") {
-      try {
-        await handleApprovedStatus(updatedAdmission);
-      } catch (error) {
-        console.error("Error in handleApprovedStatus:", error);
-        // Rollback admission status if student creation fails
-        await admissionSchema.findByIdAndUpdate(
-          admissionId,
-          { $set: { status: "inProcess" } }
-        );
-        throw error;
-      }
+    if (error.code === 11000) {
+      return Response.json(
+        { 
+          success: false,
+          message: 'Duplicate value error',
+          field: Object.keys(error.keyPattern)[0]
+        },
+        { status: 409 }
+      );
     }
 
-    return Response.json({
-      success: true,
-      message: "Admission updated successfully",
-      data: updatedAdmission,
-    });
-  } catch (error) {
-    console.error("Admission PUT error:", error);
-
-    // Handle specific error cases
-    let status = 500;
-    let message = "Server error during update";
-    let errors = null;
-
-    if (error.name === "ValidationError") {
-      status = 400;
-      message = "Validation failed";
-      errors = Object.values(error.errors).map((err) => err.message);
-    } else if (error.code === 11000) {
-      status = 409;
-      message = "Duplicate value error";
-    }
-
-    return Response.json({ success: false, message, errors }, { status });
-  }
-}
-
-async function handleApprovedStatus(admission) {
-  const {
-    _id: admissionId,
-    programType,
-    year,
-    branch,
-    fullName,
-    email,
-    studentWhatsappNumber,
-    dateOfBirth,
-    address,
-    isForeignNational,
-    nationality,
-    gender,
-    prn,
-    counsellorId,
-    motherName,
-    fatherGuardianWhatsappNumber,
-    motherMobileNumber,
-    casteAsPerLC,
-    domicile,
-    religionAsPerLC,
-    familyIncome,
-    admissionYear,
-    seatType,
-    admissionCategoryDTE,
-    feesCategory,
-    admissionType
-  } = admission;
-
-  // Validate required fields for student creation
-  const requiredFields = {
-    programType,
-    year,
-    branch,
-    fullName,
-    email,
-    studentWhatsappNumber,
-    dateOfBirth,
-    nationality
-  };
-
-  for (const [field, value] of Object.entries(requiredFields)) {
-    if (!value) {
-      throw new Error(`Missing required field for student creation: ${field}`);
-    }
-  }
-
-  // Check if student already exists for this admission
-  const existingStudent = await studentSchema.findOne({ admissionId });
-  if (existingStudent) {
-    console.log(`Student already exists for admission ${admissionId}`);
-    return existingStudent;
-  }
-
-  // Generate student ID (format: YYBRANCH####)
-  const currentYear = new Date().getFullYear().toString().slice(-2);
-  const branchCode = branch.substring(0, 3).toUpperCase();
-  const studentCount = await studentSchema.countDocuments({ branch });
-  const studentId = `${currentYear}${branchCode}${String(studentCount + 1).padStart(4, '0')}`;
-
-  // Create comprehensive student record
-  const studentData = {
-    studentId,
-    admissionId,
-    fullName,
-    email: email.toLowerCase(),
-    mobileNumber: studentWhatsappNumber,
-    dateOfBirth,
-    gender,
-    address: address?.[0] || {},
-    nationality,
-    isForeignNational: isForeignNational || false,
-    status: 'active',
-    programType,
-    currentYear: year,
-    branch,
-    prn: prn || generatePRN(branch, currentYear),
-    counsellorId,
-    motherName,
-    fatherMobileNumber: fatherGuardianWhatsappNumber,
-    motherMobileNumber,
-    caste: casteAsPerLC,
-    domicile,
-    religion: religionAsPerLC,
-    familyIncome,
-    admissionYear,
-    seatType,
-    admissionCategory: admissionCategoryDTE,
-    feesCategory,
-    admissionType
-  };
-
-  console.log(studentData);
-  
-  const student = await studentSchema.create(studentData);
-
-  // Add student to academic structure
-  await addStudentToAcademicStructure(student, branch, year, programType);
-
-  return student;
-}
-
-function generatePRN(branch, year) {
-  const branchCode = branch.substring(0, 3).toUpperCase();
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-  return `PRN${year}${branchCode}${randomNum}`;
-}
-
-async function addStudentToAcademicStructure(student, branch, year, programType) {
-  // Find or create academic record for this branch and program type
-  let academicRecord = await academicSchema.findOne({ 
-    department: branch,
-    programType: programType
-  });
-
-  if (!academicRecord) {
-    // Create new academic record if doesn't exist
-    academicRecord = await academicSchema.create({
-      department: branch,
-      programType: programType,
-      years: [{
-        year,
-        divisions: [{
-          name: 'A',
-          students: [student._id],
-          subjects: [],
-          timetable: [],
-          exams: [],
-          attendance: []
-        }]
-      }]
-    });
-    return;
-  }
-
-  // Find the year block or create it
-  let yearBlock = academicRecord.years.find(y => y.year === year);
-  
-  if (!yearBlock) {
-    // Add new year if it doesn't exist
-    await academicSchema.findByIdAndUpdate(
-      academicRecord._id,
+    return Response.json(
       {
-        $push: {
-          years: {
-            year,
-            divisions: [{
-              name: 'A',
-              students: [student._id],
-              subjects: [],
-              timetable: [],
-              exams: [],
-              attendance: []
-            }]
-          }
-        }
-      }
-    );
-    return;
-  }
-
-  // Find a division with available space (max 50 students)
-  let targetDivision = yearBlock.divisions.find(div => div.students.length < 50);
-  
-  if (!targetDivision) {
-    // Create new division if all are full (A, B, C, etc.)
-    const newDivisionName = String.fromCharCode(65 + yearBlock.divisions.length);
-    await academicSchema.findByIdAndUpdate(
-      academicRecord._id,
-      {
-        $push: {
-          "years.$[yearElem].divisions": {
-            name: newDivisionName,
-            students: [student._id],
-            subjects: [],
-            timetable: [],
-            exams: [],
-            attendance: []
-          }
-        }
+        success: false,
+        message: 'Server error during update',
+        error: error.message
       },
-      {
-        arrayFilters: [{ "yearElem.year": year }]
-      }
-    );
-  } else {
-    // Add student to existing division
-    await academicSchema.updateOne(
-      {
-        _id: academicRecord._id,
-        "years.year": year,
-        "years.divisions.name": targetDivision.name
-      },
-      {
-        $addToSet: {
-          "years.$[yearElem].divisions.$[div].students": student._id
-        }
-      },
-      {
-        arrayFilters: [
-          { "yearElem.year": year },
-          { "div.name": targetDivision.name }
-        ]
-      }
+      { status: 500 }
     );
   }
 }
-
-// ... (keep your existing DELETE, POST, and GET methods)
 
 export async function DELETE(req, { params }) {
   try {
@@ -695,6 +375,33 @@ export async function DELETE(req, { params }) {
         message: "Server error during deletion",
         error: error.message,
       },
+      { status: 500 }
+    );
+  }
+}
+
+
+// New Added For API route to fetch individual admission records: CK
+
+export async function GET(request, { params }) {
+  try {
+    const {id}  = params;
+
+    console.log("From ID page",id);
+    
+    
+    const admission = await admissionSchema.findById(id);
+    if (!admission) {
+      return NextResponse.json(
+        { success: false, error: "Admission not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: admission });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

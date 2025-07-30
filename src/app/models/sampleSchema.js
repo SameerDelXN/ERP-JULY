@@ -35,4 +35,3 @@ delete mongoose.models.sample
 const sample = mongoose.models.sample || mongoose.model('sample', sampleSchema);
 
 export default sample;
-

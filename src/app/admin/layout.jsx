@@ -159,9 +159,9 @@ const Layout = ({ children }) => {
 
                   {/* Menu Items */}
                   <div className="py-2">
-                    {/* <button
+                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200 group"
-                      // onClick={() => router.push('/admin/profile')}
+                      onClick={() => router.push('/admin/profile')}
                     >
                       <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
                         <User className="w-4 h-4 text-blue-600" />
@@ -170,11 +170,10 @@ const Layout = ({ children }) => {
                         <p className="font-medium">Profile Settings</p>
                         <p className="text-xs text-gray-500">Manage your account</p>
                       </div>
-                    </button> */}
-{/* 
+                    </button> 
                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 transition-all duration-200 group"
-                      // onClick={() => router.push('/admin/settings')}
+                      onClick={() => router.push('/admin/settings')}
                     >
                       <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors">
                         <Settings className="w-4 h-4 text-purple-600" />
@@ -183,7 +182,7 @@ const Layout = ({ children }) => {
                         <p className="font-medium">Preferences</p>
                         <p className="text-xs text-gray-500">Customize your experience</p>
                       </div>
-                    </button> */}
+                    </button>
                   </div>
 
                   {/* Logout Button */}

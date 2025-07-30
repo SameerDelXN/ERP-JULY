@@ -28,6 +28,8 @@
                 |-- page.jsx
             |-- admission-applications
                 |-- page.jsx
+                |-- [id]
+                    |-- page.jsx
             |-- courses
                 |-- page.jsx
             |-- enquiry&leads
@@ -36,6 +38,10 @@
             |-- manage-users
                 |-- page.jsx
             |-- page.jsx
+            |-- profile
+                |-- page.jsx
+            |-- settings
+                |-- page.jsx
             |-- staff-directory
                 |-- page.jsx
         |-- api
@@ -66,6 +72,8 @@
                     |-- academics
                         |-- route.js
                     |-- route.js
+                    |-- students
+                        |-- route.js
             |-- importData
                 |-- route.js
             |-- login
@@ -82,8 +90,11 @@
                 |-- [userId]
                     |-- route.js
             |-- students
+                |-- route.js
                 |-- [id]
                     |-- academics
+                        |-- route.js
+                    |-- admission
                         |-- route.js
                     |-- route.js
             |-- teachers
@@ -120,9 +131,13 @@
                 |-- page.jsx
             |-- layout.jsx
             |-- page.jsx
+            |-- student-management
+                |-- page.jsx
         |-- layout.js
         |-- lib
+            |-- cors.js
             |-- googleDriveUpload.js
+            |-- init-middleware.js
             |-- mongodb.js
         |-- login
             |-- page.jsx
@@ -156,15 +171,26 @@
                 |-- page.jsx
             |-- certificates
                 |-- page.jsx
-            |-- grades
-                |-- page.jsx
             |-- layout.jsx
             |-- myexams
                 |-- page.jsx
             |-- page.jsx
-            |-- profile
+            |-- studymaterial
                 |-- page.jsx
             |-- timetable
+                |-- page.jsx
+        |-- teacher
+            |-- attendance
+                |-- page.jsx
+            |-- layout.jsx
+            |-- marks
+                |-- page.jsx
+            |-- my-classes
+                |-- page.jsx
+            |-- page.jsx
+            |-- student-list
+                |-- page.jsx
+            |-- upload-notes
                 |-- page.jsx
         |-- verification-failed
             |-- page.jsx

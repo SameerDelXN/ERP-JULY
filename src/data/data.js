@@ -42,13 +42,12 @@ export const staffSidebarItems = [
 ];
 
 export const studentSidebarItems = [
-  { id: "overview", label: "Overview", icon: Home },
   { id: "profile", label: "Profile", icon: UserCheck },
   { id: "attendance", label: "Attendance", icon: FileText },
   { id: "myexams", label: "My Exams", icon: BookOpenCheck },
-  { id: "grades", label: "Grades", icon: GraduationCap },
   { id: "assignments", label: "Assignments", icon: BookOpen },
   { id: "timetable", label: "My Timetable", icon: CalendarClock },
+  { id: "studymaterial", label: "Study Material", icon: CalendarClock },
   { id: "certificates", label: "Certificates", icon: Award },
 
 ];

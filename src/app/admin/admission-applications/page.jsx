@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   Eye,
@@ -17,7 +17,7 @@ import {
   Activity,
   MessageSquare,
   File,
-  FileTextIcon,
+  FileText as FileTextIcon,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -26,14 +26,44 @@ import {
   ShieldCheck,
   IndianRupee,
   Tent,
+  ClipboardCheck,
+  AlertCircle,
+  FileSpreadsheet,
+  BarChart2,
+  PieChart,
+  Columns,
+  Printer,
 } from "lucide-react";
+import Link from "next/link";
 import LoadingComponent from "@/components/Loading";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import toast, { Toaster } from "react-hot-toast";
 import { useSession } from "@/context/SessionContext";
+import { Bar, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from "chart.js";
 
+import { useReactToPrint } from "react-to-print";
 
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement // This registers the arc element needed for pie charts
+);
 
 const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
   <div className="flex items-start gap-3">
@@ -61,9 +91,13 @@ const DetailCardDocuments = ({
       <div className="flex items-center gap-2">
         {viewIcon}
         <p className="font-medium text-gray-900">
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-            {value || "N/A"}
-          </a>
+          {fileUrl ? (
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+              {value || "N/A"}
+            </a>
+          ) : (
+            value || "N/A"
+          )}
         </p>
       </div>
     </div>
@@ -79,25 +113,6 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
       setApplication(foundEnquiry || null);
     }
   }, [admissionId, admission]);
-
-  if (!application) {
-    return (
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative border border-gray-100">
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
-          >
-            <XCircle className="w-5 h-5" />
-          </button>
-          <div className="text-center py-16 text-gray-500">
-            <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No admission found</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -132,6 +147,25 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
+
+  if (!application) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl relative border border-gray-100">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div className="text-center py-16 text-gray-500">
+            <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">No admission found</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -436,7 +470,134 @@ const AdmissionApplications = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
-const { user } = useSession();
+  const { user } = useSession();
+  const [importProgress, setImportProgress] = useState(0);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const fileInputRef = useRef(null);
+  const [importErrors, setImportErrors] = useState([]);
+  const [showCharts, setShowCharts] = useState(true);
+
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState([
+    "fullName",
+    "email",
+    "branch",
+    "programType",
+    "status",
+    "createdAt",
+  ]);
+  const printRef = useRef();
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportDropdownRef = useRef(null);
+
+  const getProgramDistributionData = () => {
+    const programCounts = {};
+    admission.forEach((app) => {
+      if (app.programType) {
+        programCounts[app.programType] =
+          (programCounts[app.programType] || 0) + 1;
+      }
+    });
+
+    return {
+      labels: Object.keys(programCounts),
+      datasets: [
+        {
+          label: "Applications by Program",
+          data: Object.values(programCounts),
+          backgroundColor: [
+            "rgba(59, 130, 246, 0.7)",
+            "rgba(168, 85, 247, 0.7)",
+            "rgba(16, 185, 129, 0.7)",
+            "rgba(245, 158, 11, 0.7)",
+            "rgba(239, 68, 68, 0.7)",
+          ],
+          borderColor: [
+            "rgba(59, 130, 246, 1)",
+            "rgba(168, 85, 247, 1)",
+            "rgba(16, 185, 129, 1)",
+            "rgba(245, 158, 11, 1)",
+            "rgba(239, 68, 68, 1)",
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  const getStatusDistributionData = () => {
+    const statusCounts = {
+      inProcess: admission.filter((a) => a.status === "inProcess").length,
+      approved: admission.filter((a) => a.status === "approved").length,
+      rejected: admission.filter((a) => a.status === "rejected").length,
+    };
+
+    return {
+      labels: ["In Process", "Approved", "Rejected"],
+      datasets: [
+        {
+          label: "Applications by Status",
+          data: Object.values(statusCounts),
+          backgroundColor: [
+            "rgba(245, 158, 11, 0.7)",
+            "rgba(16, 185, 129, 0.7)",
+            "rgba(239, 68, 68, 0.7)",
+          ],
+          borderColor: [
+            "rgba(245, 158, 11, 1)",
+            "rgba(16, 185, 129, 1)",
+            "rgba(239, 68, 68, 1)",
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  const getMonthlyTrendData = () => {
+    const monthlyCounts = {};
+    const currentYear = new Date().getFullYear();
+
+    admission.forEach((app) => {
+      const date = new Date(app.createdAt);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+      }
+    });
+
+    // Fill in missing months with 0
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const data = months.map((_, index) => monthlyCounts[index] || 0);
+
+    return {
+      labels: months,
+      datasets: [
+        {
+          label: "Monthly Applications",
+          data: data,
+          backgroundColor: "rgba(59, 130, 246, 0.7)",
+          borderColor: "rgba(59, 130, 246, 1)",
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
   const calculateGrowth = () => {
     if (admission.length < 2) return 0;
 
@@ -458,7 +619,7 @@ const { user } = useSession();
       );
     }).length;
 
-    if (prevMonthCount === 0) return 100; // Handle division by zero
+    if (prevMonthCount === 0) return currentMonthCount > 0 ? 100 : 0;
     return ((currentMonthCount - prevMonthCount) / prevMonthCount) * 100;
   };
 
@@ -481,8 +642,10 @@ const { user } = useSession();
   const getTopProgram = () => {
     const programCounts = {};
     admission.forEach((app) => {
-      programCounts[app.programType] =
-        (programCounts[app.programType] || 0) + 1;
+      if (app.programType) {
+        programCounts[app.programType] =
+          (programCounts[app.programType] || 0) + 1;
+      }
     });
 
     const topProgram = Object.entries(programCounts).sort(
@@ -520,6 +683,7 @@ const { user } = useSession();
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchAdmission();
   }, []);
@@ -569,60 +733,200 @@ const { user } = useSession();
     setShowDetailsModal(true);
   };
 
-  if (loading) return <LoadingComponent />;
-
-  if (error)
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="p-6 text-red-600">Error: {error}</div>
-      </div>
-    );
-
-  // Add this function to handle the file upload
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // First validate the file structure before uploading
+    try {
+      // Read the file to check structure
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Check if file has data
+      if (jsonData.length < 2) {
+        // 1 header row + at least 1 data row
+        toast.error("File must contain at least one row of data");
+        e.target.value = "";
+        return;
+      }
+
+      // Define required columns (match your backend expectations)
+      const requiredColumns = [
+        "DTEApplicationNumber",
+        "FirstName",
+        "LastName",
+        "Email",
+        "Gender",
+        "AdmissionYear",
+        "ProgramType",
+        "Year",
+        "Branch",
+        "DateOfBirth",
+        "StudentWhatsappNo",
+      ];
+
+      // Get header row (first row)
+      const headers = jsonData[0].map((h) => h.trim());
+
+      // Check if all required columns exist
+      const missingColumns = requiredColumns.filter(
+        (col) => !headers.includes(col)
+      );
+
+      if (missingColumns.length > 0) {
+        toast.error(`Missing required columns: ${missingColumns.join(", ")}`);
+        e.target.value = "";
+        return;
+      }
+
+      // Proceed with upload if validation passes
+      startFileUpload(e, file);
+    } catch (error) {
+      console.error("Error validating file:", error);
+      toast.error("Invalid file format. Please upload a valid Excel file.");
+      e.target.value = "";
+    }
+  };
+
+  const startFileUpload = (e, file) => {
+    // Reset state for new upload
+    setImportLoading(true);
+    setImportProgress(0);
+    setShowImportModal(true);
+    setImportErrors([]);
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("counsellorId", user.id);
 
-    try {
-      setImportLoading(true);
-      const response = await fetch("/api/importData", {
-        method: "POST",
-        body: formData,
+    const xhr = new XMLHttpRequest();
+
+    // Configure progress tracking
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setImportProgress(percent);
+      }
+    });
+
+    xhr.addEventListener("load", async () => {
+      try {
+        const result = JSON.parse(xhr.response);
+        await fetchAdmission();
+
+        if (xhr.status === 200) {
+          handleSuccessResponse(result);
+        } else if (xhr.status === 207) {
+          handlePartialSuccessResponse(result);
+        } else {
+          handleErrorResponse(xhr.status, result);
+        }
+      } catch (error) {
+        console.error("Error processing response:", error);
+        toast.error("Failed to process server response");
+        setImportErrors([
+          {
+            row: "Unknown",
+            errors: ["Failed to parse server response"],
+          },
+        ]);
+      } finally {
+        setImportLoading(false);
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      toast.error("Network error occurred during import");
+      setImportLoading(false);
+      setShowImportModal(false);
+    });
+
+    xhr.open("POST", "/api/importData");
+    xhr.send(formData);
+    e.target.value = "";
+
+    // Helper functions for response handling
+    function handleSuccessResponse(result) {
+      toast.success("Import completed successfully", {
+        description: `${
+          result.insertedCount || result.totalRecords || 0
+        } records imported`,
+        duration: 3000,
+      });
+    }
+
+    function handlePartialSuccessResponse(result) {
+      const importedCount = result.insertedCount || 0;
+      const duplicateCount = result.duplicates?.length || 0;
+      const errorCount = result.validationErrors?.length || 0;
+
+      let description = "";
+      if (importedCount > 0)
+        description += `${importedCount} records imported. `;
+      if (duplicateCount > 0)
+        description += `${duplicateCount} duplicates found. `;
+      if (errorCount > 0) description += `${errorCount} validation errors.`;
+
+      toast.warning("Partial import completed", {
+        description,
+        duration: 5000,
       });
 
-      console.log(response);
-      
-
-      if (!response.ok) {
-        throw new Error("Failed to import file");
+      const allErrors = [];
+      if (result.duplicates) {
+        allErrors.push(
+          ...result.duplicates.map((dup) => ({
+            row: dup.rowNumber || "Unknown",
+            errors: [`Duplicate: ${dup.dteApplicationNumber}`],
+            data: dup,
+          }))
+        );
       }
+      if (result.validationErrors) {
+        allErrors.push(
+          ...result.validationErrors.map((err) => ({
+            row: err.row,
+            errors: Array.isArray(err.errors) ? err.errors : [err.errors],
+            data: err.data || null,
+          }))
+        );
+      }
+      setImportErrors(allErrors);
+    }
 
-      const result = await response.json();
-      // Refresh the admission data
-      const res = await fetch("/api/admission");
-      const admissionData = await res.json();
-      setAdmission(admissionData.data);
-
-      console.log(admissionData.data);
-      // Show success message
-      toast.success("File Imported Successfully!");
-      fetchAdmission();
-    } catch (error) {
-      toast.error(
-        "Something went wrong!Please check format of your Excel File"
-      );
-      console.error("Error importing file:", error);
-    } finally {
-      setImportLoading(false);
-      // Reset the file input
-      e.target.value = "";
+    function handleErrorResponse(status, errorResponse) {
+      if (errorResponse?.error === "All records are duplicates") {
+        toast.error("Import failed - All records are duplicates", {
+          description: `${errorResponse.duplicates.length} duplicate records found`,
+          duration: 5000,
+        });
+        setImportErrors(
+          errorResponse.duplicates.map((dup) => ({
+            row: dup.rowNumber || "Unknown",
+            errors: ["Duplicate record"],
+            data: dup,
+          }))
+        );
+      } else if (errorResponse?.error === "Validation errors found") {
+        toast.error("Import failed - Validation errors", {
+          description: `${errorResponse.invalidRecords} records had errors`,
+          duration: 5000,
+        });
+        setImportErrors(errorResponse.details || []);
+      } else {
+        const errorMessage =
+          errorResponse?.error ||
+          errorResponse?.message ||
+          `Server responded with status ${status}`;
+        toast.error(`Import failed: ${errorMessage}`, {
+          duration: 5000,
+        });
+      }
     }
   };
-
   const handleExportToExcelSample = () => {
     const exportData = [
       {
@@ -640,9 +944,7 @@ const { user } = useSession();
         Round: "",
         SeatType: "",
         Shift: "",
-        Round: "",
         Quota: "",
-        SeatType: "",
         AdmissionCategory: "",
         Gender: "",
         MotherName: "",
@@ -652,9 +954,7 @@ const { user } = useSession();
         Nationality: "",
         FamilyIncome: "",
         AdmissionYear: "",
-        PRN: "",
         DateOfBirth: "",
-        Status: "",
         AddressLine: "",
         City: "",
         State: "",
@@ -664,11 +964,8 @@ const { user } = useSession();
         AdmissionType: "",
         SubCastAsPerLC: "",
         ReligionAsPerLC: "",
-        FamilyIncome: "",
         MothersMobileNo: "",
         IsForeignNational: "",
-        CreatedAt: "",
-        UpdatedAt: "",
       },
     ];
 
@@ -688,83 +985,253 @@ const { user } = useSession();
     saveAs(data, "admissionSample.xlsx");
   };
 
-  const handleExportToExcel = () => {
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportDropdownRef.current &&
+        !exportDropdownRef.current.contains(event.target)
+      ) {
+        setShowExportDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const allColumns = [
+    { id: "dteApplicationNumber", label: "DTE App No" },
+    { id: "fullName", label: "Full Name" },
+    { id: "email", label: "Email" },
+    { id: "studentWhatsappNumber", label: "WhatsApp" },
+    { id: "branch", label: "Branch" },
+    { id: "programType", label: "Program" },
+    { id: "year", label: "Year" },
+    { id: "round", label: "Round" },
+    { id: "seatType", label: "Seat Type" },
+    { id: "admissionCategoryDTE", label: "Admission Category" },
+    { id: "gender", label: "Gender" },
+    { id: "motherName", label: "Mother Name" },
+    { id: "fatherGuardianWhatsappNumber", label: "Parent WhatsApp" },
+    { id: "casteAsPerLC", label: "Caste" },
+    { id: "domicile", label: "Domicile" },
+    { id: "nationality", label: "Nationality" },
+    { id: "familyIncome", label: "Family Income" },
+    { id: "admissionYear", label: "Admission Year" },
+    { id: "dateOfBirth", label: "DOB" },
+    { id: "status", label: "Status" },
+    { id: "createdAt", label: "Created At" },
+    { id: "updatedAt", label: "Updated At" },
+  ];
+
+  // Handle print functionality
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    pageStyle: `
+      @page { size: auto; margin: 5mm; }
+      @media print {
+        body { -webkit-print-color-adjust: exact; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #f3f4f6 !important; }
+        tr { page-break-inside: avoid; }
+      }
+    `,
+  });
+
+  // Toggle column selection
+  const toggleColumn = (columnId) => {
+    setSelectedColumns((prev) =>
+      prev.includes(columnId)
+        ? prev.filter((id) => id !== columnId)
+        : [...prev, columnId]
+    );
+  };
+
+  // Reorder columns
+  const moveColumn = (fromIndex, toIndex) => {
+    const newColumns = [...selectedColumns];
+    const [removed] = newColumns.splice(fromIndex, 1);
+    newColumns.splice(toIndex, 0, removed);
+    setSelectedColumns(newColumns);
+  };
+
+  // const handleExportToExcel = () => {
+  //   if (!admission || admission.length === 0) {
+  //     alert("No data to export");
+  //     return;
+  //   }
+
+  //   const exportData = admission.map((app) => ({
+  //     DTEApplicationNumber: app.dteApplicationNumber || "",
+  //     FirstName: app.firstName || "",
+  //     MiddleName: app.middleName || "",
+  //     LastName: app.lastName || "",
+  //     FullName: app.fullName || "",
+  //     NameAsPerAadhar: app.nameAsPerAadhar || "",
+  //     Email: app.email || "",
+  //     StudentWhatsappNo: app.studentWhatsappNumber || "",
+  //     Branch: app.branch || "",
+  //     ProgramType: app.programType || "",
+  //     Year: app.year || "",
+  //     Round: app.round || "",
+  //     SeatType: app.seatType || "",
+  //     Shift: app.shift || "",
+  //     Quota: app.quota || "",
+  //     AdmissionCategory: app.admissionCategoryDTE || "",
+  //     Gender: app.gender || "",
+  //     MotherName: app.motherName || "",
+  //     FatherGuardianWhatsAppMobileNo: app.fatherGuardianWhatsappNumber || "",
+  //     CastAsPerLC: app.casteAsPerLC || "",
+  //     Domicile: app.domicile || "",
+  //     Nationality: app.nationality || "",
+  //     FamilyIncome: app.familyIncome || "",
+  //     AdmissionYear: app.admissionYear || "",
+  //     DateOfBirth: app.dateOfBirth || "",
+  //     Status: app.status || "",
+  //     AddressLine: app.address?.[0]?.addressLine || "",
+  //     City: app.address?.[0]?.city || "",
+  //     State: app.address?.[0]?.state || "",
+  //     Pincode: app.address?.[0]?.pincode || "",
+  //     Country: app.address?.[0]?.country || "",
+  //     FeesCategory: app.feesCategory || "",
+  //     AdmissionType: app.admissionType || "",
+  //     SubCastAsPerLC: app.subCasteAsPerLC || "",
+  //     ReligionAsPerLC: app.religionAsPerLC || "",
+  //     MothersMobileNo: app.motherMobileNumber || "",
+  //     IsForeignNational: app.isForeignNational || "",
+  //     CreatedAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : "",
+  //     UpdatedAt: app.updatedAt ? new Date(app.updatedAt).toLocaleString() : "",
+  //   }));
+
+  //   const worksheet = XLSX.utils.json_to_sheet(exportData);
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+
+  //   const excelBuffer = XLSX.write(workbook, {
+  //     bookType: "xlsx",
+  //     type: "array",
+  //   });
+
+  //   const data = new Blob([excelBuffer], {
+  //     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //   });
+
+  //   saveAs(data, "admissions.xlsx");
+  // };
+
+  // Enhanced export function with column selection
+
+  const handleExportToExcel = (type = "all") => {
+    setShowExportDropdown(false); // Close dropdown after selection
+
     if (!admission || admission.length === 0) {
-      alert("No data to export");
+      toast.error("No data to export");
       return;
     }
 
-    const exportData = admission.map((app) => ({
-      DTEApplicationNumber: app.dteApplicationNumber || "",
-      FirstName: app.firstName || "",
-      MiddleName: app.middleName || "",
-      LastName: app.lastName || "",
-      FullName: app.fullName || "",
-      NameAsPerAadhar: app.nameAsPerAadhar || "",
-      Email: app.email || "",
-      StudentWhatsappNo: app.studentWhatsappNumber || "",
-      Branch: app.branch || "",
-      ProgramType: app.programType || "",
-      Year: app.year || "",
-      Round: app.round || "",
-      SeatType: app.seatType || "",
-      Shift: app.shift || "",
-      Round: app.round || "",
-      Quota: app.quota || "",
-      SeatType: app.seatType || "",
-      AdmissionCategory: app.admissionCategoryDTE || "",
-      Gender: app.gender || "",
-      MotherName: app.motherName || "",
-      FatherGuardianWhatsAppMobileNo: app.fatherGuardianWhatsappNumber || "",
-      CastAsPerLC: app.casteAsPerLC || "",
-      Domicile: app.domicile || "",
-      Nationality: app.nationality || "",
-      FamilyIncome: app.familyIncome || "",
-      AdmissionYear: app.admissionYear || "",
-      PRN: app.prn || "",
-      DateOfBirth: app.dateOfBirth || "",
-      Status: app.status || "",
-      AddressLine: app.address?.[0]?.addressLine || "",
-      City: app.address?.[0]?.city || "",
-      State: app.address?.[0]?.state || "",
-      Pincode: app.address?.[0]?.pincode || "",
-      Country: app.address?.[0]?.country || "",
-      FeesCategory: app.feesCategory || "",
-      AdmissionType: app.admissionType || "",
-      SubCastAsPerLC: app.subCasteAsPerLC || "",
-      ReligionAsPerLC: app.religionAsPerLC || "",
-      FamilyIncome: app.familyIncome || "",
-      MothersMobileNo: app.motherMobileNumber || "",
-      IsForeignNational: app.isForeignNational || "",
-      CreatedAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : "",
-      UpdatedAt: app.updatedAt ? new Date(app.updatedAt).toLocaleString() : "",
-    }));
+    try {
+      // Filter data based on export type
+      let dataToExport;
+      switch (type) {
+        case "current":
+          dataToExport = currentItems;
+          break;
+        case "filtered":
+          dataToExport = filteredApplications;
+          break;
+        default:
+          dataToExport = admission;
+      }
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+      // Map data with selected columns
+      const exportData = dataToExport.map((app) => {
+        const row = {};
+        selectedColumns.forEach((col) => {
+          switch (col) {
+            case "createdAt":
+            case "updatedAt":
+              row[col] = app[col] ? new Date(app[col]).toLocaleString() : "N/A";
+              break;
+            case "familyIncome":
+              row[col] = app[col] ? `₹${app[col]}` : "N/A";
+              break;
+            case "address":
+              row[col] = app.address?.[0]?.addressLine || "N/A";
+              break;
+            default:
+              row[col] = app[col] || "N/A";
+          }
+        });
+        return row;
+      });
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+      // Create worksheet with headers
+      const headers = selectedColumns.map((colId) => {
+        const col = allColumns.find((c) => c.id === colId);
+        return col ? col.label : colId;
+      });
 
-    const data = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+      const worksheet = XLSX.utils.json_to_sheet(exportData, { headers });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
 
-    saveAs(data, "admissions.xlsx");
+      // Generate file name with timestamp
+      const timestamp = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, "-");
+      const fileName = `admissions_${type}_${timestamp}`;
+
+      // Export to Excel
+      XLSX.writeFile(workbook, `${fileName}.xlsx`);
+      toast.success(`Exported ${dataToExport.length} records`);
+
+      // Also generate CSV
+      const csv = XLSX.utils.sheet_to_csv(worksheet);
+      const csvBlob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      saveAs(csvBlob, `${fileName}.csv`);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Export failed. Please try again.");
+    }
   };
+
+  if (loading) return <LoadingComponent />;
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-6 text-red-600">Error: {error}</div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <Toaster />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex gap-4 pb-4 justify-end">
+        <div className="flex gap-4 pb-4 justify-end ">
+          <button
+            onClick={() => setShowCharts(!showCharts)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+          >
+            {showCharts ? (
+              <>
+                <BarChart2 className="w-4 h-4" />
+                <span>Hide Charts</span>
+              </>
+            ) : (
+              <>
+                <BarChart2 className="w-4 h-4" />
+                <span>Show Charts</span>
+              </>
+            )}
+          </button>
           <button
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
-            onClick={() => document.getElementById("fileInput").click()}
+            onClick={() => setShowImportModal(true)}
             disabled={importLoading}
           >
             {importLoading ? (
@@ -776,20 +1243,477 @@ const { user } = useSession();
               </>
             )}
           </button>
+
           <input
+            ref={fileInputRef}
             id="fileInput"
             type="file"
             accept=".xlsx, .xls, .csv"
             className="hidden"
             onChange={handleFileUpload}
           />
-          <button
-            onClick={handleExportToExcel}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+
+          {/* Import Modal */}
+          {showImportModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <h2 className="text-xl font-bold mb-4">
+                  {importLoading ? "Uploading File..." : "Import Data"}
+                </h2>
+
+                <div className="overflow-y-auto flex-1">
+                  {" "}
+                  {/* Added scrolling container */}
+                  {!importLoading && (
+                    <div className="space-y-8">
+                      {/* Supported Formats Section */}
+                      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                          <FileSpreadsheet className="w-5 h-5 mr-2 text-blue-500" />
+                          Supported Formats
+                        </h3>
+                        <ul className="space-y-2">
+                          <li className="flex items-center text-gray-600">
+                            <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
+                            <span>.xlsx (Excel)</span>
+                          </li>
+                          <li className="flex items-center text-gray-600">
+                            <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
+                            <span>.xls (Excel 97-2003)</span>
+                          </li>
+                          <li className="flex items-center text-gray-600">
+                            <ChevronRight className="w-4 h-4 text-blue-400 mr-2" />
+                            <span>.csv (Comma Separated Values)</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Required Format Section */}
+                      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div className="flex justify-between items-start mb-6">
+                          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                            <ClipboardCheck className="w-5 h-5 mr-2 text-blue-500" />
+                            Required Format
+                          </h3>
+                          <button
+                            onClick={handleExportToExcelSample}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Sample Template
+                          </button>
+                        </div>
+
+                        <p className="text-gray-600 mb-6">
+                          Ensure your file has headers in the first row and data
+                          follows the specified format below.
+                        </p>
+
+                        <div className="relative rounded-xl border border-gray-200 overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  {[
+                                    "DTEApplicationNumber",
+                                    "FirstName",
+                                    "MiddleName",
+                                    "LastName",
+                                    "FullName",
+                                    "NameAsPerAadhar",
+                                    "Email",
+                                    "StudentWhatsappNo",
+                                    "Branch",
+                                    "ProgramType",
+                                    "Year",
+                                    "Round",
+                                    "SeatType",
+                                    "Shift",
+                                    "Quota",
+                                    "AdmissionCategory",
+                                    "Gender",
+                                    "MotherName",
+                                    "FatherGuardianWhatsAppMobileNo",
+                                    "CastAsPerLC",
+                                    "Domicile",
+                                    "Nationality",
+                                    "FamilyIncome",
+                                    "AdmissionYear",
+                                    "DateOfBirth",
+                                    "AddressLine",
+                                    "City",
+                                    "State",
+                                    "Pincode",
+                                    "Country",
+                                    "FeesCategory",
+                                    "AdmissionType",
+                                    "SubCastAsPerLC",
+                                    "ReligionAsPerLC",
+                                    "MothersMobileNo",
+                                    "IsForeignNational",
+                                  ].map((header) => (
+                                    <th
+                                      key={header}
+                                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                                    >
+                                      {header}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    DTE1234567**
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    FirstName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    MiddleName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    LastName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    FullName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    NameAsPerAadhar
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    email@gmail.com
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    9988776655
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Information Technology
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Diploma/UG/PG
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    1st/2nd/3rd/4th
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    CAP1/CAP2/CAP3/Institute Level
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    GOV/MIN/Management/TFWS
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Morning/Afternoon/Evening
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Quota
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    CAP/Institute Level/Against CAP
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Gender
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    MotherName
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    9988776655
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    CastAsPerLC
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Maharashtra
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Indian
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    98765
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    2024-25
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    yyyy/mm/dd
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    AddressLine
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    City
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    State
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    123456
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Country
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    FeesCategory
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    AdmissionType
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    SubCastAsPerLC
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    ReligionAsPerLC
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    9988776655
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Yes/No
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
+                          <div className="flex">
+                            <AlertCircle className="h-5 w-5 text-blue-400 mr-3" />
+                            <div>
+                              <h4 className="text-sm font-medium text-blue-800">
+                                Important Notes
+                              </h4>
+                              <p className="text-sm text-blue-700 mt-1">
+                                • DTEApplicationNumber, AdmissionYear, Email,
+                                FullName , Gender , ProgramType , Year , Branch
+                                , DateOfBirth , StudentWhatsappNumber, these
+                                fields are required
+                                <br />
+                                • Date format should be yyyy/mm/dd
+                                <br />
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Error Display Section */}
+                      {importErrors.length > 0 && (
+                        <div className="bg-red-50 rounded-lg p-4 border border-red-100">
+                          <h3 className="text-lg font-semibold text-red-800 mb-2">
+                            Import Errors ({importErrors.length})
+                          </h3>
+                          <div className="max-h-60 overflow-y-auto">
+                            {importErrors.map((error, index) => (
+                              <div
+                                key={index}
+                                className="mb-3 p-3 bg-white rounded border border-red-100"
+                              >
+                                <p className="font-medium text-red-700">
+                                  Row {error.row || "Unknown"}:
+                                </p>
+                                <ul className="list-disc list-inside text-red-600 mt-1">
+                                  {error.errors?.map((err, i) => (
+                                    <li key={i}>{err}</li>
+                                  ))}
+                                </ul>
+                                {error.data && (
+                                  <div className="mt-2 text-xs text-gray-600">
+                                    <p>Data:</p>
+                                    <pre className="bg-gray-50 p-2 rounded overflow-x-auto">
+                                      {JSON.stringify(error.data, null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {importLoading ? (
+                  <div className="space-y-4 mt-4">
+                    {" "}
+                    {/* Moved outside scrollable area */}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                        style={{ width: `${importProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-center text-gray-600">
+                      Uploading... {importProgress}%
+                    </p>
+                    <button
+                      onClick={() => {
+                        setImportLoading(false);
+                        setShowImportModal(false);
+                      }}
+                      className="w-full px-4 py-2 text-red-600 rounded-lg border border-red-300 hover:bg-red-50"
+                    >
+                      Cancel Upload
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex justify-end gap-3 mt-4">
+                    {" "}
+                    {/* Moved outside scrollable area */}
+                    <button
+                      onClick={() => setShowImportModal(false)}
+                      className="px-4 py-2 text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current.click()}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Select File</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Column selector dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowColumnSelector(!showColumnSelector)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white border border-gray-300 rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md hover:bg-gray-50"
+            >
+              <Columns className="w-4 h-4" />
+              <span>Columns</span>
+            </button>
+
+            {showColumnSelector && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-50 border border-gray-200 p-4">
+                <h3 className="font-medium text-gray-800 mb-3">
+                  Select Columns
+                </h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {allColumns.map((column) => (
+                    <label
+                      key={column.id}
+                      className="flex items-center space-x-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedColumns.includes(column.id)}
+                        onChange={() => toggleColumn(column.id)}
+                        className="rounded text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>{column.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    Column Order
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedColumns.map((colId, index) => {
+                      const col = allColumns.find((c) => c.id === colId);
+                      return (
+                        <div
+                          key={colId}
+                          className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          draggable
+                          onDragStart={(e) =>
+                            e.dataTransfer.setData("text/plain", index)
+                          }
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const fromIndex = parseInt(
+                              e.dataTransfer.getData("text/plain")
+                            );
+                            moveColumn(fromIndex, index);
+                          }}
+                        >
+                          <span className="text-sm">{col?.label || colId}</span>
+                          <div className="flex space-x-1">
+                            {index > 0 && (
+                              <button
+                                onClick={() => moveColumn(index, index - 1)}
+                                className="p-1 text-gray-500 hover:text-gray-700"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                            )}
+                            {index < selectedColumns.length - 1 && (
+                              <button
+                                onClick={() => moveColumn(index, index + 1)}
+                                className="p-1 text-gray-500 hover:text-gray-700"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowColumnSelector(false)}
+                  className="mt-4 w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Export Button */}
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </button>
+
+            {showExportDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200 py-1">
+                <button
+                  onClick={() => handleExportToExcel("all")}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Export All Data
+                </button>
+                <button
+                  onClick={() => handleExportToExcel("filtered")}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Export Filtered Data
+                </button>
+                <button
+                  onClick={() => handleExportToExcel("current")}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Export Current Page
+                </button>
+                {/* <div className="border-t border-gray-200"></div> */}
+                {/* <button
+                  onClick={handlePrint}
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </button> */}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleExportToExcelSample}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
@@ -798,6 +1722,7 @@ const { user } = useSession();
             <span>Sample Format</span>
           </button>
         </div>
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
@@ -924,6 +1849,85 @@ const { user } = useSession();
           </div>
         </div>
 
+        {/* Visualization Section */}
+        {showCharts && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Program Distribution */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Program Distribution
+                </h3>
+                <PieChart className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="h-64">
+                <Pie
+                  data={getProgramDistributionData()}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: "right",
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </div>
+            {/* Status Distribution */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Status Distribution
+                </h3>
+                <PieChart className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="h-64">
+                <Pie
+                  data={getStatusDistributionData()}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: "right",
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Monthly Trend */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Monthly Admission Trend ({new Date().getFullYear()})
+                </h3>
+                <BarChart2 className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="h-64">
+                <Bar
+                  data={getMonthlyTrendData()}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          precision: 0,
+                        },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filters and Search */}
         <div className="bg-white rounded-xl shadow-sm mb-6">
           <div className="p-6">
@@ -957,7 +1961,7 @@ const { user } = useSession();
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 ">
-                <tr>
+                {/* <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Applicant
                   </th>
@@ -1051,6 +2055,174 @@ const { user } = useSession();
                     </tr>
                   );
                 })}
+              </tbody> */}
+                <tr>
+                  {selectedColumns.map((columnId) => {
+                    const column = allColumns.find((c) => c.id === columnId);
+                    return (
+                      <th
+                        key={columnId}
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        {column ? column.label : columnId}
+                      </th>
+                    );
+                  })}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              {/* <tbody className="bg-white divide-y divide-gray-200">
+                {currentItems?.map((application) => (
+                  <tr key={application._id} className="hover:bg-gray-50">
+                    {selectedColumns.map((columnId) => (
+                      <td
+                        key={columnId}
+                        className="px-6 py-4 whitespace-nowrap"
+                      >
+                        {(() => {
+                          switch (columnId) {
+                            case "fullName":
+                              return (
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-10 w-10">
+                                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                      <User className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {application.fullName || "N/A"}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {application.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            case "status":
+                              const status = application.status || "inProcess";
+                              const config =
+                                statusConfig[status] || statusConfig.inProcess;
+                              return (
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
+                                >
+                                  <config.icon className="w-3 h-3 mr-1" />
+                                  {config.label}
+                                </span>
+                              );
+                            case "createdAt":
+                            case "updatedAt":
+                              return (
+                                <div className="text-sm text-gray-500">
+                                  {application[columnId]
+                                    ? new Date(
+                                        application[columnId]
+                                      ).toLocaleDateString()
+                                    : "N/A"}
+                                </div>
+                              );
+                            default:
+                              return (
+                                <div className="text-sm text-gray-900">
+                                  {application[columnId] || "N/A"}
+                                </div>
+                              );
+                          }
+                        })()}
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          className="text-blue-600 hover:text-blue-900"
+                          onClick={() => openDetailsModal(application._id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody> */}
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentItems?.map((application) => (
+                  <tr key={application._id} className="hover:bg-gray-50">
+                    {selectedColumns.map((columnId) => (
+                      <td
+                        key={columnId}
+                        className="px-6 py-4 whitespace-nowrap"
+                      >
+                        {(() => {
+                          switch (columnId) {
+                            case "fullName":
+                              return (
+                                <Link
+                                  href={`/admin/admission-applications/${application._id}`}
+                                  className="flex items-center hover:text-blue-600 transition-colors"
+                                >
+                                  <div className="flex-shrink-0 h-10 w-10">
+                                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                      <User className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                                      {application.fullName || "N/A"}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      ID: {application._id?.slice(-6) || "N/A"}
+                                    </div>
+                                  </div>
+                                </Link>
+                              );
+                            case "status":
+                              const status = application.status || "inProcess";
+                              const config =
+                                statusConfig[status] || statusConfig.inProcess;
+                              return (
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
+                                >
+                                  <config.icon className="w-3 h-3 mr-1" />
+                                  {config.label}
+                                </span>
+                              );
+                            case "createdAt":
+                            case "updatedAt":
+                              return (
+                                <div className="text-sm text-gray-500">
+                                  {application[columnId]
+                                    ? new Date(
+                                        application[columnId]
+                                      ).toLocaleDateString()
+                                    : "N/A"}
+                                </div>
+                              );
+                            default:
+                              return (
+                                <div className="text-sm text-gray-900">
+                                  {application[columnId] || "N/A"}
+                                </div>
+                              );
+                          }
+                        })()}
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          className="text-blue-600 hover:text-blue-900"
+                          onClick={() => openDetailsModal(application._id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
