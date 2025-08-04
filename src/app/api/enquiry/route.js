@@ -22,7 +22,7 @@ export async function GET() {
     });
   }
 }
-
+//sample
 // export async function POST(req) {
 //   try {
 //     await connectToDatabase();
