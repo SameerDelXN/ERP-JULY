@@ -530,11 +530,9 @@ async function handleApprovedStatus(admissionData, admissionId) {
       nationality,
       isForeignNational: isForeignNational || false,
       status: "active",
-      academicDetails: {
         programType,
         currentYear: year,
         branch,
-      },
       prn: prn || generatePRN(branch, currentYearShort),
       motherName,
       fatherMobileNumber: fatherGuardianWhatsappNumber,
