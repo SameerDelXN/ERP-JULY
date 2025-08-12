@@ -44,30 +44,6 @@ const Login = () => {
     return re.test(password);
   };
 
-  // Validate form whenever email or password changes
-  // useEffect(() => {
-  //   if (email && !validateEmail(email)) {
-  //     setEmailError("Please enter a valid email address");
-  //   } else {
-  //     setEmailError("");
-  //   }
-
-  //   if (password && !validatePassword(password)) {
-  //     setPasswordError(
-  //       "Password must be at least 8 characters"
-  //     );
-  //   } else {
-  //     setPasswordError("");
-  //   }
-
-  //   setFormValid(
-  //     validateEmail(email) &&
-  //     validatePassword(password) &&
-  //     email.trim() !== "" &&
-  //     password.trim() !== ""
-  //   );
-  // }, [email, password]);
-
   useEffect(() => {
     if (selectedRole === "student") {
       // For students, just check non-empty
@@ -81,7 +57,7 @@ const Login = () => {
       } else {
         setEmailError("");
       }
-
+      
       if (password && !validatePassword(password)) {
         setPasswordError("Password must be at least 8 characters");
       } else {
@@ -96,6 +72,7 @@ const Login = () => {
       );
     }
   }, [email, password, selectedRole]);
+  
 
   // const handelForgotPassword = () =>{
   //   router.push('/forgot-password')
@@ -108,8 +85,6 @@ const Login = () => {
 
     try {
       const result = await login(email, password, selectedRole);
-      console.log(result);
-
       if (!result.success) {
         setError(result.message || "Login failed.");
         setLoading(false);

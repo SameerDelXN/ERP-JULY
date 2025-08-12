@@ -1,4 +1,5 @@
 import { Building2, X } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 const DashboardSidebar = ({
@@ -27,14 +28,14 @@ const DashboardSidebar = ({
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-100 bg-white">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <span className="text-lg font-bold text-gray-900">ERP Portal</span>
-                <div className="text-xs text-gray-500">Management System</div>
-              </div>
+            <div className="w-full h-18 mt-9">
+              <Image
+                width={1920}
+                height={1080}
+                src="\TechEdu.svg"
+                alt="TechEdu Logo"
+                className="w-full h-full object-cover "
+              />
             </div>
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
@@ -59,11 +60,13 @@ const DashboardSidebar = ({
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
-                  activeTab === item.id
-                    ? "bg-blue-100 text-blue-600"
-                    : "bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700"
-                }`}>
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
+                    activeTab === item.id
+                      ? "bg-blue-100 text-blue-600"
+                      : "bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700"
+                  }`}
+                >
                   <item.icon className="w-4 h-4" />
                 </div>
                 <span className="font-medium text-sm">{item.label}</span>

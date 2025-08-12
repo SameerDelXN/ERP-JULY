@@ -33,6 +33,10 @@ import {
   PieChart,
   Columns,
   Printer,
+  Users,
+  UserCheck,
+  TrendingUp,
+  UploadIcon,
 } from "lucide-react";
 import Link from "next/link";
 import LoadingComponent from "@/components/Loading";
@@ -1123,6 +1127,93 @@ const AdmissionApplications = () => {
 
   // Enhanced export function with column selection
 
+  //   const handleExportToExcel = (type = "all") => {
+  //     setShowExportDropdown(false); // Close dropdown after selection
+
+  //     if (!admission || admission.length === 0) {
+  //       toast.error("No data to export");
+  //       return;
+  //     }
+
+  //     try {
+  //       // Filter data based on export type
+  //       let dataToExport;
+  //       switch (type) {
+  //         case "current":
+  //           dataToExport = currentItems;
+  //           break;
+  //         case "filtered":
+  //           dataToExport = filteredApplications;
+  //           break;
+  //         default:
+  //           dataToExport = admission;
+  //       }
+
+  //      // For "all" type, we want all possible columns in the original order
+  //     const columnsToExport = type === "all"
+  //       ? allColumns.map(col => col.id)
+  //       : selectedColumns;
+
+  //       console.log(columnsToExport);
+
+  //       // Map data with selected columns
+  //       const exportData = dataToExport.map((app) => {
+  //         const row = {};
+  //         selectedColumns.forEach((col) => {
+  //           switch (col) {
+  //             case "createdAt":
+  //             case "updatedAt":
+  //               row[col] = app[col] ? new Date(app[col]).toLocaleString() : "N/A";
+  //               break;
+  //             case "familyIncome":
+  //               row[col] = app[col] ? `₹${app[col]}` : "N/A";
+  //               break;
+  //             case "address":
+  //               row[col] = app.address?.[0]?.addressLine || "N/A";
+  //               break;
+  //             default:
+  //               row[col] = app[col] || "N/A";
+  //           }
+  //         });
+  //         return row;
+  //       });
+
+  //  // Create headers based on allColumns for "all", selectedColumns for others
+  //     const headers = columnsToExport.map((colId) => {
+  //       const col = allColumns.find((c) => c.id === colId);
+  //       return col ? col.label : colId;
+  //     });
+
+  //     console.log(headers);
+
+  //       const worksheet = XLSX.utils.json_to_sheet(exportData, { headers });
+  //       console.log(worksheet);
+  //       console.log(exportData);
+
+  //       const workbook = XLSX.utils.book_new();
+  //       XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+
+  //       // Generate file name with timestamp
+  //       const timestamp = new Date()
+  //         .toISOString()
+  //         .slice(0, 19)
+  //         .replace(/[:T]/g, "-");
+  //       const fileName = `admissions_${type}_${timestamp}`;
+
+  //       // Export to Excel
+  //       XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  //       toast.success(`Exported ${dataToExport.length} records`);
+
+  //       // Also generate CSV
+  //       const csv = XLSX.utils.sheet_to_csv(worksheet);
+  //       const csvBlob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  //       saveAs(csvBlob, `${fileName}.csv`);
+  //     } catch (error) {
+  //       console.error("Export failed:", error);
+  //       toast.error("Export failed. Please try again.");
+  //     }
+  //   };
+
   const handleExportToExcel = (type = "all") => {
     setShowExportDropdown(false); // Close dropdown after selection
 
@@ -1145,35 +1236,51 @@ const AdmissionApplications = () => {
           dataToExport = admission;
       }
 
-      // Map data with selected columns
+      // For "all" type, we want all possible columns in the original order
+      const columnsToExport =
+        type === "all" ? allColumns.map((col) => col.id) : selectedColumns;
+
+      // Create headers mapping (from field name to display name)
+      const headersMap = {};
+      allColumns.forEach((col) => {
+        headersMap[col.id] = col.label;
+      });
+
+      // Map data with the correct columns and display names
       const exportData = dataToExport.map((app) => {
         const row = {};
-        selectedColumns.forEach((col) => {
+        columnsToExport.forEach((col) => {
           switch (col) {
             case "createdAt":
             case "updatedAt":
-              row[col] = app[col] ? new Date(app[col]).toLocaleString() : "N/A";
+              row[headersMap[col] || col] = app[col]
+                ? new Date(app[col]).toLocaleString()
+                : "N/A";
               break;
             case "familyIncome":
-              row[col] = app[col] ? `₹${app[col]}` : "N/A";
+              row[headersMap[col] || col] = app[col] ? `₹${app[col]}` : "N/A";
               break;
             case "address":
-              row[col] = app.address?.[0]?.addressLine || "N/A";
+              row[headersMap[col] || col] =
+                app.address?.[0]?.addressLine || "N/A";
               break;
             default:
-              row[col] = app[col] || "N/A";
+              row[headersMap[col] || col] = app[col] || "N/A";
           }
         });
         return row;
       });
 
-      // Create worksheet with headers
-      const headers = selectedColumns.map((colId) => {
-        const col = allColumns.find((c) => c.id === colId);
-        return col ? col.label : colId;
+      // Get the display headers in the correct order
+      const displayHeaders = columnsToExport.map(
+        (colId) => headersMap[colId] || colId
+      );
+
+      // Create worksheet with the display headers
+      const worksheet = XLSX.utils.json_to_sheet(exportData, {
+        header: displayHeaders,
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(exportData, { headers });
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
 
@@ -1678,7 +1785,7 @@ const AdmissionApplications = () => {
               onClick={() => setShowExportDropdown(!showExportDropdown)}
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
             >
-              <Download className="w-4 h-4" />
+              <UploadIcon className="w-4 h-4" />
               <span>Export</span>
             </button>
 
@@ -1713,14 +1820,6 @@ const AdmissionApplications = () => {
               </div>
             )}
           </div>
-
-          <button
-            onClick={handleExportToExcelSample}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br to-blue-600 from-purple-600 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Sample Format</span>
-          </button>
         </div>
 
         {/* Stats Cards */}
@@ -1852,78 +1951,255 @@ const AdmissionApplications = () => {
 
         {/* Visualization Section */}
         {showCharts && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Program Distribution */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Program Distribution
-                </h3>
-                <PieChart className="w-5 h-5 text-blue-500" />
+          <div className="space-y-6 mb-8">
+            {/* Summary Cards Row */}
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-sm border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Total Students
+                  </h3>
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="mt-2 text-3xl font-bold text-blue-900">
+                  {students.length}
+                </p>
+                <p className="mt-1 text-xs text-blue-600">
+                  Across all programs
+                </p>
               </div>
-              <div className="h-64">
-                <Pie
-                  data={getProgramDistributionData()}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: "right",
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
-            {/* Status Distribution */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Status Distribution
-                </h3>
-                <PieChart className="w-5 h-5 text-blue-500" />
-              </div>
-              <div className="h-64">
-                <Pie
-                  data={getStatusDistributionData()}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: "right",
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
 
-            {/* Monthly Trend */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Monthly Admission Trend ({new Date().getFullYear()})
-                </h3>
-                <BarChart2 className="w-5 h-5 text-blue-500" />
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-sm border border-green-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-green-800">
+                    Active Students
+                  </h3>
+                  <UserCheck className="w-5 h-5 text-green-600" />
+                </div>
+                <p className="mt-2 text-3xl font-bold text-green-900">
+                  {students.filter((s) => s.status === "Active").length}
+                </p>
+                <p className="mt-1 text-xs text-green-600">
+                  Currently enrolled
+                </p>
               </div>
-              <div className="h-64">
-                <Bar
-                  data={getMonthlyTrendData()}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        ticks: {
-                          precision: 0,
+
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl shadow-sm border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-purple-800">
+                    New This Month
+                  </h3>
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                </div>
+                <p className="mt-2 text-3xl font-bold text-purple-900">
+                  {
+                    students.filter(
+                      (s) =>
+                        new Date(s.admissionDate).getMonth() ===
+                          new Date().getMonth() &&
+                        new Date(s.admissionDate).getFullYear() ===
+                          new Date().getFullYear()
+                    ).length
+                  }
+                </p>
+                <p className="mt-1 text-xs text-purple-600">
+                  {new Date().toLocaleString("default", { month: "long" })}
+                </p>
+              </div>
+            </div> */}
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Program Distribution */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Program Distribution
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Breakdown by academic programs
+                    </p>
+                  </div>
+                  <div className="bg-blue-50 p-2 rounded-lg">
+                    <PieChart className="w-5 h-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="h-64 relative">
+                  <Pie
+                    data={getProgramDistributionData()}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "right",
+                          labels: {
+                            usePointStyle: true,
+                            padding: 16,
+                          },
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function (context) {
+                              const label = context.label || "";
+                              const value = context.raw || 0;
+                              const total = context.dataset.data.reduce(
+                                (a, b) => a + b,
+                                0
+                              );
+                              const percentage = Math.round(
+                                (value / total) * 100
+                              );
+                              return `${label}: ${value} (${percentage}%)`;
+                            },
+                          },
                         },
                       },
-                    },
-                  }}
-                />
+                      elements: {
+                        arc: {
+                          borderWidth: 0,
+                          borderRadius: 4,
+                        },
+                      },
+                    }}
+                  />
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                    <span className="text-2xl font-bold text-gray-700">
+                      {/* {students.length} */}
+                    </span>
+                    <p className="text-xs text-gray-500">Total</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Distribution */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Status Distribution
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Current student status overview
+                    </p>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded-lg">
+                    <Activity className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                <div className="h-64">
+                  <Pie
+                    data={getStatusDistributionData()}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "right",
+                          labels: {
+                            usePointStyle: true,
+                            padding: 16,
+                          },
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function (context) {
+                              const label = context.label || "";
+                              const value = context.raw || 0;
+                              const total = context.dataset.data.reduce(
+                                (a, b) => a + b,
+                                0
+                              );
+                              const percentage = Math.round(
+                                (value / total) * 100
+                              );
+                              return `${label}: ${value} (${percentage}%)`;
+                            },
+                          },
+                        },
+                      },
+                      elements: {
+                        arc: {
+                          borderWidth: 0,
+                          borderRadius: 4,
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Monthly Trend */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Monthly Admission Trend ({new Date().getFullYear()})
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      New student admissions by month
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      <span className="w-3 h-3 rounded-full bg-blue-500 mr-1"></span>
+                      <span className="text-xs text-gray-600">Admissions</span>
+                    </div>
+                    <div className="bg-indigo-50 p-2 rounded-lg">
+                      <BarChart2 className="w-5 h-5 text-indigo-600" />
+                    </div>
+                  </div>
+                </div>
+                <div className="h-72">
+                  <Bar
+                    data={getMonthlyTrendData()}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            drawBorder: false,
+                          },
+                          ticks: {
+                            precision: 0,
+                          },
+                        },
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                        },
+                      },
+                      plugins: {
+                        tooltip: {
+                          callbacks: {
+                            title: function (context) {
+                              return context[0].label;
+                            },
+                            label: function (context) {
+                              return `Admissions: ${context.raw}`;
+                            },
+                          },
+                        },
+                      },
+                      elements: {
+                        bar: {
+                          borderRadius: 4,
+                          backgroundColor: "rgba(99, 102, 241, 0.7)",
+                          hoverBackgroundColor: "rgba(99, 102, 241, 1)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <p className="text-xs text-gray-500">
+                    Last updated: {new Date().toLocaleDateString()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

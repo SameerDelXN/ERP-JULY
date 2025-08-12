@@ -56,6 +56,7 @@ export const teacherSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   {id: "my-classes", label: "My Classes", icon: BookOpen},
   {id: "attendance", label: "Mark Attendance", icon: UserCheck},
+  {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
   {id: "student-list", label: "Student List", icon: Users},
   {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
   {id: "marks", label: "Enter Marks", icon: FileCheck},
@@ -111,4 +112,12 @@ export const roles = [
   //   permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
   //   color: 'bg-yellow-500'
   // },
+  {
+    id: 6,
+    name: 'HR',
+    // description: 'Parent access to monitor child progress',
+    // userCount: 892,
+    // permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
+    color: 'bg-yellow-500'
+  },
 ];

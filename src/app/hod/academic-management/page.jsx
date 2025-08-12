@@ -631,6 +631,18 @@ const AcademicManagement = () => {
                 placeholder="e.g., Programming Fundamentals"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Subject Code</label>
+              <input
+                ref={inputRef}
+                type="text"
+                name="code"
+                value={formData.code}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g. SUS234"
+              />
+            </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Assign Teacher</label>
