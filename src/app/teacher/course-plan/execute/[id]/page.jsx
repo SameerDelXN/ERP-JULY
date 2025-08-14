@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -15,7 +15,7 @@ import {
 import { useSession } from "@/context/SessionContext";
 
 const AttendancePage = ({ params }) => {
-  const { id } = params;
+  const { id } = React.use(params);
   const router = useRouter();
   const { user } = useSession();
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,6 @@ const AttendancePage = ({ params }) => {
     topicName: "",
   });
 
-  // Fetch course data when component mounts or ID changes
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
@@ -47,8 +46,6 @@ const AttendancePage = ({ params }) => {
           division: AllCourseData.division,
           department: AllCourseData.department,
         }));
-
-        console.log("Data ", AllCourseData);
 
         await fetchStudents(AllCourseData.year);
       } catch (error) {
@@ -75,8 +72,6 @@ const AttendancePage = ({ params }) => {
       const studentsData = data.students.filter(
         (student) => student.year === year
       );
-
-      console.log(studentsData);
 
       setStudents(studentsData);
       setAttendance((prev) => ({

@@ -47,10 +47,14 @@ export async function GET() {
 export async function POST(req) {
   try {
     await connectToDatabase();
+    console.log("db connected");
+    
     const body = await req.json();
 
+    console.log(body);
+    
     // Validate required fields
-    if (!body.academicRef || !body.teacherId || !body.subject) {
+    if (!body.teacherId || !body.subject) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -58,7 +62,6 @@ export async function POST(req) {
     }
 
     const newCoursePlan = new CoursePlan({
-      academicRef: body.academicRef,
       teacherId: body.teacherId,
       subject: body.subject,
       branch: body.branch,
@@ -66,9 +69,15 @@ export async function POST(req) {
       division: body.division || "-",
       batch: body.batch || "-",
       loadType: body.loadType,
-      coursePlan: body.coursePlan,
+      title: body.title,
+      description: body.description,
+      modules: body.modules,
     });
 
+    console.log(newCoursePlan.modules.lessons);
+    
+    console.log("new Course Plan",newCoursePlan);
+  
     await newCoursePlan.save();
 
     return NextResponse.json(

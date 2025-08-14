@@ -10,6 +10,7 @@ import {
   Search,
   Filter,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -236,7 +237,7 @@ export default function CoursePlanList() {
             {/* Action Buttons */}
             <div className="flex space-x-2">
               <Link
-                href="/course-plans/export"
+                href="course-plans/export"
                 className="flex items-center gap-1 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-indigo-600"
                 title="Export All"
               >
@@ -244,7 +245,7 @@ export default function CoursePlanList() {
                 <span className="hidden md:inline">Export</span>
               </Link>
               <Link
-                href="/course-plans/new"
+                href="course-plans/new"
                 className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 title="Add New"
               >
@@ -390,19 +391,11 @@ export default function CoursePlanList() {
                       </td>
                       <td className="p-3">
                         <Link
-                          href={`course-plan/${course.id}/edit`}
+                          href={`course-plan/${course.id}/course-view`}
                           className="text-indigo-600 hover:text-indigo-800 inline-block"
-                          title={
-                            course.coursePlan
-                              ? "Edit Course Plan"
-                              : "Create Course Plan"
-                          }
+                          title="View Course Plan"
                         >
-                          {course.coursePlan ? (
-                            <FileText size={18} />
-                          ) : (
-                            <Plus size={18} />
-                          )}
+                         <Eye size={18}/>
                         </Link>
                       </td>
                       <td className="p-3">
