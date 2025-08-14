@@ -322,6 +322,9 @@ const StudentsPage = () => {
           return acc;
         }
       }, []);
+
+      console.log(uniqueStudents);
+      
       
       setStudents(uniqueStudents || []);
     } catch (err) {

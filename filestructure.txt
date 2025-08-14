@@ -16,6 +16,7 @@
     |-- login5.jpg
     |-- login6.jpg
     |-- next.svg
+    |-- TechEdu.svg
     |-- vercel.svg
     |-- Welcome.svg
     |-- window.svg
@@ -50,13 +51,23 @@
                 |-- [id]
                     |-- route.js
             |-- auth
+                |-- forgot-password
+                    |-- route.js
                 |-- logout
+                    |-- route.js
+                |-- reset-password
                     |-- route.js
                 |-- session
                     |-- route.js
             |-- check-verification
                 |-- route.js
             |-- courses
+                |-- route.js
+                |-- subject
+                    |-- route.js
+                    |-- [id]
+                        |-- route.js
+            |-- dashboard
                 |-- route.js
             |-- department
                 |-- route.js
@@ -103,6 +114,8 @@
                     |-- dashboard
                         |-- attendance
                             |-- route.js
+                        |-- result
+                            |-- route.js
                         |-- route.js
                     |-- route.js
                     |-- students
@@ -146,6 +159,7 @@
             |-- admissionSchema.js
             |-- attendanceSchema.js
             |-- course.js
+            |-- coursePlanSchema.js
             |-- EmailVerification.js
             |-- enquirySchema.js
             |-- sampleSchema.js
@@ -154,6 +168,8 @@
             |-- userSchema.js
         |-- page.js
         |-- register
+            |-- page.jsx
+        |-- reset-password
             |-- page.jsx
         |-- staff
             |-- application-management
@@ -182,6 +198,20 @@
         |-- teacher
             |-- attendance
                 |-- page.jsx
+            |-- course-plan
+                |-- execute
+                    |-- [id]
+                        |-- page.jsx
+                |-- page.jsx
+                |-- schedules
+                    |-- [id]
+                        |-- page.jsx
+                |-- syllabus
+                    |-- [id]
+                        |-- page.jsx
+                |-- [id]
+                    |-- edit
+                        |-- page.jsx
             |-- layout.jsx
             |-- marks
                 |-- page.jsx

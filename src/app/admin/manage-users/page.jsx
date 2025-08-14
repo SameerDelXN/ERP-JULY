@@ -19,9 +19,6 @@ import {
 import { roles } from "@/data/data";
 import LoadingComponent from "@/components/Loading";
 
-
-
-
 const UserManagementPage = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -204,8 +201,7 @@ const UserManagementPage = () => {
       </div>
     );
 
-  // ... (keep all your existing modal components: AddUserModal and EditUserModal)
-     const AddUserModal = () => {
+  const AddUserModal = () => {
     const [formData, setFormData] = useState({
       fullName: "",
       email: "",
@@ -218,12 +214,42 @@ const UserManagementPage = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+    const [courseOptions, setCourseOptions] = useState([]);
+    const [loadingCourses, setLoadingCourses] = useState(true);
+
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch("/api/courses");
+        if (!response.ok) throw new Error("Failed to fetch departments");
+        const departments = await response.json();
+
+        setCourseOptions(departments.courses);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchDepartments();
+    }, []);
 
     const handleChange = (e) => {
       const { name, value } = e.target;
 
       // Clear any existing error for this field
       setErrors((prev) => ({ ...prev, [name]: "" }));
+
+      // Special handling for password (no spaces allowed)
+      if (name === "password" || name === "confirmPassword") {
+        const noSpaceValue = value.replace(/\s/g, "");
+        setFormData((prev) => ({
+          ...prev,
+          [name]: noSpaceValue,
+        }));
+        return;
+      }
 
       // Special validation for fullName (only letters and spaces)
       if (name === "fullName" && value && !/^[a-zA-Z\s]*$/.test(value)) {
@@ -293,6 +319,8 @@ const UserManagementPage = () => {
         newErrors.password = "Password is required";
       } else if (formData.password.length < 8) {
         newErrors.password = "Password must be at least 8 characters";
+      } else if (/\s/.test(formData.password)) {
+        newErrors.password = "Password cannot contain spaces";
       }
 
       // Teacher/HOD-specific validation
@@ -440,7 +468,7 @@ const UserManagementPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Department *
                     </label>
-                    <input
+                    {/* <input
                       type="text"
                       name="department"
                       value={formData.department}
@@ -455,6 +483,29 @@ const UserManagementPage = () => {
                       <p className="mt-1 text-sm text-red-600">
                         {errors.department}
                       </p>
+                    )} */}
+                    {!loadingCourses ? (
+                      <select
+                        id="department"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleChange}
+                        required
+                        className={
+                          "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
+                        }
+                      >
+                        <option value="">{"Select a Department"}</option>
+                        {courseOptions.map((course, index) => (
+                          <option key={`course-${index}`} value={course.name}>
+                            {course.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
+                        Loading courses...
+                      </div>
                     )}
                   </div>
                 )}
@@ -605,6 +656,28 @@ const UserManagementPage = () => {
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [courseOptions, setCourseOptions] = useState([]);
+    const [loadingCourses, setLoadingCourses] = useState(true);
+
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch("/api/courses");
+        if (!response.ok) throw new Error("Failed to fetch departments");
+        const departments = await response.json();
+
+        console.log(departments);
+
+        setCourseOptions(departments.courses);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchDepartments();
+    }, []);
 
     const handleChange = (e) => {
       const { name, value } = e.target;
@@ -820,21 +893,28 @@ const UserManagementPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Department *
                     </label>
-                    <input
-                      type="text"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleChange}
-                      maxLength={20}
-                      className={`w-full px-3 py-2 border ${
-                        errors.department ? "border-red-500" : "border-gray-200"
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                      placeholder="Enter department"
-                    />
-                    {errors.department && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.department}
-                      </p>
+                    {!loadingCourses ? (
+                      <select
+                        id="department"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleChange}
+                        required
+                        className={
+                          "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
+                        }
+                      >
+                        <option value="">{"Select a Department"}</option>
+                        {courseOptions.map((course, index) => (
+                          <option key={`course-${index}`} value={course.name}>
+                            {course.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
+                        Loading courses...
+                      </div>
                     )}
                   </div>
                 )}
@@ -935,9 +1015,14 @@ const UserManagementPage = () => {
   const PerformanceModal = () => {
     if (!userPerformance) return null;
 
-    const conversionRate = userPerformance.totalEnquiries > 0 
-      ? ((userPerformance.convertedEnquiries / userPerformance.totalEnquiries) * 100).toFixed(2)
-      : 0;
+    const conversionRate =
+      userPerformance.totalEnquiries > 0
+        ? (
+            (userPerformance.convertedEnquiries /
+              userPerformance.totalEnquiries) *
+            100
+          ).toFixed(2)
+        : 0;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1138,6 +1223,8 @@ const UserManagementPage = () => {
                                   ? "bg-blue-100 text-blue-800"
                                   : role === "hod"
                                   ? "bg-purple-100 text-purple-800"
+                                  : role === "hr"
+                                  ? "bg-yellow-100 text-yellow-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >

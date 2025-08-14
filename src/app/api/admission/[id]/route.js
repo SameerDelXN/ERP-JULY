@@ -158,7 +158,7 @@ import { NextResponse } from 'next/server';
 export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
-    const { id: admissionId } = params;
+    const admissionId = params.id; // Get id directly from params
     const updateData = await req.json();
 
     if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
@@ -184,8 +184,6 @@ export async function PUT(req, { params }) {
         { new: true, runValidators: true }
       )
       .lean();
-
-    console.log("Update Admission : ", updatedAdmission);
 
     if (!updatedAdmission) {
       return Response.json(
@@ -234,19 +232,17 @@ export async function PUT(req, { params }) {
           email: email.toLowerCase(),
           mobileNumber: studentWhatsappNumber,
           dateOfBirth,
-          address: address?.[0] || {}, // Take first address if array exists
+          address: address?.[0] || {},
           nationality,
           isForeignNational: isForeignNational || false,
           status: 'active',
-          academicDetails: {
-            programType,
-            currentYear: year,
-            branch
-          }
+          programType,
+          currentYear: year,
+          branch
         });
       }
 
-      // Update academic record
+      // Update academic record - fixed version
       const academicUpdate = await academicSchema.findOneAndUpdate(
         { 
           department: branch,
@@ -260,7 +256,7 @@ export async function PUT(req, { params }) {
         { 
           arrayFilters: [
             { 'yearElem.year': year },
-            { 'div.students': { $size: { $lt: 50 } } } // Only divisions with < 50 students
+            { 'div.students.50': { $exists: false } } // Alternative way to check size
           ],
           new: true
         }
@@ -283,7 +279,6 @@ export async function PUT(req, { params }) {
   } catch (error) {
     console.error('Admission PUT error:', error);
     
-    // Handle specific error cases
     if (error.name === 'ValidationError') {
       return Response.json(
         { 
@@ -316,7 +311,6 @@ export async function PUT(req, { params }) {
     );
   }
 }
-
 export async function DELETE(req, { params }) {
   try {
     await connectToDatabase();
