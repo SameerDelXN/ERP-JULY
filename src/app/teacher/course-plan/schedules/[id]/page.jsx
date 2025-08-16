@@ -75,7 +75,7 @@ export default function CoursePlanPage() {
   // Fetch course plan data
   useEffect(() => {
  
- 
+ //samplle
     fetchData();
   }, [id]);
   console.log("courseeeee = ",coursePlan)
