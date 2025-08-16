@@ -29,60 +29,60 @@ export default function CoursePlanPage() {
   const [editingModuleId, setEditingModuleId] = useState(null);
   const [editingLessonId, setEditingLessonId] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
-
-  // Fetch course plan data
-useEffect(() => {
   const fetchData = async () => {
-    try {
-      setIsLoading(true);
-
-      // Fetch subject details
-      const subjectRes = await fetch(`/api/courses/subject/${id}`);
-      if (!subjectRes.ok) throw new Error("Failed to fetch subject");
-      const subjectData = await subjectRes.json();
-      const singleSubjectData = subjectData.subject;
-      setSubject(singleSubjectData);
-
-      // Fetch existing course plan
-      const planRes = await fetch(`/api/courses/course-plan/${id}`);
-      if (!planRes.ok) throw new Error("Failed to fetch course plan");
-
-      const planData = await planRes.json();
-      console.log("Fetched plan data:", planData); // Debugging
-
-      if (planData && planData.length > 0) {
-        // Ensure modules is an array, even if undefined or null
-        const coursePlanData = {
-          ...planData[0],
-          modules: planData[0].modules || [], // Fallback to empty array
-        };
-        setCoursePlan(coursePlanData);
-      } else {
-        // Initialize new plan with subject details
-        setCoursePlan({
-          title: singleSubjectData.name,
-          description: `${singleSubjectData.name} for ${singleSubjectData.year} year ${singleSubjectData.department} department`,
-          branch: singleSubjectData.department,
-          year: singleSubjectData.year,
-          division: singleSubjectData.division || "-",
-          loadType: "Theory",
-          modules: [], // Initialize empty modules
-        });
+      try {
+        setIsLoading(true);
+        console.log(id);
+       
+        // First fetch subject details
+        const subjectRes = await fetch(`/api/courses/subject/${id}`);
+        if (!subjectRes.ok) throw new Error("Failed to fetch subject");
+        const subjectData = await subjectRes.json();
+        const singleSubjectData = subjectData.subject
+        setSubject(singleSubjectData);
+ 
+       
+        // Then try to fetch existing course plan
+        const planRes = await fetch(`/api/courses/course-plan/${id}`);
+ 
+        console.log(planRes);
+       
+        if (planRes.ok) {
+          const planData = await planRes.json();
+          console.log(planData);
+          console.log("planning = ",planData)
+          if (planData) {
+            setCoursePlan(planData);
+          } else {
+            // Initialize new plan with subject details
+            setCoursePlan(prev => ({
+              ...prev,
+              title: singleSubjectData.name,
+              description: `${singleSubjectData.name} for ${singleSubjectData.year} year ${singleSubjectData.department} department`,
+              branch: singleSubjectData.department,
+              year: singleSubjectData.year,
+              division: singleSubjectData.division || "-",
+              modules:[]
+            }));
+          }
+        }
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  fetchData();
-}, [id]);
-
+    };
+  // Fetch course plan data
+  useEffect(() => {
+ 
+ 
+    fetchData();
+  }, [id]);
+  console.log("courseeeee = ",coursePlan)
   const handleSave = async () => {
     try {
       setIsLoading(true);
+      console.log("courseplandID",coursePlan)
       const method = coursePlan._id ? "PUT" : "POST";
       const url = coursePlan._id ? `/api/courses/${coursePlan._id}` : "/api/courses";
 
@@ -115,8 +115,10 @@ useEffect(() => {
       const data = await response.json();
       console.log(data);
       setCoursePlan(data);
+      
       toast.success("Course plan saved successfully!");
-      router.refresh();
+
+      window.location.reload()
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -306,7 +308,7 @@ useEffect(() => {
             </div>
           ) : (
             <div className="space-y-4">
-              {coursePlan.modules.map(module => (
+              {coursePlan?.modules?.map(module => (
                 <div key={module._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   {/* Module Header */}
                   <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">

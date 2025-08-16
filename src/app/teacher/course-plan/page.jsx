@@ -321,9 +321,9 @@ export default function CoursePlanList() {
                       </div>
                     </th>
                     <th className="p-3 font-semibold">Division</th>
-                    <th className="p-3 font-semibold">Batch</th>
+                    {/* <th className="p-3 font-semibold">Batch</th> */}
                     <th className="p-3 font-semibold">Load Type</th>
-                    <th className="p-3 font-semibold">Syllabus</th>
+                    {/* <th className="p-3 font-semibold">Syllabus</th> */}
                     <th className="p-3 font-semibold">Course Plan</th>
                     <th className="p-3 font-semibold">Schedule</th>
                     <th className="p-3 font-semibold">Execute</th>
@@ -363,7 +363,7 @@ export default function CoursePlanList() {
                           {course.division || "-"}
                       </span>
                       </td>
-                      <td className="p-3">{course.batch || "-"}</td>
+                      {/* <td className="p-3">{course.batch || "-"}</td> */}
                       <td className="p-3">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
@@ -380,7 +380,7 @@ export default function CoursePlanList() {
                           {/* {course.loadType} */}
                         </span>
                       </td>
-                      <td className="p-3">
+                      {/* <td className="p-3">
                         <Link
                           href={`course-plan/syllabus/${course.id}`}
                           className="text-indigo-600 hover:text-indigo-800 inline-block"
@@ -388,7 +388,7 @@ export default function CoursePlanList() {
                         >
                           <BookOpen size={18} />
                         </Link>
-                      </td>
+                      </td> */}
                       <td className="p-3">
                         <Link
                           href={`course-plan/${course.id}/course-view`}

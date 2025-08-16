@@ -14,22 +14,14 @@ export async function POST(req, { params }) {
       date,
       department,
       year,
-      semester,
       division,
+      semester,
       subject,
-      topicName,
-      students,
+      topic,
+      attendanceRecords,
+      courseId,
+      teacherId,
     } = body;
-
-    const teacher = params.id;
-
-    if (!date || !Array.isArray(students)) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
-
-
-    console.log(department); 
-    
 
     const attendance = new attendanceSchema({
       date,
@@ -38,14 +30,13 @@ export async function POST(req, { params }) {
       semester,
       division,
       subject,
-      teacher,
-      topicName,
-      students,
+      topic,
+      attendanceRecords,
+      courseId,
+      teacherId,
     });
 
     const saved = await attendance.save();
-    console.log("Data saved",saved);
-    
     return NextResponse.json({ message: "Attendance recorded", attendance: saved }, { status: 201 });
 
   } catch (error) {

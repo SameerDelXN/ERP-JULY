@@ -71,6 +71,8 @@
                     |-- route.js
                     |-- [id]
                         |-- route.js
+                |-- [id]
+                    |-- route.js
             |-- dashboard
                 |-- route.js
             |-- department
@@ -207,6 +209,8 @@
             |-- course-plan
                 |-- execute
                     |-- [id]
+                        |-- attendance
+                            |-- page.jsx
                         |-- page.jsx
                 |-- page.jsx
                 |-- schedules
