@@ -153,7 +153,7 @@
 // }
 
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Loader2, CheckCircle } from 'lucide-react';
 export const dynamic = 'force-dynamic';
@@ -270,6 +270,7 @@ export default function ResetPasswordConfirmPage() {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">Set New Password</h1>
@@ -341,6 +342,6 @@ export default function ResetPasswordConfirmPage() {
           </button>
         </form>
       </div>
-    </div>
+    </div></Suspense>
   );
 }
