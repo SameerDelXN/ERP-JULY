@@ -27,8 +27,6 @@ export async function GET() {
       });
     });
     
-    console.log(subjects);
-    
     return NextResponse.json({ subjects });
     
   } catch (error) {

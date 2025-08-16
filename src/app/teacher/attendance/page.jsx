@@ -1006,7 +1006,7 @@ const AttendancePage = () => {
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center">
               <User className="h-4 w-4 mr-1" />
-              <span>Faculty: {user?.name || "JOTIRAM LAXMAN REDE"}</span>
+              <span>Faculty: {user?.name || ""}</span>
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />

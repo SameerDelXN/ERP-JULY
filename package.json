@@ -19,6 +19,7 @@
     "framer-motion": "^12.23.9",
     "fs": "^0.0.1-security",
     "googleapis": "^150.0.1",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.522.0",
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.0",

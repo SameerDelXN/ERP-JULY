@@ -1,11 +1,41 @@
+// import mongoose from "mongoose";
+
+// const coursePlanSchema = new mongoose.Schema({
+//   teacherId: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "Teacher",
+//     required: true,
+//   },
+//   subject: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "subject",
+//     required: true,
+//   },
+//   branch: { type: String, required: true },
+//   year: { type: String, required: true },
+//   division: { type: String, default: "-" },
+//   batch: { type: String, default: "-" },
+//   loadType: {
+//     type: String,
+//     enum: ["Theory", "Lab", "Audit"],
+//     default: "Theory",
+//   },
+//   syllabus: { type: String },
+//   coursePlan: [{ subject: { type: String }, description: { type: String } }],
+//   schedule: { type: String },
+//   execute: { type: Boolean, default: false },
+//   report: { type: String },
+//   summaryReport: { type: String },
+//   createdAt: { type: Date, default: Date.now },
+//   updatedAt: { type: Date, default: Date.now },
+// });
+
+// module.exports =
+//   mongoose.models.CoursePlan || mongoose.model("CoursePlan", coursePlanSchema);
+
 import mongoose from "mongoose";
 
 const coursePlanSchema = new mongoose.Schema({
-    academicRef: {  // Reference to the academic document
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "academic",
-    required: true,
-  },
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Teacher",
@@ -13,23 +43,40 @@ const coursePlanSchema = new mongoose.Schema({
   },
   subject: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "subject",
+    ref: "Subject",
     required: true,
   },
   branch: { type: String, required: true },
   year: { type: String, required: true },
   division: { type: String, default: "-" },
   batch: { type: String, default: "-" },
-  loadType: { type: String, required: true },
-  syllabus: { type: String },
-  coursePlan: { type: String },
-  schedule: { type: String },
+  loadType: {
+    type: String,
+    enum: ["Theory", "Lab", "Audit"],
+    default: "Theory",
+  },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  modules: [{
+     _id:{type:String},
+    title: { type: String, required: true },
+    duration: { type: Number, default: 0 },
+    lessons: [{
+      _id:{type:String},
+      title: { type: String, required: true },
+      description: { type: String, default: "" },
+      duration: { type: Number, default: 0 },
+      completed: { type: Boolean, default: false }
+    }],
+  }],
   execute: { type: Boolean, default: false },
-  report: { type: String }, 
+  report: { type: String },
   summaryReport: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
+
+delete mongoose.models.CoursePlan
 module.exports =
   mongoose.models.CoursePlan || mongoose.model("CoursePlan", coursePlanSchema);

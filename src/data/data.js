@@ -55,11 +55,11 @@ export const studentSidebarItems = [
 export const teacherSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   {id: "my-classes", label: "My Classes", icon: BookOpen},
-  {id: "attendance", label: "Mark Attendance", icon: UserCheck},
+  // {id: "attendance", label: "Mark Attendance", icon: UserCheck},
   {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
   {id: "student-list", label: "Student List", icon: Users},
   {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
-  {id: "marks", label: "Enter Marks", icon: FileCheck},
+  {id: "marks", label: "Exam Marks", icon: FileCheck},
 ]
 
 

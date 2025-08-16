@@ -62,6 +62,10 @@
             |-- check-verification
                 |-- route.js
             |-- courses
+                |-- course-plan
+                    |-- route.js
+                    |-- [id]
+                        |-- route.js
                 |-- route.js
                 |-- subject
                     |-- route.js
@@ -151,6 +155,7 @@
             |-- cors.js
             |-- googleDriveUpload.js
             |-- init-middleware.js
+            |-- logger.js
             |-- mongodb.js
         |-- login
             |-- page.jsx
@@ -162,6 +167,7 @@
             |-- coursePlanSchema.js
             |-- EmailVerification.js
             |-- enquirySchema.js
+            |-- logSchema.js
             |-- sampleSchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
@@ -210,7 +216,7 @@
                     |-- [id]
                         |-- page.jsx
                 |-- [id]
-                    |-- edit
+                    |-- course-view
                         |-- page.jsx
             |-- layout.jsx
             |-- marks
@@ -218,6 +224,11 @@
             |-- my-classes
                 |-- page.jsx
             |-- page.jsx
+            |-- report
+                |-- [id]
+                    |-- page.jsx
+                    |-- summary
+                        |-- page.jsx
             |-- student-list
                 |-- page.jsx
             |-- upload-notes
