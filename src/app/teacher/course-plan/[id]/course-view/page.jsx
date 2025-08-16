@@ -68,7 +68,7 @@ export default function ViewCoursePlan({ params }) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md text-center">
           <Library className="h-12 w-12 mx-auto text-indigo-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Course Plan</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Course Plan. Course Plan Not Found</h2>
           <p className="text-gray-600 mb-6">{error}</p>
         </div>
       </div>

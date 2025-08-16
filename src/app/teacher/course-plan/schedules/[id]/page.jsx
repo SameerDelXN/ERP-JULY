@@ -29,9 +29,6 @@ export default function CoursePlanPage() {
   const [editingModuleId, setEditingModuleId] = useState(null);
   const [editingLessonId, setEditingLessonId] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
-
-  // Fetch course plan data
-  useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
@@ -53,9 +50,9 @@ export default function CoursePlanPage() {
         if (planRes.ok) {
           const planData = await planRes.json();
           console.log(planData);
-          
-          if (planData.length > 0) {
-            setCoursePlan(planData[0]);
+          console.log("planning = ",planData)
+          if (planData) {
+            setCoursePlan(planData);
           } else {
             // Initialize new plan with subject details
             setCoursePlan(prev => ({
@@ -75,13 +72,17 @@ export default function CoursePlanPage() {
         setIsLoading(false);
       }
     };
+  // Fetch course plan data
+  useEffect(() => {
+  
 
     fetchData();
   }, [id]);
-
+  console.log("courseeeee = ",coursePlan)
   const handleSave = async () => {
     try {
       setIsLoading(true);
+      console.log("courseplandID",coursePlan)
       const method = coursePlan._id ? "PUT" : "POST";
       const url = coursePlan._id ? `/api/courses/${coursePlan._id}` : "/api/courses";
 
@@ -114,8 +115,10 @@ export default function CoursePlanPage() {
       const data = await response.json();
       console.log(data);
       setCoursePlan(data);
+      
       toast.success("Course plan saved successfully!");
-      router.refresh();
+
+      window.location.reload()
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -298,14 +301,14 @@ export default function CoursePlanPage() {
             </button>
           </div>
 
-          {coursePlan.modules.length === 0 ? (
+          {coursePlan.modules?.length === 0 ? (
             <div className="bg-gray-50 rounded-xl p-8 text-center text-gray-500">
               <FileText size={48} className="mx-auto mb-4 text-gray-300" />
               <p>No modules added yet. Start by adding your first module.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {coursePlan.modules.map(module => (
+              {coursePlan?.modules?.map(module => (
                 <div key={module._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   {/* Module Header */}
                   <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
@@ -387,7 +390,7 @@ export default function CoursePlanPage() {
                           </button>
                         </div>
 
-                        {module.lessons.length === 0 ? (
+                        {module.lessons?.length === 0 ? (
                           <div className="text-center text-gray-500 py-4 bg-gray-50 rounded-lg">
                             No lessons in this module yet.
                           </div>

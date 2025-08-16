@@ -1,35 +1,57 @@
-// attendance.model.js (MongoDB example)
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema({
+    courseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+        required: true
+    },
     date: {
         type: Date,
         required: true,
     },
-    department: String, // e.g., "Computer Science"
-    year: String,        // e.g., "1st"
-    semester: String,    // e.g., "Sem 1"
-    division: String,    // e.g., "A"
-    subject: String,     // optional if period-wise
-    teacher: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "teacher",
+    topic: {
+        type: String,
     },
-    topicName: { type: String },
-    students: [
+    attendanceRecords: [
         {
             studentId: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Student",
+                required: true
             },
             isPresent: {
                 type: Boolean,
                 required: true,
+                default: false
             },
         },
     ],
+    teacherId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Teacher",
+        required: true
+    },
+    subject: {
+        type: String,
+        required: true
+    },
+    year: {
+        type: String,
+        required: true
+    },
+    division: {
+        type: String,
+        required: true
+    },
+    department: {
+        type: String,
+        required: true
+    },
 }, { timestamps: true });
 
+
+delete mongoose.models.attendance;
 const attendance = mongoose.models.attendance || mongoose.model('attendance', attendanceSchema);
 
 export default attendance;

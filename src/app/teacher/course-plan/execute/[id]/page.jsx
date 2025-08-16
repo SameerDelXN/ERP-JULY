@@ -1,386 +1,515 @@
-"use client";
+// "use client"
+// import { useState, useEffect } from 'react';
+// import { useParams } from 'next/navigation';
+// import { 
+//   BookOpen, Calendar, Clock, Code2, GraduationCap, 
+//   Layers, ListChecks, School, Settings, Shield, 
+//   Users, Loader2, AlertCircle, ChevronDown, ChevronRight 
+// } from 'lucide-react';
+// import { useSession } from '@/context/SessionContext';
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Calendar,
-  User,
-  Check,
-  X,
-  Clock,
-  BookOpen,
-  ArrowLeft,
-  Loader2,
-} from "lucide-react";
-import { useSession } from "@/context/SessionContext";
+// export default function CoursePlanPage() {
+//   const { id } = useParams();
+//   const [coursePlan, setCoursePlan] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [expandedModules, setExpandedModules] = useState({});
+//   const { user } = useSession();
 
-const AttendancePage = ({ params }) => {
-  const { id } = React.use(params);
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         const res = await fetch(`/api/courses/course-plan/${id}`);
+//         if (!res.ok) throw new Error(res.statusText);
+//         const data = await res.json();
+//         setCoursePlan(data);
+        
+//         // Initialize expanded state for modules with lessons
+//         if (data?.modules?.length) {
+//           const initialExpanded = {};
+//           data.modules.forEach((module, index) => {
+//             initialExpanded[module._id || index] = false;
+//           });
+//           setExpandedModules(initialExpanded);
+//         }
+//       } catch (err) {
+//         setError(err.message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchData();
+//   }, [id]);
+
+//   const toggleModule = (moduleId) => {
+//     setExpandedModules(prev => ({
+//       ...prev,
+//       [moduleId]: !prev[moduleId]
+//     }));
+//   };
+
+//   const formatDuration = (minutes) => {
+//     if (!minutes) return 'N/A';
+//     const hours = Math.floor(minutes / 60);
+//     const mins = minutes % 60;
+//     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex flex-col items-center justify-center min-h-[60vh]">
+//         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+//         <p className="mt-4 text-indigo-800">Loading course details...</p>
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="flex flex-col items-center justify-center min-h-[60vh]">
+//         <AlertCircle className="w-12 h-12 text-red-600" />
+//         <p className="mt-4 text-red-800">Failed to load course</p>
+//         <p className="mt-2 text-gray-600 max-w-md text-center">{error}</p>
+//       </div>
+//     );
+//   }
+
+//   if (!coursePlan) {
+//     return (
+//       <div className="flex flex-col items-center justify-center min-h-[60vh]">
+//         <AlertCircle className="w-12 h-12 text-yellow-600" />
+//         <p className="mt-4 text-yellow-800">Course plan not found</p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="max-w-6xl mx-auto p-4 md:p-6">
+//       <div className="flex items-center gap-3 mb-8">
+//         <BookOpen className="w-8 h-8 text-indigo-600" />
+//         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+//           {coursePlan.title} Course Plan
+//         </h1>
+//       </div>
+      
+//       <div className="space-y-6">
+//         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+//           <table className="min-w-full divide-y divide-gray-200">
+//             <thead className="bg-gray-50">
+//               <tr>
+//                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
+//                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+//               </tr>
+//             </thead>
+//             <tbody className="bg-white divide-y divide-gray-200">
+//               <TableRow 
+//                 icon={<ListChecks className="w-5 h-5 text-indigo-600" />}
+//                 label="Description"
+//                 value={coursePlan.description}
+//               />
+//               <TableRow 
+//                 icon={<Code2 className="w-5 h-5 text-indigo-600" />}
+//                 label="Branch"
+//                 value={coursePlan.branch}
+//               />
+//               <TableRow 
+//                 icon={<GraduationCap className="w-5 h-5 text-indigo-600" />}
+//                 label="Year"
+//                 value={coursePlan.year}
+//               />
+//               <TableRow 
+//                 icon={<School className="w-5 h-5 text-indigo-600" />}
+//                 label="Division"
+//                 value={coursePlan.division}
+//               />
+//               <TableRow 
+//                 icon={<Layers className="w-5 h-5 text-indigo-600" />}
+//                 label="Load Type"
+//                 value={coursePlan.loadType}
+//               />
+//               <TableRow 
+//                 icon={<BookOpen className="w-5 h-5 text-indigo-600" />}
+//                 label="Subject"
+//                 value={coursePlan.title}
+//               />
+//               <TableRow 
+//                 icon={<Settings className="w-5 h-5 text-indigo-600" />}
+//                 label="Teacher"
+//                 value={user?.fullName || 'N/A'}
+//               />
+//             </tbody>
+//           </table>
+//         </div>
+        
+//         {coursePlan.modules?.length > 0 && (
+//           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+//             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+//               <h2 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+//                 <Layers className="w-5 h-5 text-indigo-600" />
+//                 Course Modules
+//               </h2>
+//             </div>
+//             <div className="overflow-x-auto">
+//               <table className="min-w-full divide-y divide-gray-200">
+//                 <thead className="bg-gray-50">
+//                   <tr>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lessons</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-gray-200">
+//                   {coursePlan.modules.map((module, index) => (
+//                     <>
+//                       <tr 
+//                         key={module._id || index} 
+//                         className="hover:bg-gray-50 cursor-pointer"
+//                         onClick={() => toggleModule(module._id || index)}
+//                       >
+//                         <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 flex items-center gap-2">
+//                           {expandedModules[module._id || index] ? (
+//                             <ChevronDown className="w-4 h-4" />
+//                           ) : (
+//                             <ChevronRight className="w-4 h-4" />
+//                           )}
+//                           {module.title}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+//                           {formatDuration(module.duration)}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+//                           {module.lessons?.length || 0} lessons
+//                         </td>
+//                       </tr>
+//                       {expandedModules[module._id || index] && module.lessons?.length > 0 && (
+//                         <tr className="bg-gray-50">
+//                           <td colSpan="3" className="px-6 py-4">
+//                             <div className="ml-8 space-y-4">
+//                               <h4 className="font-medium text-gray-700">Lessons:</h4>
+//                               <ul className="space-y-3">
+//                                 {module.lessons.map((lesson, lessonIndex) => (
+//                                   <li key={lesson._id || lessonIndex} className="pl-4 border-l-2 border-indigo-200">
+//                                     <div className="flex justify-between">
+//                                       <span className="font-medium text-gray-800">{lesson.title}</span>
+//                                       <span className="text-sm text-gray-500">{formatDuration(lesson.duration)}</span>
+//                                     </div>
+//                                     {lesson.description && (
+//                                       <p className="mt-1 text-sm text-gray-600">{lesson.description}</p>
+//                                     )}
+//                                   </li>
+//                                 ))}
+//                               </ul>
+//                             </div>
+//                           </td>
+//                         </tr>
+//                       )}
+//                     </>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+
+// function TableRow({ icon, label, value }) {
+//   return (
+//     <tr>
+//       <td className="px-6 py-4 whitespace-nowrap">
+//         <div className="flex items-center">
+//           <div className="flex-shrink-0">
+//             {icon}
+//           </div>
+//           <div className="ml-2 font-medium text-gray-900">
+//             {label}
+//           </div>
+//         </div>
+//       </td>
+//       <td className="px-6 py-4 whitespace-nowrap">
+//         {typeof value === 'string' || typeof value === 'number' ? (
+//           <span className="text-gray-700">{value || 'N/A'}</span>
+//         ) : (
+//           value
+//         )}
+//       </td>
+//     </tr>
+//   );
+// }
+
+"use client"
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { 
+  BookOpen, Calendar, Clock, Code2, GraduationCap, 
+  Layers, ListChecks, School, Settings, Shield, 
+  Users, Loader2, AlertCircle, ChevronDown, ChevronRight,
+  Play
+} from 'lucide-react';
+import { useSession } from '@/context/SessionContext';
+
+export default function CoursePlanPage() {
+  const { id } = useParams();
   const router = useRouter();
-  const { user } = useSession();
+  const [coursePlan, setCoursePlan] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [courseData, setCourseData] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [attendance, setAttendance] = useState({
-    date: new Date().toISOString().split("T")[0],
-    students: [],
-    topicName: "",
-  });
+  const [error, setError] = useState(null);
+  const [expandedModules, setExpandedModules] = useState({});
+  const { user } = useSession();
 
   useEffect(() => {
-    const fetchCourseData = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        const res = await fetch(`/api/courses/subject/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch course data");
+        const res = await fetch(`/api/courses/course-plan/${id}`);
+        if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
-
-        const AllCourseData = data.subject;
-
-        setCourseData(AllCourseData);
-        setAttendance((prev) => ({
-          ...prev,
-          subject: AllCourseData.subjects,
-          year: AllCourseData.year,
-          division: AllCourseData.division,
-          department: AllCourseData.department,
-        }));
-
-        await fetchStudents(AllCourseData.year);
-      } catch (error) {
-        console.error("Error fetching course data:", error);
-        alert("Failed to load course data");
+        setCoursePlan(data);
+        
+        // Initialize expanded state for modules with lessons
+        if (data?.modules?.length) {
+          const initialExpanded = {};
+          data.modules.forEach((module, index) => {
+            initialExpanded[module._id || index] = false;
+          });
+          setExpandedModules(initialExpanded);
+        }
+      } catch (err) {
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      fetchCourseData();
-    }
+    fetchData();
   }, [id]);
 
-  const fetchStudents = async (year) => {
-    console.log(year);
-
-    try {
-      const res = await fetch(`/api/teachers/${user.id}/students`);
-      if (!res.ok) throw new Error("Failed to fetch students");
-      const data = await res.json();
-
-      const studentsData = data.students.filter(
-        (student) => student.year === year
-      );
-
-      setStudents(studentsData);
-      setAttendance((prev) => ({
-        ...prev,
-        students: studentsData.map((student) => ({
-          studentId: student.id,
-          schoolId: student.studentId,
-          isPresent: true,
-        })),
-      }));
-    } catch (error) {
-      console.error("Error fetching students:", error);
-      alert("Failed to load student data");
-    }
-  };
-
-  const toggleAttendance = (studentId) => {
-    setAttendance((prev) => {
-      const updatedStudents = prev.students.map((student) =>
-        student.studentId === studentId
-          ? { ...student, isPresent: !student.isPresent }
-          : student
-      );
-
-      return {
-        ...prev,
-        students: updatedStudents,
-      };
-    });
-  };
-
-  const toggleAllAttendance = (markAsPresent) => {
-    setAttendance((prev) => ({
+  const toggleModule = (moduleId) => {
+    setExpandedModules(prev => ({
       ...prev,
-      students: prev.students.map((student) => ({
-        ...student,
-        isPresent: markAsPresent,
-      })),
+      [moduleId]: !prev[moduleId]
     }));
-    alert(`Marked all students as ${markAsPresent ? "Present" : "Absent"}`);
   };
 
-  const handleSubmit = async () => {
-    if (!attendance.topicName) {
-      alert("Please enter a topic name");
-      return;
-    }
-    try {
-      setSaving(true);
+  const formatDuration = (minutes) => {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
 
-      const payload = {
-        courseId: id,
-        date: attendance.date,
-        topic: attendance.topicName,
-        attendanceRecords: attendance.students.map((student) => ({
-          studentId: student.studentId,
-          isPresent: student.isPresent,
-        })),
-        teacherId: user.id,
-        subject: courseData.subjects,
-        year: courseData.year,
-        division: courseData.division,
-        department: courseData.department,
-      };
-
-      console.log("Sending payload:", payload); // For debugging
-
-      const response = await fetch(`/api/attendance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to save attendance");
-      }
-
-      alert("Attendance saved successfully!");
-      router.push(`/courses/${id}`);
-    } catch (error) {
-      console.error("Error saving attendance:", error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
+  const handleExecuteLesson = (moduleId) => {
+    // Navigate to lesson execution page
+    router.push(`/teacher/course-plan/execute/${id}/attendance?moduleId=${moduleId}`);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+        <p className="mt-4 text-indigo-800">Loading course details...</p>
       </div>
     );
   }
 
-  if (!courseData) {
+  if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <p className="text-red-500 text-lg font-medium mb-4">
-            Course not found
-          </p>
-          <button
-            onClick={() => router.back()}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 flex items-center mx-auto"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <AlertCircle className="w-12 h-12 text-red-600" />
+        <p className="mt-4 text-red-800">Failed to load course</p>
+        <p className="mt-2 text-gray-600 max-w-md text-center">{error}</p>
       </div>
     );
   }
 
-  const presentCount = attendance.students.filter((s) => s.isPresent).length;
-  const absentCount = attendance.students.length - presentCount;
+  if (!coursePlan) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <AlertCircle className="w-12 h-12 text-yellow-600" />
+        <p className="mt-4 text-yellow-800">Course plan not found</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Course
-        </button>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-green-600 font-medium">
-              {presentCount} Present
-            </span>
-            <span className="text-gray-400">|</span>
-            <span className="text-red-600 font-medium">
-              {absentCount} Absent
-            </span>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-8">
+        <BookOpen className="w-8 h-8 text-indigo-600" />
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          {coursePlan.title} Course Plan
+        </h1>
       </div>
-
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-2">
-            {courseData.name}-{courseData.code}
-          </h1>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
-            <div className="flex items-center">
-              <User className="h-4 w-4 mr-1" />
-              <span>Faculty: {user?.fullName || "Not specified"}</span>
-            </div>
-            <div className="flex items-center">
-              <BookOpen className="h-4 w-4 mr-1" />
-              <span>Branch: {courseData.department}</span>
-            </div>
-            <div className="flex items-center">
-              <span>Year: {courseData.year}</span>
-            </div>
-            <div className="flex items-center">
-              <span>Division: {courseData.division}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={attendance.date}
-                  onChange={(e) =>
-                    setAttendance({ ...attendance, date: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Topic
-                </label>
-                <input
-                  type="text"
-                  value={attendance.topicName}
-                  onChange={(e) =>
-                    setAttendance({ ...attendance, topicName: e.target.value })
-                  }
-                  placeholder="Enter today's topic"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end space-x-2">
-              <button
-                onClick={() => toggleAllAttendance(true)}
-                className="flex items-center px-4 py-2 bg-green-50 text-green-600 border border-green-200 rounded-md hover:bg-green-100"
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Mark All Present
-              </button>
-              <button
-                onClick={() => toggleAllAttendance(false)}
-                className="flex items-center px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Mark All Absent
-              </button>
-            </div>
-          </div>
+      
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <TableRow 
+                icon={<ListChecks className="w-5 h-5 text-indigo-600" />}
+                label="Description"
+                value={coursePlan.description}
+              />
+              <TableRow 
+                icon={<Code2 className="w-5 h-5 text-indigo-600" />}
+                label="Branch"
+                value={coursePlan.branch}
+              />
+              <TableRow 
+                icon={<GraduationCap className="w-5 h-5 text-indigo-600" />}
+                label="Year"
+                value={coursePlan.year}
+              />
+              <TableRow 
+                icon={<School className="w-5 h-5 text-indigo-600" />}
+                label="Division"
+                value={coursePlan.division}
+              />
+              <TableRow 
+                icon={<Layers className="w-5 h-5 text-indigo-600" />}
+                label="Load Type"
+                value={coursePlan.loadType}
+              />
+              <TableRow 
+                icon={<BookOpen className="w-5 h-5 text-indigo-600" />}
+                label="Subject"
+                value={coursePlan.title}
+              />
+              <TableRow 
+                icon={<Settings className="w-5 h-5 text-indigo-600" />}
+                label="Teacher"
+                value={user?.fullName || 'N/A'}
+              />
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold">Students Attendance</h2>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {students.map((student) => {
-              const attendanceRecord = attendance.students.find(
-                (s) => s.studentId === student.id
-              );
-              const isPresent = attendanceRecord?.isPresent ?? true;
-
-              return (
-                <div
-                  key={student.id}
-                  className={`border rounded-lg p-4 transition-all hover:shadow-md ${
-                    isPresent
-                      ? "border-green-100 bg-green-50 hover:bg-green-100"
-                      : "border-red-100 bg-red-50 hover:bg-red-100"
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => toggleAttendance(student.id)}
-                        className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                          isPresent
-                            ? "bg-green-100 hover:bg-green-200 text-green-600"
-                            : "bg-red-100 hover:bg-red-200 text-red-600"
-                        }`}
+        
+        {coursePlan.modules?.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h2 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-600" />
+                Course Modules
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lessons</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {coursePlan.modules.map((module, index) => (
+                    <>
+                      <tr 
+                        key={module._id || index} 
+                        className="hover:bg-gray-50"
                       >
-                        {isPresent ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <X className="h-4 w-4" />
-                        )}
-                      </button>
-                      <div>
-                        <h3 className="font-medium">{student.fullName}</h3>
-                        <p className="text-sm text-gray-500">
-                          {student.studentId}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        isPresent
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {isPresent ? "Present" : "Absent"}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                        <td 
+                          className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 flex items-center gap-2 cursor-pointer"
+                          onClick={() => toggleModule(module._id || index)}
+                        >
+                          {expandedModules[module._id || index] ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                          {module.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          {formatDuration(module.duration)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          {module.lessons?.length || 0} lessons
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {module.lessons?.length > 0 && (
+                            <button
+                              onClick={() => handleExecuteLesson(module._id)}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                              <Play className="w-3 h-3 mr-1" />
+                              Start
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {expandedModules[module._id || index] && module.lessons?.length > 0 && (
+                        <tr className="bg-gray-50">
+                          <td colSpan="4" className="px-6 py-4">
+                            <div className="ml-8 space-y-4">
+                              <h4 className="font-medium text-gray-700">Lessons:</h4>
+                              <ul className="space-y-3">
+                                {module.lessons.map((lesson, lessonIndex) => (
+                                  <li key={lesson._id || lessonIndex} className="pl-4 border-l-2 border-indigo-200">
+                                    <div className="flex justify-between items-center">
+                                      <div>
+                                        <span className="font-medium text-gray-800">{lesson.title}</span>
+                                        {lesson.description && (
+                                          <p className="mt-1 text-sm text-gray-600">{lesson.description}</p>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-500">{formatDuration(lesson.duration)}</span>
+                                        <button
+                                          onClick={() => handleExecuteLesson(module._id || index, lesson._id)}
+                                          className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                          title="Execute lesson"
+                                        >
+                                          <Play className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-4">
-        <button
-          onClick={() => router.back()}
-          className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center"
-          disabled={saving}
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            "Save Attendance"
-          )}
-        </button>
+        )}
       </div>
     </div>
   );
-};
+}
 
-export default AttendancePage;
+function TableRow({ icon, label, value }) {
+  return (
+    <tr>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            {icon}
+          </div>
+          <div className="ml-2 font-medium text-gray-900">
+            {label}
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        {typeof value === 'string' || typeof value === 'number' ? (
+          <span className="text-gray-700">{value || 'N/A'}</span>
+        ) : (
+          value
+        )}
+      </td>
+    </tr>
+  );
+}
