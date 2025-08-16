@@ -156,7 +156,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Loader2, CheckCircle } from 'lucide-react';
-
+export const dynamic = 'force-dynamic';
 export default function ResetPasswordConfirmPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
