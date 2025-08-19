@@ -698,6 +698,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
+import toast, { Toaster } from "react-hot-toast";
 
 const AttendancePage = () => {
   const [allStudents, setAllStudents] = useState([]);
@@ -974,13 +975,13 @@ const AttendancePage = () => {
       );
 
       if (response.ok) {
-        alert(`Attendance saved for ${formatDate(attendance.date)}`);
+        toast.success(`Attendance saved for ${formatDate(attendance.date)}`);
       } else {
         throw new Error(await response.text());
       }
     } catch (error) {
       console.error("Error saving attendance:", error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -999,6 +1000,7 @@ const AttendancePage = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
+        <Toaster/>
         <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
             {attendance.subject} - {attendance.topicName}

@@ -11,6 +11,7 @@ import {
   MoreVertical,
   Check,
 } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function DepartmentManagement() {
   const [departments, setDepartments] = useState([]);
@@ -105,7 +106,7 @@ export default function DepartmentManagement() {
         throw new Error(data.error || "Failed to save department");
       }
 
-      alert(
+      toast.success(
         `Department ${editingDepartment ? "updated" : "created"} successfully`
       );
       resetForm();
@@ -113,7 +114,7 @@ export default function DepartmentManagement() {
       fetchTeachers()
     } catch (error) {
       console.error("Error saving department:", error);
-      alert(error.message || "Failed to save department");
+      toast.error(error.message || "Failed to save department");
     }
   };
 
@@ -141,11 +142,11 @@ const handleDelete = async (departmentId, departmentName) => {
     }
 
     const data = await response.json();
-    alert(data.message);
+    toast.success(data.message);
     fetchDepartments(); // Refresh the list
   } catch (error) {
     console.error("Delete error:", error);
-    alert(error.message);
+    toast.error(error.message);
   }
 };
 
@@ -191,6 +192,7 @@ const handleDelete = async (departmentId, departmentName) => {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <Toaster/>
       {error && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
           Error: {error}

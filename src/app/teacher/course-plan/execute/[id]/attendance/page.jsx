@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { useSearchParams } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 const AttendancePage = ({ params }) => {
   const { id } = React.use(params);
   const searchParams = useSearchParams();
@@ -87,7 +88,7 @@ const moduleId = searchParams.get('moduleId') || null;
         await fetchStudents(AllCourseData.year);
       } catch (error) {
         console.error("Error fetching course data:", error);
-        alert("Failed to load course data");
+        toast.error("Failed to load course data");
       } finally {
         setLoading(false);
       }
@@ -120,7 +121,7 @@ const moduleId = searchParams.get('moduleId') || null;
       }));
     } catch (error) {
       console.error("Error fetching students:", error);
-      alert("Failed to load student data");
+      toast.error("Failed to load student data");
     }
   };
 
@@ -147,12 +148,12 @@ const moduleId = searchParams.get('moduleId') || null;
         isPresent: markAsPresent,
       })),
     }));
-    alert(`Marked all students as ${markAsPresent ? "Present" : "Absent"}`);
+    toast.error(`Marked all students as ${markAsPresent ? "Present" : "Absent"}`);
   };
 
   const handleSubmit = async () => {
     if (!attendance.topicName) {
-      alert("Please enter a topic name");
+      toast.error("Please enter a topic name");
       return;
     }
     try {
@@ -187,11 +188,11 @@ const moduleId = searchParams.get('moduleId') || null;
         throw new Error(data.message || "Failed to save attendance");
       }
 
-      alert("Attendance saved successfully!");
+      toast.success("Attendance saved successfully!");
       router.push(`/teacher/course-plan/execute/${id}`);
     } catch (error) {
       console.error("Error saving attendance:", error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -233,6 +234,7 @@ const moduleId = searchParams.get('moduleId') || null;
 
   return (
     <div className="container mx-auto p-4 space-y-6">
+      <Toaster/>
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}

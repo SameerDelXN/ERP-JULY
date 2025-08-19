@@ -37,60 +37,6 @@ export default function CourseManagementPage() {
     }
   };
 
-  //   const toggleCourseStatus = async (id) => {
-  //   if (loadingStates[id]) return; // Prevent multiple toggles
-
-  //   try {
-  //     setLoadingStates(prev => ({ ...prev, [id]: true }));
-  //     setError(null);
-
-  //     // Find the current course
-  //     const courseToUpdate = courses.departments?.find(
-  //       (course) => course.id === id
-  //     );
-  //     if (!courseToUpdate) {
-  //       throw new Error("Course not found in local state");
-  //     }
-
-  //     // Calculate new status
-  //     const newStatus = !courseToUpdate.isActive;
-
-  //     // Optimistic UI update
-  //     setCourses(prev => ({
-  //       ...prev,
-  //       departments: prev.departments.map(course =>
-  //         course.id === id ? { ...course, isActive: newStatus } : course
-  //       ),
-  //     }));
-
-  //     // API call
-  //     const response = await fetch(`/api/department/${id}`, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ isActive: newStatus }),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json().catch(() => ({}));
-  //       throw new Error(
-  //         errorData.error || `Failed to update status (HTTP ${response.status})`
-  //       );
-  //     }
-
-  //     toast.success(`Department ${newStatus ? 'Active' : 'Inactive'} Successfully`);
-  //     await fetchCourses();
-  //   } catch (err) {
-  //     console.error("Toggle error:", err);
-  //     setError(err.message);
-  //     // Revert optimistic update
-  //     setCourses(prev => prev); // This maintains the previous state
-  //   } finally {
-  //     setLoadingStates(prev => ({ ...prev, [id]: false }));
-  //   }
-  // };
-
   const toggleCourseStatus = async (id) => {
     if (loadingStates[id]) return; // Prevent multiple toggles
 

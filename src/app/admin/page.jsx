@@ -1,71 +1,388 @@
-// "use client";
-
-// import React, { useState, useEffect } from "react";
+// "use client"
+// import { useState, useEffect } from "react"
+// import { Users, UserCheck, GraduationCap, Building, Award, BookOpen, FileText, Eye, TrendingUp } from "lucide-react"
 // import {
-//   Users,
-//   UserCheck,
-//   GraduationCap,
-//   Building,
-//   TrendingUp,
-//   TrendingDown,
-//   Calendar,
-//   Clock,
-//   Bell,
-//   Search,
-//   Filter,
-//   Download,
-//   Plus,
-//   Activity,
-//   Award,
-//   BookOpen,
-//   DollarSign,
-//   ArrowUpRight,
-//   ArrowDownRight,
-//   ChevronRight,
-//   PieChart,
-//   BarChart2,
-//   FileText,
-//   LayoutDashboard,
-//   Settings,
-//   Mail,
-//   HelpCircle,
-// } from "lucide-react";
-// import { useSession } from "@/context/SessionContext";
-// import { useRouter } from "next/navigation";
+//   Chart as ChartJS,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip,
+//   Legend,
+//   ArcElement,
+//   BarElement,
+//   Filler,
+// } from "chart.js"
+// import { Line, Bar } from "react-chartjs-2"
+
+// ChartJS.register(
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip,
+//   Legend,
+//   ArcElement,
+//   BarElement,
+//   Filler,
+// )
 
 // const AdminDashboard = () => {
-//   const { user, refreshSession } = useSession();
-//   const [dashboardData, setDashboardData] = useState(null);
-//   const [sidebarOpen, setSidebarOpen] = useState(false);
-//   const router = useRouter();
+//   const [dashboardData, setDashboardData] = useState(null)
+//   const [loading, setLoading] = useState(true)
+//   const [error, setError] = useState(null)
+//   const [admissionView, setAdmissionView] = useState("monthly") // 'monthly' or 'yearly'
+//   const [admissionData, setAdmissionData] = useState(null)
+//   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 
-//   const fetchDashboardStats = async () => {
-//     try {
-//       const res = await fetch("/api/dashboard");
-//       if (!res.ok) {
-//         throw new Error("Failed To Fetch Dashboard Data");
-//       }
-//       const data = await res.json();
-//       return data;
-//     } catch (err) {
-//       console.log(err);
-//       return null;
-//     }
-//   };
-
+//   // Fetch dashboard summary data
 //   useEffect(() => {
-//     refreshSession();
-//     fetchDashboardStats().then((data) => setDashboardData(data));
-//   }, []);
+//     const fetchDashboardData = async () => {
+//       try {
+//         const response = await fetch('/api/dashboard')
+//         if (!response.ok) {
+//           throw new Error('Failed to fetch dashboard data')
+//         }
+//         const data = await response.json()
+//         setDashboardData(data)
+//       } catch (err) {
+//         setError(err.message)
+//       }
+//     }
 
-//   // Mock data - replace with your actual data
-//   const students = {
-//     total: 1245,
-//     active: 1180,
-//     activePercentage: 95,
-//     growth: 8.2,
-//     trend: "up",
-//   };
+//     fetchDashboardData()
+//   }, [])
+
+//   // Fetch admission analytics data
+//   useEffect(() => {
+//     const fetchAdmissionData = async () => {
+//       try {
+//         const response = await fetch(`/api/dashboard/analytics?view=${admissionView}&year=${currentYear}`)
+//         if (!response.ok) {
+//           throw new Error('Failed to fetch admission analytics')
+//         }
+//         const data = await response.json()
+//         setAdmissionData(data)
+//       } catch (err) {
+//         setError(err.message)
+//       } finally {
+//         setLoading(false)
+//       }
+//     }
+
+//     fetchAdmissionData()
+//   }, [admissionView, currentYear])
+
+//   const processAdmissionData = () => {
+//     if (!admissionData?.data?.length) return { labels: [], datasets: [] }
+
+//     if (admissionView === "monthly") {
+//       const labels = admissionData.data.map(item => `${item.period} ${item.year}`)
+//       const totalData = admissionData.data.map(item => item.total)
+//       const approvedData = admissionData.data.map(item => item.approved)
+//       const inProcessData = admissionData.data.map(item => item.inProcess)
+//       const rejectedData = admissionData.data.map(item => item.rejected)
+
+//       return {
+//         labels,
+//         datasets: [
+//           {
+//             label: "Total Admissions",
+//             data: totalData,
+//             borderColor: "rgb(99, 102, 241)",
+//             backgroundColor: "rgba(99, 102, 241, 0.1)",
+//             borderWidth: 3,
+//             fill: true,
+//             tension: 0.4,
+//           },
+//           {
+//             label: "Approved",
+//             data: approvedData,
+//             borderColor: "rgb(16, 185, 129)",
+//             backgroundColor: "rgba(16, 185, 129, 0.1)",
+//             borderWidth: 2,
+//             tension: 0.4,
+//           },
+//           {
+//             label: "In Process",
+//             data: inProcessData,
+//             borderColor: "rgb(245, 158, 11)",
+//             backgroundColor: "rgba(245, 158, 11, 0.1)",
+//             borderWidth: 2,
+//             tension: 0.4,
+//           },
+//           {
+//             label: "Rejected",
+//             data: rejectedData,
+//             borderColor: "rgb(239, 68, 68)",
+//             backgroundColor: "rgba(239, 68, 68, 0.1)",
+//             borderWidth: 2,
+//             tension: 0.4,
+//           }
+//         ],
+//       }
+//     } else {
+//       const labels = admissionData.data.map(item => item.period)
+//       const totalData = admissionData.data.map(item => item.total)
+//       const approvedData = admissionData.data.map(item => item.approved)
+//       const inProcessData = admissionData.data.map(item => item.inProcess)
+//       const rejectedData = admissionData.data.map(item => item.rejected)
+
+//       return {
+//         labels,
+//         datasets: [
+//           {
+//             label: "Total Admissions",
+//             data: totalData,
+//             backgroundColor: "rgba(99, 102, 241, 0.8)",
+//             borderColor: "rgb(99, 102, 241)",
+//             borderWidth: 2,
+//             borderRadius: 8,
+//           },
+//           {
+//             label: "Approved",
+//             data: approvedData,
+//             backgroundColor: "rgba(16, 185, 129, 0.8)",
+//             borderColor: "rgb(16, 185, 129)",
+//             borderWidth: 2,
+//             borderRadius: 8,
+//           },
+//           {
+//             label: "In Process",
+//             data: inProcessData,
+//             backgroundColor: "rgba(245, 158, 11, 0.8)",
+//             borderColor: "rgb(245, 158, 11)",
+//             borderWidth: 2,
+//             borderRadius: 8,
+//           },
+//           {
+//             label: "Rejected",
+//             data: rejectedData,
+//             backgroundColor: "rgba(239, 68, 68, 0.8)",
+//             borderColor: "rgb(239, 68, 68)",
+//             borderWidth: 2,
+//             borderRadius: 8,
+//           }
+//         ],
+//       }
+//     }
+//   }
+
+//   const EnhancedStatCard = ({ title, icon: Icon, value }) => (
+//     <div className="group relative bg-white rounded-2xl p-6 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer overflow-hidden">
+//       <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+//       <div className="relative z-10">
+//         <div className="flex items-center justify-between mb-6">
+//           <div className="relative">
+//             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-all duration-300 group-hover:scale-110">
+//               <Icon className="w-6 h-6 text-white" />
+//             </div>
+//             <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full animate-pulse" />
+//           </div>
+//         </div>
+
+//         <div className="space-y-4">
+//           <h3 className="text-indigo-700 text-sm font-semibold uppercase tracking-wide">{title}</h3>
+
+//           <div className="flex items-baseline gap-2">
+//             <span className="text-3xl font-bold text-indigo-900 group-hover:text-indigo-600 transition-colors">
+//               {value || 0}
+//             </span>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   )
+
+//   const MetricCard = ({ icon: Icon, title, value }) => (
+//     <div className="group bg-white rounded-2xl p-6 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer">
+//       <div className="flex items-center gap-4 mb-4">
+//         <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/25">
+//           <Icon className="w-5 h-5 text-white" />
+//         </div>
+//         <div className="flex-1">
+//           <h3 className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">{title}</h3>
+//         </div>
+//       </div>
+
+//       <div className="space-y-2">
+//         <div className="text-2xl font-bold text-indigo-900">{value || 0}</div>
+//       </div>
+//     </div>
+//   )
+
+//   const AdmissionGraph = () => {
+//     const chartData = processAdmissionData()
+
+//     const chartOptions = {
+//       responsive: true,
+//       maintainAspectRatio: false,
+//       plugins: {
+//         legend: {
+//           position: "top",
+//           labels: {
+//             font: {
+//               size: 12,
+//               weight: "600",
+//             },
+//             color: "#4338ca",
+//           },
+//         },
+//         title: {
+//           display: true,
+//           text: `Admissions Trend - ${admissionView === "monthly" ? "Monthly" : "Yearly"} View`,
+//           font: {
+//             size: 16,
+//             weight: "bold",
+//           },
+//           color: "#312e81",
+//         },
+//         tooltip: {
+//           backgroundColor: "rgba(255, 255, 255, 0.95)",
+//           titleColor: "#312e81",
+//           bodyColor: "#4338ca",
+//           borderColor: "#c7d2fe",
+//           borderWidth: 1,
+//           cornerRadius: 8,
+//           displayColors: true,
+//         },
+//       },
+//       scales: {
+//         y: {
+//           beginAtZero: true,
+//           grid: {
+//             color: "rgba(99, 102, 241, 0.1)",
+//           },
+//           ticks: {
+//             color: "#6366f1",
+//             font: {
+//               size: 11,
+//             },
+//           },
+//         },
+//         x: {
+//           grid: {
+//             display: false,
+//           },
+//           ticks: {
+//             color: "#6366f1",
+//             font: {
+//               size: 11,
+//             },
+//             maxRotation: admissionView === "monthly" ? 45 : 0,
+//           },
+//         },
+//       }
+//     }
+
+//     const handleYearChange = (increment) => {
+//       if (admissionView === "monthly") {
+//         setCurrentYear(prev => prev + increment)
+//       }
+//     }
+
+//     return (
+//       <div className="bg-white rounded-2xl p-6 border border-indigo-100/50 shadow-lg">
+//         <div className="flex items-center justify-between mb-6">
+//           <div className="flex items-center gap-3">
+//             <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg">
+//               <TrendingUp className="w-5 h-5 text-white" />
+//             </div>
+//             <h3 className="text-lg font-bold text-indigo-900">Admission Analytics</h3>
+//           </div>
+
+//           <div className="flex items-center gap-4">
+//             {admissionView === "monthly" && (
+//               <div className="flex items-center gap-2">
+//                 <button
+//                   onClick={() => handleYearChange(-1)}
+//                   className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+//                 >
+//                   &lt;
+//                 </button>
+//                 <span className="font-medium text-indigo-700">{currentYear}</span>
+//                 <button
+//                   onClick={() => handleYearChange(1)}
+//                   className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+//                 >
+//                   &gt;
+//                 </button>
+//               </div>
+//             )}
+
+//             <div className="flex gap-2">
+//               <button
+//                 onClick={() => setAdmissionView("monthly")}
+//                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+//                   admissionView === "monthly"
+//                     ? "bg-indigo-600 text-white shadow-md"
+//                     : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+//                 }`}
+//               >
+//                 Monthly
+//               </button>
+//               <button
+//                 onClick={() => setAdmissionView("yearly")}
+//                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+//                   admissionView === "yearly"
+//                     ? "bg-indigo-600 text-white shadow-md"
+//                     : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+//                 }`}
+//               >
+//                 Yearly
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="h-80">
+//           {loading ? (
+//             <div className="h-full flex items-center justify-center">
+//               <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+//             </div>
+//           ) : admissionData?.data?.length > 0 ? (
+//             admissionView === "monthly" ? (
+//               <Line data={chartData} options={chartOptions} />
+//             ) : (
+//               <Bar data={chartData} options={chartOptions} />
+//             )
+//           ) : (
+//             <div className="h-full flex items-center justify-center text-gray-500">
+//               No admission data available
+//             </div>
+//           )}
+//         </div>
+
+//         {admissionData?.summary && (
+//           <div className="mt-4 grid grid-cols-3 gap-4">
+//             <div className="text-center p-3 bg-indigo-50 rounded-lg">
+//               <div className="text-2xl font-bold text-indigo-900">
+//                 {admissionData.summary.total}
+//               </div>
+//               <div className="text-sm text-indigo-600">Total Admissions</div>
+//             </div>
+//             <div className="text-center p-3 bg-emerald-50 rounded-lg">
+//               <div className="text-2xl font-bold text-emerald-900">
+//                 {admissionData.summary.average}
+//               </div>
+//               <div className="text-sm text-emerald-600">Average per {admissionView === "monthly" ? "Month" : "Year"}</div>
+//             </div>
+//             <div className="text-center p-3 bg-purple-50 rounded-lg">
+//               <div className="text-2xl font-bold text-purple-900">
+//                 {admissionData.summary.peak.count}
+//               </div>
+//               <div className="text-sm text-purple-600">
+//                 Peak {admissionView === "monthly" ? "Month" : "Year"} ({admissionData.summary.peak.period})
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     )
+//   }
 
 //   const stats = {
 //     students: {
@@ -74,371 +391,95 @@
 //       route: "/admin/students",
 //     },
 //     staff: {
-//       total: 45,
-//       active: 42,
-//       activePercentage: 93,
-//       growth: 5.2,
-//       trend: "up",
 //       icon: UserCheck,
 //       title: "Total Staff",
 //       route: "/admin/staff",
 //     },
 //     teachers: {
-//       total: 28,
-//       active: 26,
-//       activePercentage: 93,
-//       growth: -2.1,
-//       trend: "down",
 //       icon: GraduationCap,
 //       title: "Total Teachers",
 //       route: "/admin/teachers",
 //     },
 //     hr: {
-//       total: 5,
-//       active: 5,
-//       activePercentage: 100,
-//       growth: 8.7,
-//       trend: "up",
 //       icon: Building,
 //       title: "HR Personnel",
 //       route: "/admin/hr",
 //     },
-//   };
+//   }
 
-//   const recentActivities = [
-//     {
-//       id: 1,
-//       type: "admission",
-//       message: "15 new admission applications received",
-//       time: "2 hours ago",
-//       route: "/admin/admissions",
-//     },
-//     {
-//       id: 2,
-//       type: "staff",
-//       message: "New teacher John Smith joined Mathematics dept",
-//       time: "4 hours ago",
-//       route: "/admin/staff",
-//     },
-//     {
-//       id: 3,
-//       type: "system",
-//       message: "Monthly attendance report generated",
-//       time: "6 hours ago",
-//       route: "/admin/reports",
-//     },
-//     {
-//       id: 4,
-//       type: "payment",
-//       message: "₹2,50,000 fees collected today",
-//       time: "8 hours ago",
-//       route: "/admin/finance",
-//     },
-//   ];
-
-//   const quickActions = [
-//     {
-//       icon: Plus,
-//       label: "Add Department",
-//       route: "/admin/academic-configuration",
-//     },
-//     { icon: UserCheck, label: "Add Staff", route: "/admin/manage-users" },
-//     { icon: Calendar, label: "Schedule", route: "/admin/calendar" },
-//     { icon: Download, label: "Reports", route: "/admin/reports" },
-//   ];
-
-//   const StatCard = ({
-//     title,
-//     icon: Icon,
-//     total,
-//     active,
-//     activePercentage,
-//     growth,
-//     trend,
-//     route,
-//   }) => (
-//     <div
-//       onClick={() => router.push(route)}
-//       className="bg-white rounded-xl p-6 border border-indigo-50 hover:shadow-md transition-all duration-200 group cursor-pointer hover:border-indigo-100"
-//     >
-//       <div className="flex items-center justify-between mb-4">
-//         <div className="p-3 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors duration-200">
-//           <Icon className="w-5 h-5 text-indigo-600" />
+//   if (loading && !dashboardData) {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center">
+//         <div className="text-center">
+//           <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+//           <p className="mt-4 text-indigo-600 font-medium">Loading dashboard data...</p>
 //         </div>
-//         <span
-//           className={`text-xs font-medium px-2 py-1 rounded-full ${
-//             trend === "up"
-//               ? "bg-green-50 text-green-600"
-//               : "bg-red-50 text-red-600"
-//           }`}
-//         >
-//           {trend === "up" ? (
-//             <span className="flex items-center gap-1">
-//               <ArrowUpRight className="w-3 h-3" /> +{growth}%
-//             </span>
-//           ) : (
-//             <span className="flex items-center gap-1">
-//               <ArrowDownRight className="w-3 h-3" /> {growth}%
-//             </span>
-//           )}
-//         </span>
 //       </div>
+//     )
+//   }
 
-//       <div className="space-y-3">
-//         <h3 className="text-indigo-900/70 text-sm font-medium">{title}</h3>
-//         <div className="flex items-baseline gap-2">
-//           <span className="text-2xl font-semibold text-indigo-900">
-//             {total}
-//           </span>
-//           <span className="text-sm text-indigo-500">total</span>
-//         </div>
-//         <div className="flex items-center gap-3">
-//           <div className="flex-1 bg-indigo-50 rounded-full h-1.5">
-//             <div
-//               className="h-1.5 rounded-full bg-indigo-600 transition-all duration-300"
-//               style={{ width: `${activePercentage}%` }}
-//             ></div>
+//   if (error) {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center">
+//         <div className="text-center p-6 bg-white rounded-xl shadow-md max-w-md">
+//           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+//             <Eye className="w-8 h-8 text-red-500" />
 //           </div>
-//           <span className="text-xs text-indigo-600">{active} active</span>
+//           <h3 className="text-lg font-bold text-red-600 mb-2">Error Loading Dashboard</h3>
+//           <p className="text-gray-600 mb-4">{error}</p>
+//           <button
+//             onClick={() => window.location.reload()}
+//             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+//           >
+//             Try Again
+//           </button>
 //         </div>
 //       </div>
-//     </div>
-//   );
+//     )
+//   }
 
 //   return (
-//     <div className="min-h-screen bg-indigo-50/30 flex">
+//     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+//       <div className="p-6 space-y-8">
+//         {/* Main Stats Grid */}
+//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+//           <EnhancedStatCard title={stats.students.title} icon={stats.students.icon} value={dashboardData?.students} />
+//           <EnhancedStatCard title={stats.staff.title} icon={stats.staff.icon} value={dashboardData?.staffs} />
+//           <EnhancedStatCard title={stats.teachers.title} icon={stats.teachers.icon} value={dashboardData?.teachers} />
+//           <EnhancedStatCard title={stats.hr.title} icon={stats.hr.icon} value={dashboardData?.hr} />
+//         </div>
 
-//       {/* Main Content */}
-//       <div className="flex-1 overflow-auto">
-//         <div className="p-6">
-//           {/* Header */}
-//           <div className="flex justify-between items-center mb-8">
-//             <div>
-//               <h1 className="text-2xl font-bold text-indigo-900">
-//                 Dashboard Overview
-//               </h1>
-//               <p className="text-indigo-500">
-//                 Welcome back, {user?.name || "Admin"}
-//               </p>
-//             </div>
-//             <div className="flex items-center gap-4">
-//               <div className="relative">
-//                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400" />
-//                 <input
-//                   type="text"
-//                   placeholder="Search..."
-//                   className="pl-10 pr-4 py-2 text-sm rounded-lg border border-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-transparent w-64"
-//                 />
-//               </div>
-//               <button className="p-2 rounded-lg bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 relative">
-//                 <Bell className="w-5 h-5" />
-//                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-//               </button>
-//               <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-//                 <Plus className="w-4 h-4" />
-//                 <span>New Task</span>
-//               </button>
-//             </div>
-//           </div>
+//         <AdmissionGraph />
 
-//           {/* Stats Grid */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-//             <StatCard
-//               title={stats.students.title}
-//               icon={stats.students.icon}
-//               total={students.total}
-//               active={students.active}
-//               activePercentage={students.activePercentage}
-//               growth={students.growth}
-//               trend={students.trend}
-//               route={stats.students.route}
-//             />
-//             <StatCard
-//               title={stats.staff.title}
-//               icon={stats.staff.icon}
-//               total={stats.staff.total}
-//               active={stats.staff.active}
-//               activePercentage={stats.staff.activePercentage}
-//               growth={stats.staff.growth}
-//               trend={stats.staff.trend}
-//               route={stats.staff.route}
-//             />
-//             <StatCard
-//               title={stats.teachers.title}
-//               icon={stats.teachers.icon}
-//               total={stats.teachers.total}
-//               active={stats.teachers.active}
-//               activePercentage={stats.teachers.activePercentage}
-//               growth={stats.teachers.growth}
-//               trend={stats.teachers.trend}
-//               route={stats.teachers.route}
-//             />
-//             <StatCard
-//               title={stats.hr.title}
-//               icon={stats.hr.icon}
-//               total={stats.hr.total}
-//               active={stats.hr.active}
-//               activePercentage={stats.hr.activePercentage}
-//               growth={stats.hr.growth}
-//               trend={stats.hr.trend}
-//               route={stats.hr.route}
-//             />
-//           </div>
-
-//           {/* Charts Section */}
-//           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-//             <div className="bg-white rounded-xl p-6 border border-indigo-50">
-//               <div className="flex items-center justify-between mb-4">
-//                 <h3 className="text-lg font-medium text-indigo-900">
-//                   Student Enrollment
-//                 </h3>
-//                 <div className="flex items-center gap-2">
-//                   <button className="text-xs px-2 py-1 rounded-md bg-indigo-50 text-indigo-600">
-//                     Monthly
-//                   </button>
-//                   <button className="text-xs px-2 py-1 rounded-md text-indigo-500 hover:bg-indigo-50">
-//                     Yearly
-//                   </button>
-//                 </div>
-//               </div>
-//               <div className="h-64 bg-indigo-50 rounded-lg flex items-center justify-center">
-//                 <BarChart2 className="w-12 h-12 text-indigo-300" />
-//               </div>
-//             </div>
-//             <div className="bg-white rounded-xl p-6 border border-indigo-50">
-//               <div className="flex items-center justify-between mb-4">
-//                 <h3 className="text-lg font-medium text-indigo-900">
-//                   Attendance Overview
-//                 </h3>
-//                 <div className="flex items-center gap-2">
-//                   <button className="text-xs px-2 py-1 rounded-md bg-indigo-50 text-indigo-600">
-//                     By Class
-//                   </button>
-//                   <button className="text-xs px-2 py-1 rounded-md text-indigo-500 hover:bg-indigo-50">
-//                     By Subject
-//                   </button>
-//                 </div>
-//               </div>
-//               <div className="h-64 bg-indigo-50 rounded-lg flex items-center justify-center">
-//                 <PieChart className="w-12 h-12 text-indigo-300" />
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Additional Metrics */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-//             <div
-//               onClick={() => router.push("/admin/attendance")}
-//               className="bg-white rounded-xl p-6 border border-indigo-50 hover:shadow-sm transition-all cursor-pointer"
-//             >
-//               <div className="flex items-center gap-3 mb-3">
-//                 <div className="p-2 bg-indigo-50 rounded-lg">
-//                   <Award className="w-5 h-5 text-indigo-600" />
-//                 </div>
-//                 <span className="text-sm font-medium text-indigo-700">
-//                   Attendance Rate
-//                 </span>
-//               </div>
-//               <div className="text-2xl font-semibold text-indigo-900">94.2%</div>
-//               <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
-//                 <ArrowUpRight className="w-3 h-3" />
-//                 +2.1% from last month
-//               </div>
-//             </div>
-
-//             <div
-//               onClick={() => router.push("/admin/courses")}
-//               className="bg-white rounded-xl p-6 border border-indigo-50 hover:shadow-sm transition-all cursor-pointer"
-//             >
-//               <div className="flex items-center gap-3 mb-3">
-//                 <div className="p-2 bg-indigo-50 rounded-lg">
-//                   <BookOpen className="w-5 h-5 text-indigo-600" />
-//                 </div>
-//                 <span className="text-sm font-medium text-indigo-700">
-//                   Active Courses
-//                 </span>
-//               </div>
-//               <div className="text-2xl font-semibold text-indigo-900">127</div>
-//               <div className="text-xs text-indigo-500 mt-1 flex items-center gap-1">
-//                 <Plus className="w-3 h-3" />5 new this month
-//               </div>
-//             </div>
-
-//             <div
-//               onClick={() => router.push("/admin/events")}
-//               className="bg-white rounded-xl p-6 border border-indigo-50 hover:shadow-sm transition-all cursor-pointer"
-//             >
-//               <div className="flex items-center gap-3 mb-3">
-//                 <div className="p-2 bg-indigo-50 rounded-lg">
-//                   <Calendar className="w-5 h-5 text-indigo-600" />
-//                 </div>
-//                 <span className="text-sm font-medium text-indigo-700">
-//                   Events Today
-//                 </span>
-//               </div>
-//               <div className="text-2xl font-semibold text-indigo-900">8</div>
-//               <div className="text-xs text-indigo-500 mt-1">3 upcoming</div>
-//             </div>
-
-//             <div
-//               onClick={() => router.push("/admin/finance")}
-//               className="bg-white rounded-xl p-6 border border-indigo-50 hover:shadow-sm transition-all cursor-pointer"
-//             >
-//               <div className="flex items-center gap-3 mb-3">
-//                 <div className="p-2 bg-indigo-50 rounded-lg">
-//                   <DollarSign className="w-5 h-5 text-indigo-600" />
-//                 </div>
-//                 <span className="text-sm font-medium text-indigo-700">
-//                   Revenue
-//                 </span>
-//               </div>
-//               <div className="text-2xl font-semibold text-indigo-900">
-//                 ₹12.5L
-//               </div>
-//               <div className="text-xs text-indigo-500 mt-1">This month</div>
-//             </div>
-//           </div>
+//         {/* Secondary Metrics */}
+//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+//           <MetricCard icon={Award} title="Attendance Rate" value="94.2%" />
+//           <MetricCard icon={BookOpen} title="Active Courses" value={dashboardData?.activeCourse || 0} />
+//           <MetricCard icon={FileText} title="Pending Admissions" value={dashboardData?.inProcessAdmissions || 0} />
+//           <MetricCard icon={Eye} title="New Enquiries" value={dashboardData?.newEnquiries || 0} />
 //         </div>
 //       </div>
 //     </div>
-//   );
-// };
+//   )
+// }
 
-// export default AdminDashboard;
+// export default AdminDashboard
 
-"use client"
-import React, { useState, useEffect } from "react";
+"use client";
+import { useState, useEffect } from "react";
 import {
   Users,
   UserCheck,
   GraduationCap,
   Building,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Clock,
-  Bell,
-  Search,
-  Filter,
-  Download,
-  Plus,
-  Activity,
   Award,
   BookOpen,
-  DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
-  ChevronRight,
-  PieChart,
-  BarChart2,
   FileText,
-  LayoutDashboard,
-  Settings,
-  Mail,
-  HelpCircle,
   Eye,
-  Star,
-  AlertCircle,
+  TrendingUp,
+  XCircle,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -452,13 +493,8 @@ import {
   ArcElement,
   BarElement,
   Filler,
-} from 'chart.js';
-import {
-  Line,
-  Bar,
-  Doughnut,
-  Pie,
-} from 'react-chartjs-2';
+} from "chart.js";
+import { Line, Bar } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
@@ -474,48 +510,443 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedTimeframe, setSelectedTimeframe] = useState('monthly');
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [admissionView, setAdmissionView] = useState("monthly"); // 'monthly' or 'yearly'
+  const [admissionData, setAdmissionData] = useState(null);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-  // Sample data for charts
-  const enrollmentData = [
-    { month: 'Jan', students: 1100, target: 1000 },
-    { month: 'Feb', students: 1150, target: 1100 },
-    { month: 'Mar', students: 1180, target: 1200 },
-    { month: 'Apr', students: 1220, target: 1250 },
-    { month: 'May', students: 1245, target: 1300 },
-    { month: 'Jun', students: 1280, target: 1350 },
-  ];
+  // Fetch dashboard summary data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch("/api/dashboard");
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
 
-  const attendanceData = [
-    { name: 'Present', value: 94.2, color: '#4f46e5' },
-    { name: 'Absent', value: 3.8, color: '#ef4444' },
-    { name: 'Late', value: 2.0, color: '#f59e0b' },
-  ];
+    fetchDashboardData();
+  }, []);
 
-  const performanceData = [
-    { subject: 'Math', score: 85 },
-    { subject: 'Science', score: 92 },
-    { subject: 'English', score: 88 },
-    { subject: 'History', score: 76 },
-    { subject: 'Arts', score: 95 },
-  ];
+  // Fetch admission analytics data
+  useEffect(() => {
+    const fetchAdmissionData = async () => {
+      try {
+        const response = await fetch(
+          `/api/dashboard/analytics?view=${admissionView}&year=${currentYear}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch admission analytics");
+        }
+        const data = await response.json();
+        setAdmissionData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const revenueData = [
-    { month: 'Jan', revenue: 850000, expenses: 620000 },
-    { month: 'Feb', revenue: 920000, expenses: 650000 },
-    { month: 'Mar', revenue: 1100000, expenses: 720000 },
-    { month: 'Apr', revenue: 1180000, expenses: 780000 },
-    { month: 'May', revenue: 1250000, expenses: 820000 },
-  ];
+    fetchAdmissionData();
+  }, [admissionView, currentYear]);
 
-  // Mock data
-  const students = {
-    total: 1245,
-    active: 1180,
-    activePercentage: 95,
-    growth: 8.2,
-    trend: "up",
+  const processAdmissionData = () => {
+    if (!admissionData?.data?.length) return { labels: [], datasets: [] };
+
+    if (admissionView === "monthly") {
+      const labels = admissionData.data.map(
+        (item) => `${item.period} ${item.year}`
+      );
+      const totalData = admissionData.data.map((item) => item.total);
+      const approvedData = admissionData.data.map((item) => item.approved);
+      const inProcessData = admissionData.data.map((item) => item.inProcess);
+      const rejectedData = admissionData.data.map((item) => item.rejected);
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: "Total Admissions",
+            data: totalData,
+            borderColor: "rgb(99, 102, 241)",
+            backgroundColor: "rgba(99, 102, 241, 0.1)",
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+          },
+          {
+            label: "Approved",
+            data: approvedData,
+            borderColor: "rgb(16, 185, 129)",
+            backgroundColor: "rgba(16, 185, 129, 0.1)",
+            borderWidth: 2,
+            tension: 0.4,
+          },
+          {
+            label: "In Process",
+            data: inProcessData,
+            borderColor: "rgb(245, 158, 11)",
+            backgroundColor: "rgba(245, 158, 11, 0.1)",
+            borderWidth: 2,
+            tension: 0.4,
+          },
+          {
+            label: "Rejected",
+            data: rejectedData,
+            borderColor: "rgb(239, 68, 68)",
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            borderWidth: 2,
+            tension: 0.4,
+          },
+        ],
+      };
+    } else {
+      const labels = admissionData.data.map((item) => item.period);
+      const totalData = admissionData.data.map((item) => item.total);
+      const approvedData = admissionData.data.map((item) => item.approved);
+      const inProcessData = admissionData.data.map((item) => item.inProcess);
+      const rejectedData = admissionData.data.map((item) => item.rejected);
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: "Total Admissions",
+            data: totalData,
+            backgroundColor: "rgba(99, 102, 241, 0.8)",
+            borderColor: "rgb(99, 102, 241)",
+            borderWidth: 2,
+            borderRadius: 8,
+          },
+          {
+            label: "Approved",
+            data: approvedData,
+            backgroundColor: "rgba(16, 185, 129, 0.8)",
+            borderColor: "rgb(16, 185, 129)",
+            borderWidth: 2,
+            borderRadius: 8,
+          },
+          {
+            label: "In Process",
+            data: inProcessData,
+            backgroundColor: "rgba(245, 158, 11, 0.8)",
+            borderColor: "rgb(245, 158, 11)",
+            borderWidth: 2,
+            borderRadius: 8,
+          },
+          {
+            label: "Rejected",
+            data: rejectedData,
+            backgroundColor: "rgba(239, 68, 68, 0.8)",
+            borderColor: "rgb(239, 68, 68)",
+            borderWidth: 2,
+            borderRadius: 8,
+          },
+        ],
+      };
+    }
+  };
+
+  const AdmissionGraph = () => {
+    const chartData = processAdmissionData();
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            font: {
+              size: 12,
+              weight: "600",
+            },
+            color: "#4338ca",
+            usePointStyle: true,
+            padding: 20,
+          },
+        },
+        title: {
+          display: false,
+        },
+        tooltip: {
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          titleColor: "#312e81",
+          bodyColor: "#4338ca",
+          borderColor: "#c7d2fe",
+          borderWidth: 1,
+          cornerRadius: 8,
+          displayColors: true,
+          padding: 12,
+          bodyFont: {
+            weight: "600",
+          },
+          callbacks: {
+            label: function (context) {
+              let label = context.dataset.label || "";
+              if (label) {
+                label += ": ";
+              }
+              label += context.parsed.y;
+              return label;
+            },
+          },
+        },
+      },
+      interaction: {
+        intersect: false,
+        mode: "index",
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: "rgba(99, 102, 241, 0.1)",
+          },
+          ticks: {
+            color: "#6366f1",
+            font: {
+              size: 11,
+            },
+          },
+        },
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: "#6366f1",
+            font: {
+              size: 11,
+            },
+            maxRotation: admissionView === "monthly" ? 45 : 0,
+          },
+        },
+      },
+      elements: {
+        point: {
+          radius: admissionView === "monthly" ? 4 : 0,
+          hoverRadius: 6,
+          backgroundColor: "white",
+          borderWidth: 2,
+        },
+      },
+    };
+
+    const handleYearChange = (increment) => {
+      if (admissionView === "monthly") {
+        setCurrentYear((prev) => prev + increment);
+      }
+    };
+
+    return (
+      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-600 rounded-lg shadow">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800">
+              Admission Analytics
+            </h3>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {admissionView === "monthly" && (
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+                <button
+                  onClick={() => handleYearChange(-1)}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors"
+                  aria-label="Previous year"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <span className="font-medium text-gray-700 px-2">
+                  {currentYear}
+                </span>
+                <button
+                  onClick={() => handleYearChange(1)}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors"
+                  aria-label="Next year"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
+              <button
+                onClick={() => setAdmissionView("monthly")}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
+                  admissionView === "monthly"
+                    ? "bg-indigo-600 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setAdmissionView("yearly")}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
+                  admissionView === "yearly"
+                    ? "bg-indigo-600 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-80">
+          {loading ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="animate-pulse flex flex-col items-center gap-2">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-indigo-400" />
+                </div>
+                <p className="text-sm text-gray-500">
+                  Loading admission data...
+                </p>
+              </div>
+            </div>
+          ) : admissionData?.data?.length > 0 ? (
+            admissionView === "monthly" ? (
+              <Line data={chartData} options={chartOptions} />
+            ) : (
+              <Bar data={chartData} options={chartOptions} />
+            )
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+              <svg
+                className="w-12 h-12"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p>No admission data available</p>
+            </div>
+          )}
+        </div>
+
+        {admissionData?.summary && (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-indigo-50/50 rounded-lg p-4 border border-indigo-100 flex items-center gap-4">
+              <div className="p-2 bg-indigo-100 rounded-full">
+                <svg
+                  className="w-5 h-5 text-indigo-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-indigo-900">
+                  {admissionData.summary.total}
+                </div>
+                <div className="text-sm text-indigo-600">Total Admissions</div>
+              </div>
+            </div>
+            <div className="bg-emerald-50/50 rounded-lg p-4 border border-emerald-100 flex items-center gap-4">
+              <div className="p-2 bg-emerald-100 rounded-full">
+                <svg
+                  className="w-5 h-5 text-emerald-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-emerald-900">
+                  {admissionData.summary.average}
+                </div>
+                <div className="text-sm text-emerald-600">
+                  Average per {admissionView === "monthly" ? "Month" : "Year"}
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50/50 rounded-lg p-4 border border-purple-100 flex items-center gap-4">
+              <div className="p-2 bg-purple-100 rounded-full">
+                <svg
+                  className="w-5 h-5 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {admissionData.summary.peak.count}
+                </div>
+                <div className="text-sm text-purple-600">
+                  Peak {admissionView === "monthly" ? "Month" : "Year"} (
+                  {admissionData.summary.peak.period})
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const stats = {
@@ -525,446 +956,182 @@ const AdminDashboard = () => {
       route: "/admin/students",
     },
     staff: {
-      total: 45,
-      active: 42,
-      activePercentage: 93,
-      growth: 5.2,
-      trend: "up",
       icon: UserCheck,
       title: "Total Staff",
       route: "/admin/staff",
     },
     teachers: {
-      total: 28,
-      active: 26,
-      activePercentage: 93,
-      growth: -2.1,
-      trend: "down",
       icon: GraduationCap,
       title: "Total Teachers",
       route: "/admin/teachers",
     },
     hr: {
-      total: 5,
-      active: 5,
-      activePercentage: 100,
-      growth: 8.7,
-      trend: "up",
       icon: Building,
       title: "HR Personnel",
       route: "/admin/hr",
     },
   };
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: "admission",
-      message: "15 new admission applications received",
-      time: "2 hours ago",
-      icon: Users,
-      color: "bg-blue-500",
-    },
-    {
-      id: 2,
-      type: "staff",
-      message: "New teacher John Smith joined Mathematics dept",
-      time: "4 hours ago",
-      icon: UserCheck,
-      color: "bg-green-500",
-    },
-    {
-      id: 3,
-      type: "system",
-      message: "Monthly attendance report generated",
-      time: "6 hours ago",
-      icon: FileText,
-      color: "bg-purple-500",
-    },
-    {
-      id: 4,
-      type: "payment",
-      message: "₹2,50,000 fees collected today",
-      time: "8 hours ago",
-      icon: DollarSign,
-      color: "bg-emerald-500",
-    },
-  ];
+  if (loading && !dashboardData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">
+            Loading dashboard data...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const EnhancedStatCard = ({
-    title,
-    icon: Icon,
-    total,
-    active,
-    activePercentage,
-    growth,
-    trend,
-    route,
-  }) => (
-    <div className="group relative bg-white rounded-2xl p-6 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      {/* Content */}
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-6">
-          <div className="relative">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-all duration-300 group-hover:scale-110">
-              <Icon className="w-6 h-6 text-white" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full animate-pulse" />
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-4">
+        <div className="text-center p-6 bg-white rounded-xl shadow-sm max-w-md border border-gray-100">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
           </div>
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="text-indigo-700 text-sm font-semibold uppercase tracking-wide">{title}</h3>
-          
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-indigo-900 group-hover:text-indigo-600 transition-colors">
-              {total.toLocaleString()}
-            </span>
-            <span className="text-sm text-indigo-500 font-medium">total</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const MetricCard = ({ icon: Icon, title, value, subtitle, trend, onClick }) => (
-    <div 
-      onClick={onClick}
-      className="group bg-white rounded-2xl p-6 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
-    >
-      <div className="flex items-center gap-4 mb-4">
-        <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/25">
-          <Icon className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">{title}</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-2">
+            Error Loading Dashboard
+          </h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            Try Again
+          </button>
         </div>
       </div>
-      
-      <div className="space-y-2">
-        <div className="text-2xl font-bold text-indigo-900">{value}</div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-indigo-500">{subtitle}</span>
-          {trend && (
-            <span className={`text-xs flex items-center gap-1 ${
-              trend.includes('+') ? 'text-emerald-600' : 'text-indigo-500'
-            }`}>
-              {trend.includes('+') && <ArrowUpRight className="w-3 h-3" />}
-              {trend.includes('new') && <Plus className="w-3 h-3" />}
-              {trend}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const ChartCard = ({ title, children, actions }) => (
-    <div className="bg-white rounded-2xl p-6 border border-indigo-100/50 shadow-sm hover:shadow-lg transition-all duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-indigo-900">{title}</h3>
-        {actions && (
-          <div className="flex items-center gap-2">
-            {actions}
-          </div>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-
-  const TimeframeButton = ({ active, children, onClick }) => (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-        active
-          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-          : 'text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
-      }`}
-    >
-      {children}
-    </button>
-  );
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-      <div className="p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 to-indigo-600 bg-clip-text text-transparent">
-              Dashboard Overview
-            </h1>
-            <p className="text-indigo-600 font-medium">Welcome back, Admin</p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400" />
-              <input
-                type="text"
-                placeholder="Search anything..."
-                className="pl-10 pr-4 py-2.5 text-sm rounded-xl border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent w-64 bg-white/50 backdrop-blur-sm"
-              />
-            </div>
-            
-            <button className="relative p-2.5 rounded-xl bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 hover:scale-105">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-            </button>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Dashboard Overview
+          </h1>
+          <div className="text-sm text-gray-500">
+            Last updated:{" "}
+            {new Date().toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
           </div>
         </div>
 
         {/* Main Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <EnhancedStatCard
-            title={stats.students.title}
-            icon={stats.students.icon}
-            total={students.total}
-            active={students.active}
-            activePercentage={students.activePercentage}
-            growth={students.growth}
-            trend={students.trend}
-            route={stats.students.route}
-          />
-          <EnhancedStatCard
-            title={stats.staff.title}
-            icon={stats.staff.icon}
-            total={stats.staff.total}
-            active={stats.staff.active}
-            activePercentage={stats.staff.activePercentage}
-            growth={stats.staff.growth}
-            trend={stats.staff.trend}
-            route={stats.staff.route}
-          />
-          <EnhancedStatCard
-            title={stats.teachers.title}
-            icon={stats.teachers.icon}
-            total={stats.teachers.total}
-            active={stats.teachers.active}
-            activePercentage={stats.teachers.activePercentage}
-            growth={stats.teachers.growth}
-            trend={stats.teachers.trend}
-            route={stats.teachers.route}
-          />
-          <EnhancedStatCard
-            title={stats.hr.title}
-            icon={stats.hr.icon}
-            total={stats.hr.total}
-            active={stats.hr.active}
-            activePercentage={stats.hr.activePercentage}
-            growth={stats.hr.growth}
-            trend={stats.hr.trend}
-            route={stats.hr.route}
-          />
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartCard
-            title="Student Enrollment Trend"
-            actions={
-              <div className="flex gap-2">
-                <TimeframeButton active={selectedTimeframe === 'monthly'} onClick={() => setSelectedTimeframe('monthly')}>
-                  Monthly
-                </TimeframeButton>
-                <TimeframeButton active={selectedTimeframe === 'yearly'} onClick={() => setSelectedTimeframe('yearly')}>
-                  Yearly
-                </TimeframeButton>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {stats.students.title}
+                </p>
+                <p className="text-2xl font-bold text-blue-600">{dashboardData?.students}</p>
               </div>
-            }
-          >
-            <div className="h-80">
-              <Line
-                data={{
-                  labels: enrollmentData.map(d => d.month),
-                  datasets: [
-                    {
-                      label: 'Students',
-                      data: enrollmentData.map(d => d.students),
-                      borderColor: '#4f46e5',
-                      backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                      borderWidth: 3,
-                      fill: true,
-                      tension: 0.4,
-                      pointBackgroundColor: '#4f46e5',
-                      pointBorderColor: '#ffffff',
-                      pointBorderWidth: 2,
-                      pointRadius: 6,
-                      pointHoverRadius: 8,
-                    },
-                    {
-                      label: 'Target',
-                      data: enrollmentData.map(d => d.target),
-                      borderColor: '#94a3b8',
-                      backgroundColor: 'transparent',
-                      borderWidth: 2,
-                      borderDash: [5, 5],
-                      fill: false,
-                      tension: 0.4,
-                      pointBackgroundColor: '#94a3b8',
-                      pointBorderColor: '#ffffff',
-                      pointBorderWidth: 2,
-                      pointRadius: 4,
-                      pointHoverRadius: 6,
-                    }
-                  ]
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                      labels: {
-                        usePointStyle: true,
-                        color: '#4f46e5',
-                        font: {
-                          weight: 'bold'
-                        }
-                      }
-                    },
-                    tooltip: {
-                      backgroundColor: 'white',
-                      titleColor: '#4f46e5',
-                      bodyColor: '#4f46e5',
-                      borderColor: '#c7d2fe',
-                      borderWidth: 1,
-                      cornerRadius: 12,
-                      boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.1)'
-                    }
-                  },
-                  scales: {
-                    x: {
-                      grid: {
-                        color: '#e0e7ff',
-                      },
-                      ticks: {
-                        color: '#6366f1',
-                        font: {
-                          weight: 'bold'
-                        }
-                      }
-                    },
-                    y: {
-                      grid: {
-                        color: '#e0e7ff',
-                      },
-                      ticks: {
-                        color: '#6366f1',
-                        font: {
-                          weight: 'bold'
-                        }
-                      }
-                    }
-                  },
-                  interaction: {
-                    intersect: false,
-                    mode: 'index'
-                  }
-                }}
-              />
-            </div>
-          </ChartCard>
-
-          <ChartCard
-            title="Attendance Distribution"
-            actions={
-              <div className="flex gap-2">
-                <TimeframeButton active={true}>This Week</TimeframeButton>
-                <TimeframeButton active={false}>This Month</TimeframeButton>
-              </div>
-            }
-          >
-            <div className="h-80 flex items-center justify-center">
-              <div className="w-80">
-                <Doughnut
-                  data={{
-                    labels: attendanceData.map(d => d.name),
-                    datasets: [
-                      {
-                        data: attendanceData.map(d => d.value),
-                        backgroundColor: attendanceData.map(d => d.color),
-                        borderColor: '#ffffff',
-                        borderWidth: 3,
-                        hoverBorderWidth: 4,
-                        cutout: '60%',
-                      }
-                    ]
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          usePointStyle: true,
-                          padding: 20,
-                          color: '#4f46e5',
-                          font: {
-                            weight: 'bold',
-                            size: 12
-                          }
-                        }
-                      },
-                      tooltip: {
-                        backgroundColor: 'white',
-                        titleColor: '#4f46e5',
-                        bodyColor: '#4f46e5',
-                        borderColor: '#c7d2fe',
-                        borderWidth: 1,
-                        cornerRadius: 12,
-                        callbacks: {
-                          label: function(context) {
-                            return `${context.label}: ${context.parsed}%`;
-                          }
-                        }
-                      }
-                    }
-                  }}
-                />
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+                <Users className="w-6 h-6 text-white" />
               </div>
             </div>
-          </ChartCard>
+          </div>
+          <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                 {stats.staff.title}
+                </p>
+                <p className="text-2xl font-bold text-yellow-600">{dashboardData?.staffs}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
+                <UserCheck className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stats.teachers.title}</p>
+                <p className="text-2xl font-bold text-green-600">{dashboardData?.teachers}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stats.hr.title}</p>
+                <p className="text-2xl font-bold text-red-600">{dashboardData?.hr}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
+                <Building className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Admission Graph */}
+        <AdmissionGraph />
 
         {/* Secondary Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            icon={Award}
-            title="Attendance Rate"
-            value="94.2%"
-            subtitle="Overall performance"
-            trend="+2.1% from last month"
-          />
-          
-          <MetricCard
-            icon={BookOpen}
-            title="Active Courses"
-            value="127"
-            subtitle="Currently running"
-            trend="5 new this month"
-          />
-          
-          <MetricCard
-            icon={Calendar}
-            title="Events Today"
-            value="8"
-            subtitle="Scheduled activities"
-            trend="3 upcoming"
-          />
-          
-          <MetricCard
-            icon={DollarSign}
-            title="Monthly Revenue"
-            value="₹12.5L"
-            subtitle="This month"
-            trend="+18.2% growth"
-          />
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                 Active Courses
+                </p>
+                <p className="text-2xl font-bold text-purple-600">{dashboardData?.activeCourse || 0}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                 Pending Admissions
+                </p>
+                <p className="text-2xl font-bold text-yellow-600">{dashboardData?.inProcessAdmissions || 0}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-fuchsia-100 to-fuchsia-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">New Enquiries</p>
+                <p className="text-2xl font-bold text-fuchsia-600">{dashboardData?.newEnquiries || 0}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-fuchsia-500 to-fuchsia-600 rounded-lg">
+                <Eye className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

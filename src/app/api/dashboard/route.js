@@ -6,6 +6,7 @@ import Teacher from '@/app/models/teacherSchema';
 import User from '@/app/models/userSchema';
 import Admission from '@/app/models/admissionSchema';
 import Enquiry from '@/app/models/enquirySchema';
+import Academic from '@/app/models/academicSchema';
 
 export async function GET() {
   try {
@@ -17,14 +18,16 @@ export async function GET() {
       usersCount,
       hrCount,
       admissionsCount,
-      enquiriesCount
+      enquiriesCount,
+      activeCourseCount
     ] = await Promise.all([
       Student.countDocuments(),
       Teacher.countDocuments(),
       User.countDocuments({role: 'staff'}),
       User.countDocuments({role: 'hr'}),
       Admission.countDocuments({ status: 'inProcess' }),
-      Enquiry.countDocuments({ status: 'New' })
+      Enquiry.countDocuments({ status: 'New' }),
+      Academic.countDocuments({isActive: true})
     ]);
 
     return NextResponse.json({
@@ -33,7 +36,8 @@ export async function GET() {
       staffs: usersCount,
       hr: hrCount,
       inProcessAdmissions: admissionsCount,
-      newEnquiries: enquiriesCount
+      newEnquiries: enquiriesCount,
+      activeCourse: activeCourseCount
     });
 
   } catch (error) {
