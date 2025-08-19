@@ -1,100 +1,120 @@
-'use client';
+"use client"
 
-import React, { useEffect, useState } from 'react';
-import { CalendarDays, Clock, BookOpenCheck, FileText, AlertCircle, CheckCircle, Loader2, Filter, Search, Bell, Calendar, Eye } from 'lucide-react';
-import { useSession } from '@/context/SessionContext';
+import { useEffect, useState } from "react"
+import {
+  CalendarDays,
+  Clock,
+  BookOpenCheck,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Filter,
+  Search,
+  Calendar,
+  Eye,
+  Trophy,
+} from "lucide-react"
+import { useSession } from "@/context/SessionContext"
 
 function formatDate(isoDate) {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(isoDate).toLocaleDateString(undefined, options);
+  const options = { year: "numeric", month: "long", day: "numeric" }
+  return new Date(isoDate).toLocaleDateString(undefined, options)
 }
 
 function getTimeUntilExam(examDate) {
-  const now = new Date();
-  const exam = new Date(examDate);
-  const timeDiff = exam - now;
+  const now = new Date()
+  const exam = new Date(examDate)
+  const timeDiff = exam - now
 
-  if (timeDiff < 0) return 'Past';
+  if (timeDiff < 0) return "Past"
 
-  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
 
-  if (days === 0) return `${hours}h remaining`;
-  if (days === 1) return 'Tomorrow';
-  if (days <= 7) return `${days} days`;
-  return `${days} days`;
+  if (days === 0) return `${hours}h remaining`
+  if (days === 1) return "Tomorrow"
+  if (days <= 7) return `${days} days`
+  return `${days} days`
 }
 
 function getExamStatus(examDate) {
-  const now = new Date();
-  const exam = new Date(examDate);
-  const timeDiff = exam - now;
-  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const now = new Date()
+  const exam = new Date(examDate)
+  const timeDiff = exam - now
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
 
-  if (timeDiff < 0) return { status: 'past', color: 'gray', bgColor: 'bg-gray-100' };
-  if (days <= 3) return { status: 'urgent', color: 'red', bgColor: 'bg-red-50' };
-  if (days <= 7) return { status: 'soon', color: 'yellow', bgColor: 'bg-yellow-50' };
-  return { status: 'upcoming', color: 'blue', bgColor: 'bg-blue-50' };
+  if (timeDiff < 0) return { status: "past", color: "gray", bgColor: "bg-gray-100" }
+  if (days <= 3) return { status: "urgent", color: "red", bgColor: "bg-red-50" }
+  if (days <= 7) return { status: "soon", color: "yellow", bgColor: "bg-yellow-50" }
+  return { status: "upcoming", color: "blue", bgColor: "bg-blue-50" }
 }
 
 export default function ExamsPage() {
-  const { user } = useSession();
-  const studentId = user?.id;
-  const [exams, setExams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const { user } = useSession()
+  const studentId = user?.id
+  const [exams, setExams] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterStatus, setFilterStatus] = useState("all")
+
+  const getStudentResult = (exam) => {
+    if (!exam.result || !Array.isArray(exam.result) || !studentId) {
+      return null
+    }
+    return exam.result.find((result) => result.student === studentId)
+  }
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        if (!studentId) return;
-        const res = await fetch(`/api/students/${studentId}/academics`);
-        const data = await res.json();
+        if (!studentId) return
+        const res = await fetch(`/api/students/${studentId}/academics`)
+        const data = await res.json()
 
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch');
+        if (!res.ok) throw new Error(data.error || "Failed to fetch")
 
-        const academic = data.academic;
-        const division = academic?.years?.[0]?.divisions?.[0];
-        const examsArray = division?.exams || [];
+        const academic = data.academic
+        const division = academic?.years?.[0]?.divisions?.[0]
+        const examsArray = division?.exams || []
 
-        setExams(examsArray);
+        setExams(examsArray)
       } catch (err) {
-        console.error('Error fetching exams:', err);
-        setError(err.message || 'Something went wrong');
+        console.error("Error fetching exams:", err)
+        setError(err.message || "Something went wrong")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchExams();
-  }, []);
+    fetchExams()
+  }, [])
 
-
-   const LoadingSpinner = () => (
+  console.log("Exams:", exams)
+  const LoadingSpinner = () => (
     <div className="flex items-center justify-center p-8">
       <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
     </div>
-  );
+  )
 
-  const filteredExams = exams.filter(exam => {
-    const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exam.type.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredExams = exams.filter((exam) => {
+    const matchesSearch =
+      exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exam.type.toLowerCase().includes(searchTerm.toLowerCase())
 
-    if (filterStatus === 'all') return matchesSearch;
+    if (filterStatus === "all") return matchesSearch
 
-    const status = getExamStatus(exam.date).status;
-    return matchesSearch && status === filterStatus;
-  });
+    const status = getExamStatus(exam.date).status
+    return matchesSearch && status === filterStatus
+  })
 
-  const upcomingCount = exams.filter(exam => getExamStatus(exam.date).status !== 'past').length;
-  const urgentCount = exams.filter(exam => getExamStatus(exam.date).status === 'urgent').length;
+  const upcomingCount = exams.filter((exam) => getExamStatus(exam.date).status !== "past").length
+  const urgentCount = exams.filter((exam) => getExamStatus(exam.date).status === "urgent").length
 
   const handleViewResult = (examId) => {
     // Add your view result logic here
-    console.log('View result for exam:', examId);
-  };
+    console.log("View result for exam:", examId)
+  }
 
   if (loading) {
     return (
@@ -107,7 +127,7 @@ export default function ExamsPage() {
           <p className="text-gray-600">Please wait while we fetch your information...</p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -201,14 +221,15 @@ export default function ExamsPage() {
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
               <BookOpenCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <div className="text-gray-600">
-                {searchTerm || filterStatus !== 'all' ? 'No exams match your search criteria.' : 'No upcoming exams.'}
+                {searchTerm || filterStatus !== "all" ? "No exams match your search criteria." : "No upcoming exams."}
               </div>
             </div>
           ) : (
             <div className="grid gap-4">
               {filteredExams.map((exam) => {
-                const examStatus = getExamStatus(exam.date);
-                const timeUntil = getTimeUntilExam(exam.date);
+                const examStatus = getExamStatus(exam.date)
+                const timeUntil = getTimeUntilExam(exam.date)
+                const studentResult = getStudentResult(exam)
 
                 return (
                   <div
@@ -227,7 +248,9 @@ export default function ExamsPage() {
                           </div>
                         </div>
 
-                        <div className={`px-3 py-1 rounded-full text-xs font-semibold bg-${examStatus.color}-100 text-${examStatus.color}-800`}>
+                        <div
+                          className={`px-3 py-1 rounded-full text-xs font-semibold bg-${examStatus.color}-100 text-${examStatus.color}-800`}
+                        >
                           {timeUntil}
                         </div>
                       </div>
@@ -243,34 +266,41 @@ export default function ExamsPage() {
                           <span className="font-medium">Total Marks: {exam.totalMarks}</span>
                         </div>
 
-                        {/* View Result Button */}
                         <div className="flex justify-end">
-                          <button
-                            onClick={() => handleViewResult(exam._id)}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors duration-200 font-medium text-sm"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View Result
-                          </button>
+                          {studentResult ? (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg">
+                                <Trophy className="w-4 h-4" />
+                                <span className="font-semibold text-sm">
+                                  {studentResult.marks}/{exam.totalMarks}
+                                </span>
+                              </div>
+                            
+                            </div>
+                          ) : (
+                            <div className="text-gray-500 text-sm font-medium">Result not available</div>
+                          )}
                         </div>
                       </div>
 
-                      {examStatus.status === 'urgent' && (
+                      {examStatus.status === "urgent" && (
                         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                           <div className="flex items-center gap-2 text-red-700">
                             <AlertCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">Exam is coming up soon! Make sure you're prepared.</span>
+                            <span className="text-sm font-medium">
+                              Exam is coming up soon! Make sure you're prepared.
+                            </span>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }

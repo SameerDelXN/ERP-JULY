@@ -418,7 +418,7 @@ export default function CoursePlanList() {
                       </td>
                       <td className="p-3">
                         <Link
-                          href={`/reports/${course.id}`}
+                          href={`/teacher/report/${course.id}`}
                           className="text-indigo-600 hover:text-indigo-800 inline-block"
                           title="View Report"
                         >
@@ -427,7 +427,7 @@ export default function CoursePlanList() {
                       </td>
                       <td className="p-3">
                         <Link
-                          href={`/reports/${course._id}/summary`}
+                          href={`/teacher/report/${course.id}/summary`}
                           className="text-indigo-600 hover:text-indigo-800 inline-block"
                           title="View Summary Report"
                         >

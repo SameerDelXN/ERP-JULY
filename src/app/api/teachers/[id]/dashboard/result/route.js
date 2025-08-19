@@ -15,7 +15,12 @@ export async function POST(request) {
       examId,
       students 
     } = await request.json();
-
+     console.log("year", year);
+     console.log("semester", semester);
+     console.log("division", division);
+     console.log("examId", examId);
+     console.log("subject", subject);
+     console.log("students", students);
     // Validate required fields
     if (!department || !year || !semester || !division || !subject || !examId || !students) {
       return new Response(JSON.stringify({ 
@@ -24,13 +29,7 @@ export async function POST(request) {
       }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
  
-    console.log("Backend Data : ",department, 
-      year, 
-      semester, 
-      division, 
-      subject, 
-      examId,
-      students );
+   
 
     // Find the academic document
     const academicDoc = await Academic.findOne({ 

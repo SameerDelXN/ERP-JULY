@@ -5,7 +5,7 @@ import { connectToDatabase } from '../../lib/mongodb';
 import User from '../../models/userSchema';
 import teacherSchema from '../../models/teacherSchema';
 import bcrypt from 'bcryptjs'; // If you want to hash passwords
-
+import { logUserAction } from '@/app/lib/logger';
 export async function POST(req) {
   try {
     await connectToDatabase();
@@ -67,7 +67,12 @@ export async function POST(req) {
         role,
         password: hashedPassword,
       });
-
+      
+      await logUserAction({
+      userId: 'admin',
+      action: 'created_user',
+      entity: 'user',
+    });
       return NextResponse.json({
         message: 'Teacher registered successfully'
       }, {
@@ -112,7 +117,11 @@ export async function POST(req) {
         role,
         password: hashedPassword,
       });
-
+       await logUserAction({
+      userId: 'admin',
+      action: 'created_user',
+      entity: 'user',
+    });
       return NextResponse.json({ message: 'HOD registered successfully' }, { status: 201 });
     }
 
@@ -151,7 +160,11 @@ export async function POST(req) {
       password: hashedPassword,
       role,
     });
-
+     await logUserAction({
+      userId: 'admin',
+      action: 'created_user',
+      entity: 'user',
+    });
     return NextResponse.json({
       message: 'User registered successfully'
     }, {

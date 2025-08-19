@@ -61,6 +61,7 @@ export async function GET(req, { params }) {
             if (subjectExam.length > 0) {
               myExam.push({
                 exams: subjectExam.map((e) => ({
+                  id:e._id,
                   type: e.type,
                   subject: e.subject,
                   date: e.date,

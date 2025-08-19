@@ -29,7 +29,7 @@ const attendanceSchema = new mongoose.Schema({
     ],
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Teacher",
+        ref: "teacher",
         required: true
     },
     subject: {
