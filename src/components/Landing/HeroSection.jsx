@@ -18,7 +18,7 @@ const TechnicalInstituteHero = () => {
           <div className="lg:w-1/2 space-y-6 z-10">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight">
               <span className="block">Next-Gen Campus Management</span>
-              <span className="text-blue-200">for Technical Institutes</span>
+              <span className="text-blue-200">for TechEdu </span>
             </h1>
             
             <p className="text-lg md:text-xl text-blue-100 max-w-lg">
@@ -66,7 +66,7 @@ const TechnicalInstituteHero = () => {
               <div className="bg-gray-900 p-4">
                 {/* Technical dashboard mockup */}
                 <div className="flex justify-between items-center mb-4">
-                  <div className="text-sm font-mono text-blue-400">TECH-ERP v4.2</div>
+                  <div className="text-sm font-mono text-blue-400">TechEdu v4.2</div>
                   <div className="flex space-x-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500"></div>

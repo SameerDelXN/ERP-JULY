@@ -158,8 +158,6 @@ export default function StudentProfilePage() {
     }
   };
 
-
-
   //----------------------------------------------------------------------------------------
   
   // const id = student.admissionId;

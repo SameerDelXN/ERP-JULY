@@ -15,6 +15,7 @@ export async function GET() {
     const [
       studentsCount,
       teachersCount,
+      hodCounts,
       usersCount,
       hrCount,
       admissionsCount,
@@ -23,6 +24,7 @@ export async function GET() {
     ] = await Promise.all([
       Student.countDocuments(),
       Teacher.countDocuments(),
+      Teacher.countDocuments({role:'hod'}),
       User.countDocuments({role: 'staff'}),
       User.countDocuments({role: 'hr'}),
       Admission.countDocuments({ status: 'inProcess' }),
@@ -33,6 +35,7 @@ export async function GET() {
     return NextResponse.json({
       students: studentsCount,
       teachers: teachersCount,
+      hod:hodCounts,
       staffs: usersCount,
       hr: hrCount,
       inProcessAdmissions: admissionsCount,

@@ -1,470 +1,3 @@
-// "use client"
-// import { useState, useEffect } from "react"
-// import { Users, UserCheck, GraduationCap, Building, Award, BookOpen, FileText, Eye, TrendingUp } from "lucide-react"
-// import {
-//   Chart as ChartJS,
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Title,
-//   Tooltip,
-//   Legend,
-//   ArcElement,
-//   BarElement,
-//   Filler,
-// } from "chart.js"
-// import { Line, Bar } from "react-chartjs-2"
-
-// ChartJS.register(
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Title,
-//   Tooltip,
-//   Legend,
-//   ArcElement,
-//   BarElement,
-//   Filler,
-// )
-
-// const AdminDashboard = () => {
-//   const [dashboardData, setDashboardData] = useState(null)
-//   const [loading, setLoading] = useState(true)
-//   const [error, setError] = useState(null)
-//   const [admissionView, setAdmissionView] = useState("monthly") // 'monthly' or 'yearly'
-//   const [admissionData, setAdmissionData] = useState(null)
-//   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-
-//   // Fetch dashboard summary data
-//   useEffect(() => {
-//     const fetchDashboardData = async () => {
-//       try {
-//         const response = await fetch('/api/dashboard')
-//         if (!response.ok) {
-//           throw new Error('Failed to fetch dashboard data')
-//         }
-//         const data = await response.json()
-//         setDashboardData(data)
-//       } catch (err) {
-//         setError(err.message)
-//       }
-//     }
-
-//     fetchDashboardData()
-//   }, [])
-
-//   // Fetch admission analytics data
-//   useEffect(() => {
-//     const fetchAdmissionData = async () => {
-//       try {
-//         const response = await fetch(`/api/dashboard/analytics?view=${admissionView}&year=${currentYear}`)
-//         if (!response.ok) {
-//           throw new Error('Failed to fetch admission analytics')
-//         }
-//         const data = await response.json()
-//         setAdmissionData(data)
-//       } catch (err) {
-//         setError(err.message)
-//       } finally {
-//         setLoading(false)
-//       }
-//     }
-
-//     fetchAdmissionData()
-//   }, [admissionView, currentYear])
-
-//   const processAdmissionData = () => {
-//     if (!admissionData?.data?.length) return { labels: [], datasets: [] }
-
-//     if (admissionView === "monthly") {
-//       const labels = admissionData.data.map(item => `${item.period} ${item.year}`)
-//       const totalData = admissionData.data.map(item => item.total)
-//       const approvedData = admissionData.data.map(item => item.approved)
-//       const inProcessData = admissionData.data.map(item => item.inProcess)
-//       const rejectedData = admissionData.data.map(item => item.rejected)
-
-//       return {
-//         labels,
-//         datasets: [
-//           {
-//             label: "Total Admissions",
-//             data: totalData,
-//             borderColor: "rgb(99, 102, 241)",
-//             backgroundColor: "rgba(99, 102, 241, 0.1)",
-//             borderWidth: 3,
-//             fill: true,
-//             tension: 0.4,
-//           },
-//           {
-//             label: "Approved",
-//             data: approvedData,
-//             borderColor: "rgb(16, 185, 129)",
-//             backgroundColor: "rgba(16, 185, 129, 0.1)",
-//             borderWidth: 2,
-//             tension: 0.4,
-//           },
-//           {
-//             label: "In Process",
-//             data: inProcessData,
-//             borderColor: "rgb(245, 158, 11)",
-//             backgroundColor: "rgba(245, 158, 11, 0.1)",
-//             borderWidth: 2,
-//             tension: 0.4,
-//           },
-//           {
-//             label: "Rejected",
-//             data: rejectedData,
-//             borderColor: "rgb(239, 68, 68)",
-//             backgroundColor: "rgba(239, 68, 68, 0.1)",
-//             borderWidth: 2,
-//             tension: 0.4,
-//           }
-//         ],
-//       }
-//     } else {
-//       const labels = admissionData.data.map(item => item.period)
-//       const totalData = admissionData.data.map(item => item.total)
-//       const approvedData = admissionData.data.map(item => item.approved)
-//       const inProcessData = admissionData.data.map(item => item.inProcess)
-//       const rejectedData = admissionData.data.map(item => item.rejected)
-
-//       return {
-//         labels,
-//         datasets: [
-//           {
-//             label: "Total Admissions",
-//             data: totalData,
-//             backgroundColor: "rgba(99, 102, 241, 0.8)",
-//             borderColor: "rgb(99, 102, 241)",
-//             borderWidth: 2,
-//             borderRadius: 8,
-//           },
-//           {
-//             label: "Approved",
-//             data: approvedData,
-//             backgroundColor: "rgba(16, 185, 129, 0.8)",
-//             borderColor: "rgb(16, 185, 129)",
-//             borderWidth: 2,
-//             borderRadius: 8,
-//           },
-//           {
-//             label: "In Process",
-//             data: inProcessData,
-//             backgroundColor: "rgba(245, 158, 11, 0.8)",
-//             borderColor: "rgb(245, 158, 11)",
-//             borderWidth: 2,
-//             borderRadius: 8,
-//           },
-//           {
-//             label: "Rejected",
-//             data: rejectedData,
-//             backgroundColor: "rgba(239, 68, 68, 0.8)",
-//             borderColor: "rgb(239, 68, 68)",
-//             borderWidth: 2,
-//             borderRadius: 8,
-//           }
-//         ],
-//       }
-//     }
-//   }
-
-//   const EnhancedStatCard = ({ title, icon: Icon, value }) => (
-//     <div className="group relative bg-white rounded-2xl p-6 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer overflow-hidden">
-//       <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-//       <div className="relative z-10">
-//         <div className="flex items-center justify-between mb-6">
-//           <div className="relative">
-//             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-all duration-300 group-hover:scale-110">
-//               <Icon className="w-6 h-6 text-white" />
-//             </div>
-//             <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full animate-pulse" />
-//           </div>
-//         </div>
-
-//         <div className="space-y-4">
-//           <h3 className="text-indigo-700 text-sm font-semibold uppercase tracking-wide">{title}</h3>
-
-//           <div className="flex items-baseline gap-2">
-//             <span className="text-3xl font-bold text-indigo-900 group-hover:text-indigo-600 transition-colors">
-//               {value || 0}
-//             </span>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   )
-
-//   const MetricCard = ({ icon: Icon, title, value }) => (
-//     <div className="group bg-white rounded-2xl p-6 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer">
-//       <div className="flex items-center gap-4 mb-4">
-//         <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg shadow-indigo-500/25">
-//           <Icon className="w-5 h-5 text-white" />
-//         </div>
-//         <div className="flex-1">
-//           <h3 className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">{title}</h3>
-//         </div>
-//       </div>
-
-//       <div className="space-y-2">
-//         <div className="text-2xl font-bold text-indigo-900">{value || 0}</div>
-//       </div>
-//     </div>
-//   )
-
-//   const AdmissionGraph = () => {
-//     const chartData = processAdmissionData()
-
-//     const chartOptions = {
-//       responsive: true,
-//       maintainAspectRatio: false,
-//       plugins: {
-//         legend: {
-//           position: "top",
-//           labels: {
-//             font: {
-//               size: 12,
-//               weight: "600",
-//             },
-//             color: "#4338ca",
-//           },
-//         },
-//         title: {
-//           display: true,
-//           text: `Admissions Trend - ${admissionView === "monthly" ? "Monthly" : "Yearly"} View`,
-//           font: {
-//             size: 16,
-//             weight: "bold",
-//           },
-//           color: "#312e81",
-//         },
-//         tooltip: {
-//           backgroundColor: "rgba(255, 255, 255, 0.95)",
-//           titleColor: "#312e81",
-//           bodyColor: "#4338ca",
-//           borderColor: "#c7d2fe",
-//           borderWidth: 1,
-//           cornerRadius: 8,
-//           displayColors: true,
-//         },
-//       },
-//       scales: {
-//         y: {
-//           beginAtZero: true,
-//           grid: {
-//             color: "rgba(99, 102, 241, 0.1)",
-//           },
-//           ticks: {
-//             color: "#6366f1",
-//             font: {
-//               size: 11,
-//             },
-//           },
-//         },
-//         x: {
-//           grid: {
-//             display: false,
-//           },
-//           ticks: {
-//             color: "#6366f1",
-//             font: {
-//               size: 11,
-//             },
-//             maxRotation: admissionView === "monthly" ? 45 : 0,
-//           },
-//         },
-//       }
-//     }
-
-//     const handleYearChange = (increment) => {
-//       if (admissionView === "monthly") {
-//         setCurrentYear(prev => prev + increment)
-//       }
-//     }
-
-//     return (
-//       <div className="bg-white rounded-2xl p-6 border border-indigo-100/50 shadow-lg">
-//         <div className="flex items-center justify-between mb-6">
-//           <div className="flex items-center gap-3">
-//             <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg">
-//               <TrendingUp className="w-5 h-5 text-white" />
-//             </div>
-//             <h3 className="text-lg font-bold text-indigo-900">Admission Analytics</h3>
-//           </div>
-
-//           <div className="flex items-center gap-4">
-//             {admissionView === "monthly" && (
-//               <div className="flex items-center gap-2">
-//                 <button
-//                   onClick={() => handleYearChange(-1)}
-//                   className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-//                 >
-//                   &lt;
-//                 </button>
-//                 <span className="font-medium text-indigo-700">{currentYear}</span>
-//                 <button
-//                   onClick={() => handleYearChange(1)}
-//                   className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-//                 >
-//                   &gt;
-//                 </button>
-//               </div>
-//             )}
-
-//             <div className="flex gap-2">
-//               <button
-//                 onClick={() => setAdmissionView("monthly")}
-//                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-//                   admissionView === "monthly"
-//                     ? "bg-indigo-600 text-white shadow-md"
-//                     : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-//                 }`}
-//               >
-//                 Monthly
-//               </button>
-//               <button
-//                 onClick={() => setAdmissionView("yearly")}
-//                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-//                   admissionView === "yearly"
-//                     ? "bg-indigo-600 text-white shadow-md"
-//                     : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-//                 }`}
-//               >
-//                 Yearly
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-
-//         <div className="h-80">
-//           {loading ? (
-//             <div className="h-full flex items-center justify-center">
-//               <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-//             </div>
-//           ) : admissionData?.data?.length > 0 ? (
-//             admissionView === "monthly" ? (
-//               <Line data={chartData} options={chartOptions} />
-//             ) : (
-//               <Bar data={chartData} options={chartOptions} />
-//             )
-//           ) : (
-//             <div className="h-full flex items-center justify-center text-gray-500">
-//               No admission data available
-//             </div>
-//           )}
-//         </div>
-
-//         {admissionData?.summary && (
-//           <div className="mt-4 grid grid-cols-3 gap-4">
-//             <div className="text-center p-3 bg-indigo-50 rounded-lg">
-//               <div className="text-2xl font-bold text-indigo-900">
-//                 {admissionData.summary.total}
-//               </div>
-//               <div className="text-sm text-indigo-600">Total Admissions</div>
-//             </div>
-//             <div className="text-center p-3 bg-emerald-50 rounded-lg">
-//               <div className="text-2xl font-bold text-emerald-900">
-//                 {admissionData.summary.average}
-//               </div>
-//               <div className="text-sm text-emerald-600">Average per {admissionView === "monthly" ? "Month" : "Year"}</div>
-//             </div>
-//             <div className="text-center p-3 bg-purple-50 rounded-lg">
-//               <div className="text-2xl font-bold text-purple-900">
-//                 {admissionData.summary.peak.count}
-//               </div>
-//               <div className="text-sm text-purple-600">
-//                 Peak {admissionView === "monthly" ? "Month" : "Year"} ({admissionData.summary.peak.period})
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     )
-//   }
-
-//   const stats = {
-//     students: {
-//       icon: Users,
-//       title: "Total Students",
-//       route: "/admin/students",
-//     },
-//     staff: {
-//       icon: UserCheck,
-//       title: "Total Staff",
-//       route: "/admin/staff",
-//     },
-//     teachers: {
-//       icon: GraduationCap,
-//       title: "Total Teachers",
-//       route: "/admin/teachers",
-//     },
-//     hr: {
-//       icon: Building,
-//       title: "HR Personnel",
-//       route: "/admin/hr",
-//     },
-//   }
-
-//   if (loading && !dashboardData) {
-//     return (
-//       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center">
-//         <div className="text-center">
-//           <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-//           <p className="mt-4 text-indigo-600 font-medium">Loading dashboard data...</p>
-//         </div>
-//       </div>
-//     )
-//   }
-
-//   if (error) {
-//     return (
-//       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center">
-//         <div className="text-center p-6 bg-white rounded-xl shadow-md max-w-md">
-//           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-//             <Eye className="w-8 h-8 text-red-500" />
-//           </div>
-//           <h3 className="text-lg font-bold text-red-600 mb-2">Error Loading Dashboard</h3>
-//           <p className="text-gray-600 mb-4">{error}</p>
-//           <button
-//             onClick={() => window.location.reload()}
-//             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-//           >
-//             Try Again
-//           </button>
-//         </div>
-//       </div>
-//     )
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-//       <div className="p-6 space-y-8">
-//         {/* Main Stats Grid */}
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//           <EnhancedStatCard title={stats.students.title} icon={stats.students.icon} value={dashboardData?.students} />
-//           <EnhancedStatCard title={stats.staff.title} icon={stats.staff.icon} value={dashboardData?.staffs} />
-//           <EnhancedStatCard title={stats.teachers.title} icon={stats.teachers.icon} value={dashboardData?.teachers} />
-//           <EnhancedStatCard title={stats.hr.title} icon={stats.hr.icon} value={dashboardData?.hr} />
-//         </div>
-
-//         <AdmissionGraph />
-
-//         {/* Secondary Metrics */}
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//           <MetricCard icon={Award} title="Attendance Rate" value="94.2%" />
-//           <MetricCard icon={BookOpen} title="Active Courses" value={dashboardData?.activeCourse || 0} />
-//           <MetricCard icon={FileText} title="Pending Admissions" value={dashboardData?.inProcessAdmissions || 0} />
-//           <MetricCard icon={Eye} title="New Enquiries" value={dashboardData?.newEnquiries || 0} />
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default AdminDashboard
-
 "use client";
 import { useState, useEffect } from "react";
 import {
@@ -495,6 +28,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
+import { useRouter } from "next/navigation";
 
 ChartJS.register(
   CategoryScale,
@@ -517,6 +51,7 @@ const AdminDashboard = () => {
   const [admissionData, setAdmissionData] = useState(null);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
+  const router = useRouter();
   // Fetch dashboard summary data
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -953,12 +488,12 @@ const AdminDashboard = () => {
     students: {
       icon: Users,
       title: "Total Students",
-      route: "/admin/students",
+      route: "/admin/student-profiles",
     },
     staff: {
       icon: UserCheck,
       title: "Total Staff",
-      route: "/admin/staff",
+      route: "/admin/manage-users",
     },
     teachers: {
       icon: GraduationCap,
@@ -1039,48 +574,72 @@ const AdminDashboard = () => {
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div
+            className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200"
+            onClick={() => router.push(stats.students.route)}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
                   {stats.students.title}
                 </p>
-                <p className="text-2xl font-bold text-blue-600">{dashboardData?.students}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {dashboardData?.students}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
                 <Users className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div
+            className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200"
+            onClick={() => router.push(stats.staff.route)}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                 {stats.staff.title}
+                  {stats.staff.title}
                 </p>
-                <p className="text-2xl font-bold text-yellow-600">{dashboardData?.staffs}</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {dashboardData?.staffs}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
                 <UserCheck className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div
+            className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200"
+            onClick={() => router.push(stats.teachers.route)}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{stats.teachers.title}</p>
-                <p className="text-2xl font-bold text-green-600">{dashboardData?.teachers}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {stats.teachers.title}
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {dashboardData?.teachers}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div
+            className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200"
+            onClick={() => router.push(stats.hr.route)}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{stats.hr.title}</p>
-                <p className="text-2xl font-bold text-red-600">{dashboardData?.hr}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {stats.hr.title}
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {dashboardData?.hr}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
                 <Building className="w-6 h-6 text-white" />
@@ -1094,14 +653,29 @@ const AdminDashboard = () => {
 
         {/* Secondary Metrics */}
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-gradient-to-br from-teal-100 to-teal-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total HOD</p>
+                <p className="text-2xl font-bold text-teal-600">
+                  {dashboardData?.hod || 0}
+                </p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg">
+                <Eye className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
           <div className="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                 Active Courses
+                  Active Courses
                 </p>
-                <p className="text-2xl font-bold text-purple-600">{dashboardData?.activeCourse || 0}</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {dashboardData?.activeCourse || 0}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
                 <BookOpen className="w-6 h-6 text-white" />
@@ -1112,9 +686,11 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                 Pending Admissions
+                  Pending Admissions
                 </p>
-                <p className="text-2xl font-bold text-yellow-600">{dashboardData?.inProcessAdmissions || 0}</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {dashboardData?.inProcessAdmissions || 0}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
                 <Clock className="w-6 h-6 text-white" />
@@ -1124,8 +700,12 @@ const AdminDashboard = () => {
           <div className="bg-gradient-to-br from-fuchsia-100 to-fuchsia-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">New Enquiries</p>
-                <p className="text-2xl font-bold text-fuchsia-600">{dashboardData?.newEnquiries || 0}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  New Enquiries
+                </p>
+                <p className="text-2xl font-bold text-fuchsia-600">
+                  {dashboardData?.newEnquiries || 0}
+                </p>
               </div>
               <div className="p-3 bg-gradient-to-br from-fuchsia-500 to-fuchsia-600 rounded-lg">
                 <Eye className="w-6 h-6 text-white" />
