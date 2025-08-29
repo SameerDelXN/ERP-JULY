@@ -27,14 +27,18 @@ export default function StaffManagement() {
   useEffect(() => {
     const fetchStaff = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const res = await fetch('/api/hr/staff');
-        const {staff:staff,teacher} = await res.json();
-        const combined = [...staff,...teacher];
-        console.log("Staff",combined);
-        setStaff(combined);
-        setFilteredStaff(combined);
+        const data = await res.json();
+        if (data.success) {
+          setStaff(data.data);
+          setFilteredStaff(data.data);
+        } else {
+          setError(data.error || 'Failed to fetch staff');
+        }
       } catch (error) {
-        console.error('Failed to fetch staff:', error);
+        setError('Error fetching staff: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -48,10 +52,9 @@ export default function StaffManagement() {
 
       if(searchTerm){
      results = staff.filter(person =>
-      person?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-       person?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person?.staffId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person?.teacherId?.toLowerCase().includes(searchTerm.toLowerCase())
+  (person.staffId?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (person.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (person.department?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
     );
   }
 
@@ -84,40 +87,49 @@ export default function StaffManagement() {
     const method = currentStaff ? 'PUT' : 'POST';
 
 
-    const apiData = isTeacher ?{
-      fullName : formData.name,
-      email: formData.email,
-      phone: formData.contactNumber,
-      department: formData.department,
-      role: formData.designation,
-      salary: formData.salary,
-      teacherId: formData.staffId
-    } : {
+    const apiData = {
+      staffId: formData.staffId,
       name: formData.name,
       email: formData.email,
-      contactNumber: formData.contactNumber,
+      contactNumber: formData.contactNumber || null,
       department: formData.department,
       designation: formData.designation,
-      salary: formData.salary,
-      staffId: formData.staffId
+      salary: formData.salary ? parseFloat(formData.salary) : null,
+      password: isTeacher ? formData.password : undefined,
     };
 
     try {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(apiData),
       });
-      const newStaff = await res.json();
-      
+      const response = await res.json();
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to save staff');
+      }
+
+      const newStaff = response.data;
       if (currentStaff) {
-        setStaff(staff.map(s => s._id === newStaff._id ? newStaff : s));
+        setStaff(staff.map((s) => (s._id === newStaff._id ? newStaff : s)));
       } else {
         setStaff([...staff, newStaff]);
       }
       setIsModalOpen(false);
+      setFormData({
+        staffId: '',
+        name: '',
+        email: '',
+        department: 'HR',
+        designation: '',
+        salary: '',
+        contactNumber: '',
+        password: '',
+      });
+      setError(null);
     } catch (error) {
-      console.error('Error saving staff:', error);
+      setError('Error saving staff: ' + error.message);
     }
   };
 
@@ -134,16 +146,17 @@ export default function StaffManagement() {
   };
 
   // Open modal for editing
-  const handleEdit = (staff) => {
+   const handleEdit = (staff) => {
     setCurrentStaff(staff);
     setFormData({
-      staffId: staff.staffId,
-      name: staff.name,
-      email: staff.email,
-      department: staff.department,
-      designation: staff.designation,
-      salary: staff.salary,
-      contactNumber: staff.contactNumber || ''
+      staffId: staff.staffId || '',
+      name: staff.name || '',
+      email: staff.email || '',
+      department: staff.department || 'HR',
+      designation: staff.designation || '',
+      salary: staff.salary || '',
+      contactNumber: staff.phone || '',
+      password: '', // Password not retrieved for security
     });
     setIsModalOpen(true);
   };
@@ -158,7 +171,8 @@ export default function StaffManagement() {
       department: 'HR',
       designation: '',
       salary: '',
-      contactNumber: ''
+      contactNumber: '',
+      password: '',
     });
     setIsModalOpen(true);
   };
@@ -173,20 +187,22 @@ const getInitials = (name) => {
     .substring(0, 2);
 };
 
+console.log("Staff",staff);
+
   if (loading) return <div className="text-center py-8">Loading staff data...</div>;
   console.log(filteredStaff)
-  return (
+   return (
     <div className="p-6 m-6 text-gray-950 bg-white rounded-lg shadow overflow-hidden">
       
 
       {/* Search Bar */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <div className="relative w-full max-w-xs">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Search by name or ID..."
+              placeholder="Search by name, ID, or department..."
               className="pl-10 pr-2 py-1.5 w-full border rounded-lg focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -195,11 +211,11 @@ const getInitials = (name) => {
           <select
             className="ml-2 py-2 px-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
             value={roleFilter}
-            onChange={e => setRoleFilter(e.target.value)}
+            onChange={(e) => setRoleFilter(e.target.value)}
           >
-            <option value="all">All Role</option>
+            <option value="all">All Roles</option>
             <option value="teaching">Teaching</option>
-            <option value="non-teaching">Non Teaching Staff</option>
+            <option value="non-teaching">Non-Teaching</option>
           </select>
         </div>
         <button
@@ -211,243 +227,209 @@ const getInitials = (name) => {
         </button>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
-        {/* <h1 className="text-2xl font-bold">Staff Management</h1> */}
-        
-      </div>
-
       {/* Staff Table */}
-      {/* <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
-         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salary</th> 
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salary</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredStaff?.map((person) => (
-              <tr key={person._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{person.staffId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{person.salary.toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button
-                    onClick={() => handleEdit(person)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(person._id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+            {filteredStaff?.length > 0 ? (
+              filteredStaff.map((person) => (
+                <tr key={person._id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 mr-2 rounded-full bg-gray-100 flex items-center justify-center text-gray-950 font-medium">
+                        {getInitials(person.name)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900">{person.name || 'N/A'}</span>
+                        <span className="text-xs text-gray-500">{person.staffId || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {person.salary ? `₹${Number(person.salary).toLocaleString()}` : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button
+                      onClick={() => handleEdit(person)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(person._id, person.type)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                  No staff found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-      </div> */}
-
-      {/* Staff Table */}
-<div className="bg-white rounded-lg shadow overflow-hidden">
-  <table className="min-w-full divide-y divide-gray-200">
-    <thead className="bg-gray-50">
-      <tr>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-gray-200">
-      {filteredStaff?.map((person) => (
-        <tr key={person._id}>
-          <td className="px-6 py-4 whitespace-nowrap">
-            <div className="flex items-center">
-              <div className='flex-shrink-0 h-10 w-10 mr-2 rounded-full bg-gray-100 flex items-center justify-center text-gray-950 font-medium'>
-                {getInitials(person.name || person.fullName)}
-              </div>
-              <div className='flex flex-col'>
-                <span className="text-sm font-medium text-gray-900">{person.name || person.fullName}</span>
-              <span className="text-xs text-gray-500">{person.staffId || person.teacherId}</span>
-              </div>
-              
-            </div>
-          </td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department}</td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation || person.role}</td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            <button
-              onClick={() => handleEdit(person)}
-              className="text-blue-600 hover:text-blue-900 mr-4"
-            >
-              <Edit size={16} />
-            </button>
-            <button
-              onClick={() => handleDelete(person._id)}
-              className="text-red-600 hover:text-red-900"
-            >
-              <Trash2 size={16} />
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-      {/* Add/Edit Modal */}
-      {/* Add/Edit Modal */}
-{isModalOpen && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-lg p-6 w-full max-w-2xl"> {/* Increased max-width */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">
-          {currentStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
-        </h2>
-        <button 
-          onClick={() => setIsModalOpen(false)}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          ✕
-        </button>
       </div>
-      
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> {/* Two-column grid */}
-          {/* Column 1 */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-              <input
-                type="text"
-                name="staffId"
-                value={formData.staffId || formData.teacherId}
-                onChange={handleInputChange}
-                placeholder="Enter Staff ID"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName || formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter full name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter email address"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+      {/* Add/Edit Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">
+                {currentStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
               >
-                <option value="">Select Department</option>
-                <option value="HR">HR</option>
-                <option value="teacher">Teacher</option>
-                <option value="account">Account</option>
-                {/* <option value="hod">HOD</option> */}
-                <option value="library">Library</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Column 2 */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
-              <input
-                type="text"
-                name="position"
-                value={formData.position || formData.role}
-                onChange={handleInputChange}
-                placeholder="Enter position"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+                ✕
+              </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salary *</label>
-              <input
-                type="number"
-                name="salary"
-                value={formData.salary}
-                onChange={handleInputChange}
-                placeholder="Enter salary"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
-              <input
-                type="tel"
-                name="contactNumber"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="Enter phone number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID *</label>
+                    <input
+                      type="text"
+                      name="staffId"
+                      value={formData.staffId}
+                      onChange={handleInputChange}
+                      placeholder="Enter Staff ID"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Enter full name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Enter email address"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+                    <select
+                      name="department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="HR">HR</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="HOD">HOD</option>
+                      <option value="Account">Account</option>
+                      <option value="Library">Library</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+                    <input
+                      type="text"
+                      name="designation"
+                      value={formData.designation}
+                      onChange={handleInputChange}
+                      placeholder="Enter position"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                    <input
+                      type="number"
+                      name="salary"
+                      value={formData.salary}
+                      onChange={handleInputChange}
+                      placeholder="Enter salary"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required={formData.department !== 'Teacher' && formData.department !== 'HOD'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <input
+                      type="tel"
+                      name="contactNumber"
+                      value={formData.contactNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter phone number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required={formData.department === 'Teacher' || formData.department === 'HOD'}
+                    />
+                  </div>
+                  {(formData.department === 'Teacher' || formData.department === 'HOD') && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        placeholder="Enter password"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 pt-6 mt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                >
+                  {currentStaff ? 'Update Staff' : 'Add Staff'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        {/* Full-width buttons below the columns */}
-        <div className="flex justify-end space-x-3 pt-6 mt-4 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(false)}
-            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          >
-            {currentStaff ? 'Update Staff' : 'Add Staff'}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-      
+      )}
     </div>
   );
 }

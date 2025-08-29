@@ -5,14 +5,54 @@ import Staff from '@/models/staff';
 import teacher from '@/app/models/teacherSchema';
 
 export async function GET() {
-  await connectToDatabase();
   try {
-    const staffList = await Staff.find().sort({ joiningDate: -1 });
-    const teacherList = await teacher.find().sort({dateOfJoining:-1});
+    await connectToDatabase();
 
-    return NextResponse.json({ success: true, staff: staffList , teacher:teacherList});
+    // Fetch staff and teacher records, sorted by joining date
+    const staffList = await Staff.find().sort({ joiningDate: -1 }).lean();
+    const teacherList = await teacher.find().sort({ dateOfJoining: -1 }).lean();
+
+
+    console.log(staffList);
+    // Normalize fields to a consistent structure
+    const combinedList = [
+      ...staffList.map((item) => ({
+        _id: item._id.toString(),
+        staffId: item.staffId,
+        name: item.name,
+        email: item.email,
+        phone: item.phone || null,
+        department: item.department,
+        designation: item.designation,
+        salary: item.salary,
+        joiningDate: item.joiningDate,
+        leaveCount: item.leaveCount,
+        type: 'staff', // Add type to distinguish staff
+      })),
+      ...teacherList.map((item) => ({
+        _id: item._id.toString(),
+        staffId: item.teacherId,
+        name: item.fullName,
+        email: item.email,
+        phone: item.phone || null,
+        department: item.department || (item.role === 'hod' ? 'HOD' : 'Teacher'),
+        designation: item.role === 'hod' ? 'HOD' : item.role || 'Teacher',
+        salary: item.salary || null, // Teacher schema doesn't have salary, so default to null
+        joiningDate: item.dateOfJoining,
+        leaveCount: null, // Teacher schema doesn't have leaveCount
+        type: 'teacher', // Add type to distinguish teacher
+      })),
+    ];
+
+    console.log("Combined",combinedList);
+
+    return NextResponse.json({ success: true, data: combinedList });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('Error fetching employees:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch employees' },
+      { status: 500 }
+    );
   }
 }
 

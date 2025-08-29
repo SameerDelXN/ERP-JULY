@@ -40,7 +40,8 @@ export default function PayrollPage() {
     } else {
       const filtered = employees.filter(emp => 
         (emp.staffId && emp.staffId.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (emp.name && emp.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        (emp.name && emp.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (emp.department?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
       );
       setFilteredEmployees(filtered);
     }
@@ -97,7 +98,7 @@ export default function PayrollPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEmployees.length > 0 ? (
+                {filteredEmployees?.length > 0 ? (
                   filteredEmployees.map((employee) => (
                     <tr key={employee._id}>
                       {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.staffId}</td>
