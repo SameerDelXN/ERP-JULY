@@ -1,8 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { BookOpen, Users, Search, FileText, Edit, Home, GraduationCap, Calendar } from "lucide-react"
-import { useSession } from "@/context/SessionContext"
+import { useState, useEffect } from "react";
+import {
+  ClipboardList,
+  BookOpen,
+  Users,
+  Search,
+  Filter,
+  ChevronDown,
+  MoreVertical,
+  FileText,
+  Download,
+  Printer,
+  Plus,
+  Edit,
+  Trash2,
+  Clock,
+  Home,
+  GraduationCap,
+  Calendar,
+} from "lucide-react";
+import { useSession } from "@/context/SessionContext";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function MarksPage() {
   const [loading, setLoading] = useState(true)
@@ -123,11 +142,11 @@ export default function MarksPage() {
         }),
       )
 
-      alert("Marks saved successfully!")
+      toast.success("Marks saved successfully!")
     } catch (error) {
       console.error("Error saving marks:", error)
       setError(error.message)
-      alert(`Error saving marks: ${error.message}`)
+      toast.error(`Error saving marks: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -351,6 +370,8 @@ export default function MarksPage() {
 
   return (
     <div className="min-h-screen bg-indigo-50">
+      <Toaster/>
+      {/* Main Content */}
       <main className="container mx-auto p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>

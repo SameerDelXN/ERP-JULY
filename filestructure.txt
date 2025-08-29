@@ -15,6 +15,7 @@
     |-- login4.jpeg
     |-- login5.jpg
     |-- login6.jpg
+    |-- Logo.png
     |-- next.svg
     |-- TechEdu.svg
     |-- vercel.svg
@@ -45,6 +46,10 @@
                 |-- page.jsx
             |-- staff-directory
                 |-- page.jsx
+            |-- student-profiles
+                |-- page.jsx
+                |-- [id]
+                    |-- page.jsx
         |-- api
             |-- admission
                 |-- route.js
@@ -74,7 +79,15 @@
                 |-- [id]
                     |-- route.js
             |-- dashboard
+                |-- analytics
+                    |-- route.js
+                |-- hod
+                    |-- route.js
                 |-- route.js
+                |-- staff
+                    |-- route.js
+                |-- teacher
+                    |-- route.js
             |-- department
                 |-- route.js
                 |-- [id]

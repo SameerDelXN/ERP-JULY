@@ -370,7 +370,7 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
       onClose();
       toast.success("Assign Counselor Successfully..!!");
     } catch (error) {
-      alert(`Failed to assign counselor: ${error.message}`);
+      toast.error(`Failed to assign counselor: ${error.message}`);
     }
   };
 

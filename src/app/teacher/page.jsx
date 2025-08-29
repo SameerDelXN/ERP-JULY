@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+
 const StatCard = ({ title, value, icon: Icon, color, trend }) => (
   <div className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderLeftColor: color }}>
     <div className="flex items-center justify-between">
@@ -316,7 +317,7 @@ export default function TeacherDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex space-x-8 mb-8">
           {tabs.map((tab) => (

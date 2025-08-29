@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { roles } from "@/data/data";
 import LoadingComponent from "@/components/Loading";
+import toast, { Toaster } from "react-hot-toast";
 
 const UserManagementPage = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -110,7 +111,7 @@ const UserManagementPage = () => {
       setUserPerformance(data);
       setShowPerformanceModal(true);
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
       console.error("Performance fetch error:", err);
     } finally {
       setLoading(false);
@@ -145,9 +146,9 @@ const UserManagementPage = () => {
       }
 
       await fetchAllUsers();
-      alert("User deleted successfully");
+      toast.success("User deleted successfully");
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
       console.error("Delete error:", err);
     } finally {
       setLoading(false);
@@ -390,11 +391,11 @@ const UserManagementPage = () => {
           throw new Error(data.error || "Registration failed");
         }
 
-        alert("User registered successfully!");
+        toast.success("User registered successfully!");
         setShowAddUserModal(false);
         fetchAllUsers();
       } catch (err) {
-        alert(err.message);
+        toast.error(err.message);
         console.error("Registration error:", err);
       } finally {
         setIsSubmitting(false);
@@ -403,6 +404,7 @@ const UserManagementPage = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Toaster/>
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">Add New User</h2>
@@ -816,10 +818,10 @@ const UserManagementPage = () => {
 
         // Refresh user list
         await fetchAllUsers();
-        alert("User updated successfully!");
+        toast.success("User updated successfully!");
         setShowEditUserModal(false);
       } catch (err) {
-        alert(err.message);
+        toast.error(err.message);
         console.error("Update error:", err);
       } finally {
         setIsSubmitting(false);
@@ -828,6 +830,7 @@ const UserManagementPage = () => {
     console.log(formData);
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Toaster/>
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">Edit User</h2>
@@ -1026,6 +1029,7 @@ const UserManagementPage = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Toaster/>
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">
@@ -1130,6 +1134,7 @@ const UserManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster/>
       <div className="p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
           <div className="flex border-b border-gray-100">

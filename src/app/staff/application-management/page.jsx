@@ -2092,7 +2092,7 @@ const AdmissionApplications = () => {
 
   const handleExportToExcel = () => {
     if (!admission || admission.length === 0) {
-      alert("No data to export");
+      toast.error("No data to export");
       return;
     }
 

@@ -107,6 +107,7 @@
 import { useSession } from '@/context/SessionContext';
 import { BookOpen, Plus, Loader2, AlertCircle, X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 const Classes = ({ teacherId }) => {
     const [classes, setClasses] = useState([]);
@@ -360,7 +361,7 @@ const Classes = ({ teacherId }) => {
                         Close
                     </button>
                     <button 
-                        onClick={() => alert(`Saving changes for ${selectedClass.name}`)}
+                        onClick={() => toast.success(`Saving changes for ${selectedClass.name}`)}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                     >
                         Save Changes
@@ -376,6 +377,7 @@ const Classes = ({ teacherId }) => {
 
     return (
         <div className="space-y-6">
+            <Toaster/>
             {modalType === 'view' && renderViewClassModal()}
             {modalType === 'manage' && renderManageClassModal()}
 

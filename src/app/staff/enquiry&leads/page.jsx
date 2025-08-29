@@ -3,38 +3,26 @@ import React, { useEffect, useState } from "react";
 import {
   Search,
   Filter,
-  Plus,
   Eye,
   Edit,
-  Trash2,
   Phone,
   Mail,
   Calendar,
   User,
   GraduationCap,
-  MapPin,
-  Star,
   Clock,
-  CheckCircle,
   XCircle,
-  AlertCircle,
   Users,
-  UserCheck,
-  ArrowUpRight,
-  ArrowDownRight,
-  Download,
-  MoreVertical,
   UserPlus,
-  Briefcase,
   MessageSquare,
   Zap,
   Target,
   Activity,
   TrendingUp,
 } from "lucide-react";
-import Image from "next/image";
 import { useSession } from "@/context/SessionContext";
 import LoadingComponent from "@/components/Loading";
+import toast, { Toaster } from "react-hot-toast";
 
 const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const [enquiry, setEnquiry] = useState(null);
@@ -330,7 +318,7 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.followUpDate) {
-      alert("Follow-up date is required");
+      toast("Follow-up date is required");
       return;
     }
     try {
@@ -343,7 +331,7 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
       onClose();
     } catch (error) {
       console.error("Submission error:", error);
-      alert(`Failed to update status: ${error.message}`);
+      toast.error(`Failed to update status: ${error.message}`);
     }
   };
   const handleStatusChange = (status) => {
@@ -360,6 +348,7 @@ const StatusChangeModal = ({ onClose, onSubmit, enquiryId, currentStatus }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Toaster/>
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative border border-gray-100">
         <div className="flex items-center rounded-2xl justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-3">

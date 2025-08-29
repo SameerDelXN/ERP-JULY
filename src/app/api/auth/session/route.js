@@ -68,10 +68,12 @@ export async function GET() {
     const cookieStore = cookies();
     const sessionToken = cookieStore.get('sessionToken')?.value;
     const role = cookieStore.get('role')?.value;
-    console.log("session = ",sessionToken)
+
+
     console.log("Session token from cookies:", sessionToken);
     console.log("Role from cookies:", role);
     console.log(role)
+
     if (!sessionToken || !role) {
       console.log('No session token or role found');
       return Response.json({ user: null }, { status: 200 });
@@ -92,7 +94,7 @@ export async function GET() {
           role: hod.role,
           department: hod.department,
           teacherId: hod.teacherId,
-          isHod: true,
+          // isHod: true,
         },
       });
     }
