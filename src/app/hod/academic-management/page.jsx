@@ -72,7 +72,8 @@ const AcademicManagement = () => {
     type: '',
     subject: '',
     totalMarks: '',
-    date: ''
+    date: '',
+    duration: ''
   });
 
   // Days and periods for timetable
@@ -340,7 +341,7 @@ const AcademicManagement = () => {
 
   const addExam = async () => {
     try {
-      if (!newExam.type || !newExam.subject || !newExam.totalMarks || !newExam.date) {
+      if (!newExam.type || !newExam.subject || !newExam.totalMarks || !newExam.date || !newExam.duration) {
         setError('Please fill in all exam details');
         return;
       }
@@ -366,7 +367,8 @@ const AcademicManagement = () => {
         type: '',
         subject: '',
         totalMarks: '',
-        date: ''
+        date: '',
+        duration: ''
       });
       setError(null);
       setEditingYear(null);
@@ -934,7 +936,7 @@ const AcademicManagement = () => {
 
     // Validate exam data
     const validateExam = () => {
-      if (!newExam.type || !newExam.subject || !newExam.totalMarks || !newExam.date) {
+      if (!newExam.type || !newExam.subject || !newExam.totalMarks || !newExam.date || !newExam.duration) {
         setError('Please fill in all required fields');
         return false;
       }
@@ -968,7 +970,8 @@ const AcademicManagement = () => {
         if (
           existingExams[i].type === newExam.type &&
           existingExams[i].subject === newExam.subject &&
-          existingExams[i].date === newExam.date
+          existingExams[i].date === newExam.date &&
+          existingExams[i].duration === newExam.duration
         ) {
           setError('An exam of this type for this subject already exists on this date');
           return false;
@@ -1008,7 +1011,8 @@ const AcademicManagement = () => {
           type: '',
           subject: '',
           totalMarks: '',
-          date: ''
+          date: '',
+          duration:''
         });
         setError(null);
         setDateError(null);
@@ -1099,6 +1103,18 @@ const AcademicManagement = () => {
                 min={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setNewExam({ ...newExam, date: e.target.value })}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Duration*</label>
+              <input
+                type="number"
+                min="1"
+                value={newExam.duration}
+                onChange={(e) => setNewExam({ ...newExam, duration: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g 30 min"
               />
             </div>
 
@@ -1474,7 +1490,8 @@ const AcademicManagement = () => {
                         type: '',
                         subject: '',
                         totalMarks: '',
-                        date: ''
+                        date: '',
+                        duration:''
                       });
                       setEditingExam(null);
                       setShowExamModal(true);
@@ -1507,7 +1524,8 @@ const AcademicManagement = () => {
                               type: '',
                               subject: '',
                               totalMarks: '',
-                              date: ''
+                              date: '',
+                              duration:''
                             });
                             setEditingExam(null);
                             setShowExamModal(true);
@@ -1526,6 +1544,7 @@ const AcademicManagement = () => {
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Exam Type</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Marks</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
@@ -1536,6 +1555,7 @@ const AcademicManagement = () => {
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.type}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.subject}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.totalMarks}</td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">{exam.duration}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">
                                   {new Date(exam.date).toLocaleDateString()}
                                 </td>
@@ -1549,7 +1569,8 @@ const AcademicManagement = () => {
                                           type: exam.type,
                                           subject: exam.subject,
                                           totalMarks: exam.totalMarks,
-                                          date: exam.date.split('T')[0] // Format date for input
+                                          date: exam.date.split('T')[0] ,// Format date for input
+                                          duration: exam.duration
                                         });
                                         setEditingExam(examIndex);
                                         setShowExamModal(true);

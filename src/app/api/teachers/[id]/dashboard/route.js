@@ -65,6 +65,8 @@ export async function GET(req, { params }) {
                   type: e.type,
                   subject: e.subject,
                   date: e.date,
+                  duration: e.duration,
+                  totalMarks: e.totalMarks
                 })),
               });
             }
@@ -72,6 +74,8 @@ export async function GET(req, { params }) {
         }
       }
     }
+
+    
 
     return NextResponse.json(
       {

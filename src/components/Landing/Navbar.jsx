@@ -39,20 +39,17 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/" className="flex items-center group">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg flex items-center justify-center group-hover:from-blue-700 group-hover:to-blue-500 transition-all">
-              <span className="text-white font-bold text-xl">TE</span>
-            </div>
-            <div className="w-full h-full">
-            <Image
-              width={100}
-              height={100}
-              src="\TechEdu.svg"
-              alt="TechEdu Logo"
-              className="w-full h-full object-cover "
+          {/* ✅ Logo (only image, cropped bottom) */}
+          <Link href="/" className="flex items-center">
+            <div className="w-44 h-16 relative overflow-hidden rounded-lg shadow-md transition-transform transform hover:scale-105 ">
+              <Image
+                width={1920}
+                height={1080}
+                src="\TechEdu.svg"
+                alt="TechEdu Logo"
+                className="w-full h-full object-cover "
               />
-              </div>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
