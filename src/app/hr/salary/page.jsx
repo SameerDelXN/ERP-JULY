@@ -12,12 +12,14 @@ export default function SalaryPage() {
     leaveDeduction: ''
   });
   const [salaryRecords, setSalaryRecords] = useState([]);
+  const [staffList, setStaffList] = useState([]); // NEW: staff list state
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
+    // Fetch salary records
     fetch('/api/hr/salary')
       .then(res => res.json())
       .then(data => {
@@ -25,14 +27,80 @@ export default function SalaryPage() {
       })
       .catch(() => setSalaryRecords([]))
       .finally(() => setIsLoading(false));
+    // Fetch staff list
+    fetch('/api/hr/staff')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setStaffList(data.data);
+      })
+      .catch(() => setStaffList([]));
   }, []);
 
+  // Enhanced input change handler for syncing
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    let updatedForm = { ...formData, [name]: value };
+
+    // Helper: find in salaryRecords
+    const findInSalary = (key, val) => salaryRecords.find(r => r[key] === val);
+    // Helper: find in staffList
+    const findInStaff = (key, val) => staffList.find(s => s[key] === val);
+
+    if (name === 'staffId') {
+      // Try to find in salary records first
+      const salaryRec = findInSalary('staffId', value);
+      if (salaryRec) {
+        updatedForm = {
+          staffId: salaryRec.staffId.staffId,
+          name: salaryRec.name,
+          baseSalary: salaryRec.baseSalary?.toString() || '',
+          allowances: salaryRec.allowances?.toString() || '',
+          deductions: salaryRec.deductions?.toString() || '',
+          leaveDeduction: salaryRec.leaveDeduction?.toString() || ''
+        };
+        setEditingId(salaryRec._id);
+      } else {
+        // Not in salary, try staff list
+        const staff = findInStaff('staffId', value);
+        if (staff) {
+          updatedForm.name = staff.name;
+        }
+        // Clear salary fields for new entry
+        updatedForm.baseSalary = '';
+        updatedForm.allowances = '';
+        updatedForm.deductions = '';
+        updatedForm.leaveDeduction = '';
+        setEditingId(null);
+      }
+    }
+    if (name === 'name') {
+      // Try to find in salary records first
+      const salaryRec = findInSalary('name', value);
+      if (salaryRec) {
+        updatedForm = {
+          staffId: salaryRec.staffId._id,
+          name: salaryRec.name,
+          baseSalary: salaryRec.baseSalary?.toString() || '',
+          allowances: salaryRec.allowances?.toString() || '',
+          deductions: salaryRec.deductions?.toString() || '',
+          leaveDeduction: salaryRec.leaveDeduction?.toString() || ''
+        };
+        setEditingId(salaryRec._id);
+      } else {
+        // Not in salary, try staff list
+        const staff = findInStaff('name', value);
+        if (staff) {
+          updatedForm.staffId = staff.staffId;
+        }
+        // Clear salary fields for new entry
+        updatedForm.baseSalary = '';
+        updatedForm.allowances = '';
+        updatedForm.deductions = '';
+        updatedForm.leaveDeduction = '';
+        setEditingId(null);
+      }
+    }
+    setFormData(updatedForm);
   };
 
   const calculateNetSalary = () => {
@@ -51,7 +119,7 @@ export default function SalaryPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          staffId: formData.staffId,
+          staffId: formData.staffId?.staffId,
           name: formData.name,
           baseSalary: parseFloat(formData.baseSalary),
           allowances: parseFloat(formData.allowances) || 0,
@@ -88,7 +156,7 @@ export default function SalaryPage() {
 
   const handleEdit = (record) => {
     setFormData({
-      staffId: record.staffId,
+      staffId: record.staffId?.staffId || record.staffId,
       name: record.name,
       baseSalary: record.baseSalary.toString(),
       allowances: record.allowances.toString(),
@@ -109,13 +177,13 @@ export default function SalaryPage() {
   );
 console.log(salaryRecords)
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">Salary Structure Management</h1>
+    <div className="space-y-6 px-2 sm:px-4 md:px-8 max-w-5xl mx-auto w-full">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Salary Structure Management</h1>
           <a 
             href="/hr/payroll" 
-            className="inline-flex items-center text-[#093FB4] hover:text-blue-700 font-medium cursor-pointer"
+            className="inline-flex items-center text-[#093FB4] hover:text-blue-700 font-medium cursor-pointer text-sm sm:text-base"
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -125,8 +193,8 @@ console.log(salaryRecords)
         </div>
 
         {/* Add/Edit Salary Form */}
-        <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <div className="bg-blue-50 p-4 sm:p-6 rounded-lg border border-blue-200 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
             {editingId ? 'Edit Salary Structure' : 'Add New Salary Structure'}
           </h2>
           
@@ -236,19 +304,19 @@ console.log(salaryRecords)
 
             {/* Net Salary Preview */}
             {(formData.baseSalary || formData.allowances || formData.deductions || formData.leaveDeduction) && (
-              <div className="bg-gray-50 p-4 rounded-md border">
-                <p className="text-sm text-gray-600">
-                  Net Salary Preview: <span className="font-bold text-lg text-[#093FB4]">${calculateNetSalary().toLocaleString()}</span>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-md border">
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Net Salary Preview: <span className="font-bold text-base sm:text-lg text-[#093FB4]">${calculateNetSalary().toLocaleString()}</span>
                 </p>
               </div>
             )}
 
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className={`px-6 py-2 rounded-md font-medium ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#093FB4] hover:bg-blue-700 text-[#FFFCFB]'}`}
+                className={`px-4 sm:px-6 py-2 rounded-md font-medium ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#093FB4] hover:bg-blue-700 text-[#FFFCFB]'}`}
               >
                 {isLoading ? 'Processing...' : editingId ? 'Update Salary' : 'Add Salary Structure'}
               </button>
@@ -267,7 +335,7 @@ console.log(salaryRecords)
                       leaveDeduction: ''
                     });
                   }}
-                  className="px-6 py-2 rounded-md font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  className="px-4 sm:px-6 py-2 rounded-md font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
                 >
                   Cancel
                 </button>
@@ -277,7 +345,7 @@ console.log(salaryRecords)
         </div>
 
         {/* Search and Table */}
-        <div className="mb-4 flex items-center">
+        {/* <div className="mb-4 flex items-center">
           <input
             type="text"
             placeholder="Search by name or staff ID..."
@@ -288,50 +356,43 @@ console.log(salaryRecords)
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Base Salary</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Allowances</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deductions</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leave Deduction</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Net Salary</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Base Salary</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Allowances</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deductions</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leave Deduction</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Net Salary</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRecords.map(record => (
                 <tr key={record._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.staffId}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.baseSalary?.toLocaleString?.() ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.allowances?.toLocaleString?.() ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.deductions?.toLocaleString?.() ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.leaveDeduction?.toLocaleString?.() ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">${record.netSalary?.toLocaleString?.() ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{record.staffId}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{record.name}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{record.baseSalary?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">${record.allowances?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">${record.deductions?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">₹{record.leaveDeduction?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-bold">₹{record.netSalary?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     <button
                       className="text-blue-600 hover:text-blue-900 mr-2"
                       onClick={() => handleEdit(record)}
                     >
                       Edit
                     </button>
-                    {/*
-                    <button
-                      className="text-red-600 hover:text-red-900"
-                      onClick={() => handleDelete(record._id)}
-                    >
-                      Delete
-                    </button>
-                    */}
+                   
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
       </div>
     </div>
   );

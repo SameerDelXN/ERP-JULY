@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectDB from '@/lib/mongoose';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import { Salary, Payslip } from '@/models/payroll';
 import Staff from '@/models/staff';
 
@@ -170,7 +171,7 @@ import Staff from '@/models/staff';
 // }
 
 export async function GET(req, { params }) {
-  await connectDB(); // First await any async operations
+  await connectToDatabase(); // First await any async operations
   const identifier = params.staffid; // Then access params
 
   try {
@@ -250,3 +251,73 @@ export async function GET(req, { params }) {
     );
   }
 }
+
+export async function POST(req, { params }) {
+  await connectToDatabase();
+  const identifier = params.staffid;
+  try {
+    const { month, year } = await req.json();
+    if (!month || !year) {
+      return NextResponse.json({ success: false, message: 'Month and year are required.' }, { status: 400 });
+    }
+
+    // Find staff by staffId (string) or ObjectId
+    let staff = await Staff.findOne({ staffId: identifier });
+    if (!staff && mongoose.Types.ObjectId.isValid(identifier)) {
+      staff = await Staff.findById(identifier);
+    }
+    if (!staff) {
+      return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
+    }
+
+    // Try to find existing payslip for this staff, month, and year
+    let payslip = await Payslip.findOne({ staffId: staff._id, month, year });
+    if (payslip) {
+      return NextResponse.json({ success: true, data: [payslip] });
+    }
+
+    // Find salary info
+    const salary = await Salary.findOne({ staffId: staff._id });
+    if (!salary) {
+      return NextResponse.json({ success: false, message: 'Salary not found' }, { status: 404 });
+    }
+
+    // Calculate earnings and deductions (customize as needed)
+    const gross = (salary.earnings?.baseSalary || 0) + (salary.earnings?.allowances || 0);
+    const totalDeductions = (salary.deductions?.pf || 0) + (salary.deductions?.leave || 0);
+    const net = gross - totalDeductions;
+
+    // Create new payslip
+    payslip = await Payslip.create({
+      staffId: staff._id,
+      month,
+      year,
+      dateOfIssue: new Date(),
+      earnings: {
+        basic: salary.earnings?.baseSalary || 0,
+        hra: salary.earnings?.allowances || 0,
+        da: 0,
+        specialAllowance: 0,
+        bonus: 0,
+        other: 0
+      },
+      deductions: {
+        pf: salary.deductions?.pf || 0,
+        tds: 0,
+        loan: 0,
+        leave: salary.deductions?.leave || 0,
+        other: 0
+      },
+      grossEarnings: gross,
+      totalDeductions: totalDeductions,
+      netSalary: net,
+      paymentStatus: 'Pending'
+    });
+
+    return NextResponse.json({ success: true, data: [payslip] });
+  } catch (error) {
+    console.error('❌ Payslip POST error:', error);
+    return NextResponse.json({ success: false, message: 'Server error', error: error.message }, { status: 500 });
+  }
+}
+  

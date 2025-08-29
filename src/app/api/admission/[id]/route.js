@@ -1,16 +1,18 @@
-// import { connectToDatabase } from '../../../lib/mongodb';
-// import admissionSchema from '../../../models/admissionSchema';
+import { connectToDatabase } from '../../../lib/mongodb';
+import admissionSchema from '../../../models/admissionSchema';
 
-// // PUT - Update admission by ID (from params)
-// import studentSchema from '../../../models/studentSchema';
-// import academicSchema from '../../../models/academicSchema';
-
+// PUT - Update admission by ID (from params)
+import studentSchema from '../../../models/studentSchema';
+import academicSchema from '../../../models/academicSchema';
+import { NextResponse } from 'next/server';
+// kanika
 // export async function PUT(req, { params }) {
 //   try {
 //     await connectToDatabase();
 //     const updateData = await req.json();
 //     const { id: admissionId } = params;
-    
+
+//     console.log(updateData)
 //     if (!admissionId || !updateData || typeof updateData !== 'object') {
 //       return new Response(JSON.stringify({
 //         message: 'Missing or invalid admissionId or update data'
@@ -23,17 +25,15 @@
 //       updateData,
 //       { new: true }
 //     );
-
+//     console.log(updatedAdmission)
 //     if (!updatedAdmission) {
 //       return new Response(JSON.stringify({ message: 'Admission not found' }), { status: 404 });
 //     }
 
 //     // 2. Only proceed if status is approved
 //     if (updateData.status === 'approved') {
-//       const department = updatedAdmission.courseName; // department = courseName
-//       const rawYear = updatedAdmission.yearOfAdmission; // e.g. "1st Year"
-//       const year = rawYear?.split(" ")[0]; // "1st", "2nd", etc.
-
+//       const department = updatedAdmission.branch; // department = courseName
+//       const year = updatedAdmission.year; // e.g. "1st Year"
 //       if (!department || !year) {
 //         return new Response(JSON.stringify({
 //           message: 'Cannot determine department or year from admission data'
@@ -108,7 +108,6 @@
 //   }
 // }
 
-
 // // DELETE - Delete admission by ID (from params)
 // export async function DELETE(req, { params }) {
 //   try {
@@ -151,23 +150,20 @@
 //   }
 // }
 
-import { connectToDatabase } from '../../../lib/mongodb';
-import admissionSchema from '../../../models/admissionSchema';
-import studentSchema from '../../../models/studentSchema';
-import academicSchema from '../../../models/academicSchema';
+// import { connectToDatabase } from '../../../lib/mongodb';
+// import admissionSchema from '../../../models/admissionSchema';
+// import studentSchema from '../../../models/studentSchema';
+// import academicSchema from '../../../models/academicSchema';
 
 export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
+    const admissionId = params.id; // Get id directly from params
     const updateData = await req.json();
-
-    const { id: admissionId } = params;
-    console.log(updateData)
-    
 
     if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
       return Response.json(
-        { success: false, message: 'Missing or invalid update data' },
+        { success: false, message: "Missing or invalid update data" },
         { status: 400 }
       );
     }
@@ -181,11 +177,13 @@ export async function PUT(req, { params }) {
     }
 
     // Update admission record
-    const updatedAdmission = await admissionSchema.findByIdAndUpdate(
-      admissionId,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    ).lean();
+    const updatedAdmission = await admissionSchema
+      .findByIdAndUpdate(
+        admissionId,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      )
+      .lean();
 
     if (!updatedAdmission) {
       return Response.json(
@@ -234,19 +232,17 @@ export async function PUT(req, { params }) {
           email: email.toLowerCase(),
           mobileNumber: studentWhatsappNumber,
           dateOfBirth,
-          address: address?.[0] || {}, // Take first address if array exists
+          address: address?.[0] || {},
           nationality,
           isForeignNational: isForeignNational || false,
           status: 'active',
-          academicDetails: {
-            programType,
-            currentYear: year,
-            branch
-          }
+          programType,
+          currentYear: year,
+          branch
         });
       }
 
-      // Update academic record
+      // Update academic record - fixed version
       const academicUpdate = await academicSchema.findOneAndUpdate(
         { 
           department: branch,
@@ -260,7 +256,7 @@ export async function PUT(req, { params }) {
         { 
           arrayFilters: [
             { 'yearElem.year': year },
-            { 'div.students': { $size: { $lt: 50 } } } // Only divisions with < 50 students
+            { 'div.students.50': { $exists: false } } // Alternative way to check size
           ],
           new: true
         }
@@ -283,7 +279,6 @@ export async function PUT(req, { params }) {
   } catch (error) {
     console.error('Admission PUT error:', error);
     
-    // Handle specific error cases
     if (error.name === 'ValidationError') {
       return Response.json(
         { 
@@ -316,7 +311,6 @@ export async function PUT(req, { params }) {
     );
   }
 }
-
 export async function DELETE(req, { params }) {
   try {
     await connectToDatabase();
@@ -325,7 +319,7 @@ export async function DELETE(req, { params }) {
     // Validate admission ID
     if (!mongoose.Types.ObjectId.isValid(admissionId)) {
       return Response.json(
-        { success: false, message: 'Invalid admission ID format' },
+        { success: false, message: "Invalid admission ID format" },
         { status: 400 }
       );
     }
@@ -334,21 +328,23 @@ export async function DELETE(req, { params }) {
     const existingStudent = await studentSchema.findOne({ admissionId });
     if (existingStudent) {
       return Response.json(
-        { 
+        {
           success: false,
-          message: 'Cannot delete admission - student record exists',
-          studentId: existingStudent.studentId
+          message: "Cannot delete admission - student record exists",
+          studentId: existingStudent.studentId,
         },
         { status: 400 }
       );
     }
 
     // Perform deletion
-    const deletedAdmission = await admissionSchema.findByIdAndDelete(admissionId);
+    const deletedAdmission = await admissionSchema.findByIdAndDelete(
+      admissionId
+    );
 
     if (!deletedAdmission) {
       return Response.json(
-        { success: false, message: 'Admission not found' },
+        { success: false, message: "Admission not found" },
         { status: 404 }
       );
     }
@@ -356,24 +352,50 @@ export async function DELETE(req, { params }) {
     return Response.json(
       {
         success: true,
-        message: 'Admission deleted successfully',
+        message: "Admission deleted successfully",
         data: {
           _id: deletedAdmission._id,
           fullName: deletedAdmission.fullName,
-          status: deletedAdmission.status
-        }
+          status: deletedAdmission.status,
+        },
       },
       { status: 200 }
     );
-
   } catch (error) {
-    console.error('Admission DELETE error:', error);
+    console.error("Admission DELETE error:", error);
     return Response.json(
       {
         success: false,
-        message: 'Server error during deletion',
-        error: error.message
+        message: "Server error during deletion",
+        error: error.message,
       },
+      { status: 500 }
+    );
+  }
+}
+
+
+// New Added For API route to fetch individual admission records: CK
+
+export async function GET(request, { params }) {
+  try {
+    const {id}  = params;
+
+    console.log("From ID page",id);
+    
+    
+    const admission = await admissionSchema.findById(id);
+    if (!admission) {
+      return NextResponse.json(
+        { success: false, error: "Admission not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: admission });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

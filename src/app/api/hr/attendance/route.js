@@ -1,43 +1,68 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
-import Attendance from '@/models/attendance';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
+//import Attendance from '@/models/attendance';
+import attendanceSchema from '@/models/attendanceSchema';
 import Staff from '@/models/staff';
 
+// export async function GET(request) {
+//   await connectToDatabase();
+
+//   const { searchParams } = new URL(request.url);
+//   const staffId = searchParams.get('staffId');
+//   const date = searchParams.get('date'); // format: YYYY-MM-DD
+
+//   console.log(staffId);
+//   let filter = {};
+
+//   if (staffId) {
+//     const staff = await Staff.findOne({ staffId });
+//     if (!staff) {
+//       return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
+//     }
+//     filter.staff = staff._id;
+//   }
+
+//   if (date) {
+//     const day = new Date(date);
+//     const start = new Date(day.setHours(0, 0, 0, 0));
+//     const end = new Date(day.setHours(23, 59, 59, 999));
+//     filter.date = { $gte: start, $lt: end };
+//   }
+
+//   try {
+//     const records = await attendance.find(filter).populate('staff', 'name staffId');
+//     return NextResponse.json({ success: true, data: records });
+//   } catch (error) {
+//     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+//   }
+// }
+
 export async function GET(request) {
-  await connectDB();
-
-  const { searchParams } = new URL(request.url);
-  const staffId = searchParams.get('staffId');
-  const date = searchParams.get('date'); // format: YYYY-MM-DD
-
-  let filter = {};
-
-  if (staffId) {
-    const staff = await Staff.findOne({ staffId });
-    if (!staff) {
-      return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
-    }
-    filter.staff = staff._id;
-  }
-
-  if (date) {
-    const day = new Date(date);
-    const start = new Date(day.setHours(0, 0, 0, 0));
-    const end = new Date(day.setHours(23, 59, 59, 999));
-    filter.date = { $gte: start, $lt: end };
-  }
+  await connectToDatabase();
 
   try {
-    const records = await Attendance.find(filter).populate('staff', 'name staffId');
+    // ✅ Always fetch all attendance records
+    const records = await attendanceSchema
+      .find()
+      .populate('staff', 'name staffId department'); // include staff info
+
+
+      console.log("Record",records);
+
     return NextResponse.json({ success: true, data: records });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
 
+
 export async function POST(request) {
-  await connectDB();
+  await connectToDatabase();
   const body = await request.json();
 
   // ✅ 1. Special Case: Mark all staff present today
@@ -52,7 +77,7 @@ export async function POST(request) {
     let skipped = 0;
 
     for (const staff of allStaff) {
-      const exists = await Attendance.findOne({
+      const exists = await attendanceSchema.findOne({
         staff: staff._id,
         date: { $gte: startOfDay, $lt: endOfDay }
       });
@@ -62,7 +87,7 @@ export async function POST(request) {
         continue;
       }
 
-      await Attendance.create({
+      await attendanceSchema.create({
         staff: staff._id,
         date: new Date(),
         status: 'Present',
@@ -96,7 +121,7 @@ export async function POST(request) {
       }
 
       const attendanceDate = new Date(date);
-      const exists = await Attendance.findOne({
+      const exists = await attendanceSchema.findOne({
         staff: staff._id,
         date: {
           $gte: new Date(attendanceDate.setHours(0, 0, 0, 0)),
@@ -109,7 +134,7 @@ export async function POST(request) {
         continue;
       }
 
-      const created = await Attendance.create({
+      const created = await attendanceSchema.create({
         staff: staff._id,
         date: attendanceDate,
         status,
@@ -132,7 +157,7 @@ export async function POST(request) {
     return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
   }
 
-  const single = await Attendance.create({
+  const single = await attendanceSchema.create({
     staff: staff._id,
     date: new Date(date),
     status,
@@ -143,7 +168,7 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
-  await connectDB();
+  await connectToDatabase();
   const body = await request.json();
   const { staffId, date, status } = body;
 
@@ -160,7 +185,7 @@ export async function PATCH(request) {
   const startOfDay = new Date(day.setHours(0, 0, 0, 0));
   const endOfDay = new Date(day.setHours(23, 59, 59, 999));
 
-  const updated = await Attendance.findOneAndUpdate(
+  const updated = await attendanceSchema.findOneAndUpdate(
     {
       staff: staff._id,
       date: { $gte: startOfDay, $lt: endOfDay }

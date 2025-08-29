@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const academicSchema = new mongoose.Schema({
   department: {
@@ -22,20 +22,21 @@ const academicSchema = new mongoose.Schema({
             required: true,
           },
           students: {
-            type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+            type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
             validate: {
               validator: function (arr) {
                 return arr.length <= 50;
               },
-              message: 'A division cannot have more than 50 students.',
+              message: "A division cannot have more than 50 students.",
             },
           },
           subjects: [
             {
+              code:{type:String, required:true},
               name: { type: String, required: true }, // e.g. OOPs, CNS
               teacher: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'teacher',
+                ref: "teacher",
                 required: true,
               },
             },
@@ -47,12 +48,12 @@ const academicSchema = new mongoose.Schema({
               subject: { type: String, required: true },
               teacher: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
+                ref: "User",
                 required: true,
               },
               time: {
                 start: { type: String }, // "10:00"
-                end: { type: String },   // "10:45"
+                end: { type: String }, // "10:45"
               },
             },
           ],
@@ -62,13 +63,30 @@ const academicSchema = new mongoose.Schema({
               subject: { type: String, required: true },
               totalMarks: { type: Number, required: true },
               date: { type: Date, required: true },
+              result: [
+                {
+                  student: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Student",
+                    required: true,
+                  },
+                  marks: {
+                    type: Number,
+                    default: null,
+                  },
+                  isAttend: {
+                    type: Boolean,
+                    default: true,
+                  },
+                },
+              ],
             },
           ],
           attendance: [
             {
               student: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'User', // assuming student is stored in 'User' model
+                ref: "User", // assuming student is stored in 'User' model
               },
               subject: { type: String, required: true },
               date: { type: Date, required: true },
@@ -79,7 +97,7 @@ const academicSchema = new mongoose.Schema({
 
               recordedBy: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'User', // recorded by teacher
+                ref: "User", // recorded by teacher
                 required: true,
               },
             },
@@ -88,10 +106,24 @@ const academicSchema = new mongoose.Schema({
       ],
     },
   ],
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  programType: {
+    type: String,
+    required: true,
+  },
+  description: { type: String },
 });
 
 delete mongoose.models.academic;
 
-const academic = mongoose.models.academic || mongoose.model('academic', academicSchema);
+const academic =
+  mongoose.models.academic || mongoose.model("academic", academicSchema);
 
 export default academic;

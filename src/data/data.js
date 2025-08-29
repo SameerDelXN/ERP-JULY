@@ -14,16 +14,17 @@ import {
   Award,
   BookOpenCheck,
   CalendarClock,
-  BookMarked
+  BookMarked,
+  FileCheck
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "manage-users", label: "Manage Users/Roles", icon: Users },
   { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
   { id: "admission-applications", label: "Admission Applications", icon: BookImage },
+  { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
+  { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   { id: "courses", label: "CRM Management", icon: BookImage },
-  // { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
-  // { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
   // { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   // { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
@@ -41,16 +42,25 @@ export const staffSidebarItems = [
 ];
 
 export const studentSidebarItems = [
-  { id: "overview", label: "Overview", icon: Home },
   { id: "profile", label: "Profile", icon: UserCheck },
   { id: "attendance", label: "Attendance", icon: FileText },
   { id: "myexams", label: "My Exams", icon: BookOpenCheck },
-  { id: "grades", label: "Grades", icon: GraduationCap },
   { id: "assignments", label: "Assignments", icon: BookOpen },
   { id: "timetable", label: "My Timetable", icon: CalendarClock },
+  { id: "studymaterial", label: "Study Material", icon: CalendarClock },
   { id: "certificates", label: "Certificates", icon: Award },
 
 ];
+
+export const teacherSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  {id: "my-classes", label: "My Classes", icon: BookOpen},
+  // {id: "attendance", label: "Mark Attendance", icon: UserCheck},
+  {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
+  {id: "student-list", label: "Student List", icon: Users},
+  {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
+  {id: "marks", label: "Exam Marks", icon: FileCheck},
+]
 
 
 export const roles = [
@@ -102,4 +112,12 @@ export const roles = [
   //   permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
   //   color: 'bg-yellow-500'
   // },
+  {
+    id: 6,
+    name: 'HR',
+    // description: 'Parent access to monitor child progress',
+    // userCount: 892,
+    // permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
+    color: 'bg-yellow-500'
+  },
 ];

@@ -1,82 +1,44 @@
-// app/api/admin/courses/[id]/route.js
 import { connectToDatabase } from "@/app/lib/mongodb";
-import Course from "../../../models/course";
 import { NextResponse } from "next/server";
+import CoursePlan from "@/app/models/coursePlanSchema"
 
-export async function GET(request, { params }) {
+export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
-    const course = await Course.findById(params.id);
+    const { id } = params; // Get the ID from the URL parameters
+    const body = await req.json();
     
-    if (!course) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
-    }
-    
-    return NextResponse.json(course);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch course" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request, { params }) {
-  try {
-    await connectToDatabase();
-    const data = await request.json();
-    
-    const course = await Course.findByIdAndUpdate(
-      params.id,
-      data,
-      { new: true }
-    );
-    
-    if (!course) {
-      return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
-    }
-    
-    return NextResponse.json(course);
-  } catch (error) {
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { error: "Course with this name already exists" },
+        { error: "Course plan ID is required" },
         { status: 400 }
       );
     }
-    return NextResponse.json(
-      { error: "Failed to update course" },
-      { status: 500 }
-    );
-  }
-}
 
-export async function DELETE(request, { params }) {
-  try {
-    await connectToDatabase();
-    
-    const course = await Course.findByIdAndDelete(params.id);
-    
-    if (!course) {
+    const updatedPlan = await CoursePlan.findOneAndUpdate(
+      { _id: id }, // Query by subject field
+      { 
+        $set: body,    // Update with the entire body
+        updatedAt: new Date() 
+      },
+      { new: true }    // Return the updated document
+    );
+
+    if (!updatedPlan) {
       return NextResponse.json(
-        { error: "Course not found" },
+        { error: "Course plan not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(
-      { message: "Course deleted successfully" },
+      { message: "Course plan updated successfully", data: updatedPlan },
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error updating course plan:", error);
     return NextResponse.json(
-      { error: "Failed to delete course" },
+      { error: "Failed to update course plan" },
       { status: 500 }
     );
   }

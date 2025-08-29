@@ -1,17 +1,18 @@
 // /app/api/hr/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
-import HR from '@/models/hr'; 
+//import connectDB from '@/lib/mongoose';
+//import HR from '@/models/hr'; 
+import { connectToDatabase } from '@/app/lib/mongodb';
 import Staff from '@/models/staff';
 
 export async function POST(request) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const body = await request.json();
 
     // 1. Create HR
-    const hr = await HR.create(body);
+    // const hr = await HR.create(body);
 
 
     // 2. Also add HR as Staff
@@ -44,13 +45,14 @@ export async function POST(request) {
 
 export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
 
-    const hrList = await HR.find(); // get all HRs
+    //const hrList = await HR.find(); // get all HRs
+    const  staff = await Staff.find();
 
     return Response.json({
       success: true,
-      data: hrList
+      data: staff
     });
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 500 });

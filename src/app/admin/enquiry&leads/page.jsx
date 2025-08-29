@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import LoadingComponent from "@/components/Loading";
+import toast, { Toaster } from "react-hot-toast";
 
 const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const [enquiry, setEnquiry] = useState(null);
@@ -54,18 +55,17 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const fetchCounselor = async (counselorId) => {
     try {
       const res = await fetch(`/api/userData?id=${counselorId}`);
-      if (!res.ok) throw new Error('Failed to fetch counselor');
+      if (!res.ok) throw new Error("Failed to fetch counselor");
       const data = await res.json();
-      const assignCounselor = data.users
+      const assignCounselor = data.users;
 
-      assignCounselor.map(user =>{
+      assignCounselor.map((user) => {
         if (user._id === counselorId) {
-          setCounselor(user.fullName)
+          setCounselor(user.fullName);
         }
-      })
-      
+      });
     } catch (error) {
-      console.error('Error fetching counselor:', error);
+      console.error("Error fetching counselor:", error);
     }
   };
 
@@ -219,6 +219,13 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               iconColor="text-orange-600"
             />
             <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Program Type"
+              value={enquiry.programType || "N/A"}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Enquiry Date"
               value={
@@ -246,7 +253,7 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
             <DetailCard
               icon={<MessageSquare className="w-5 h-5" />}
               label="Assigned Counsellor"
-              value={counselor  || "Not Yet Assigned"}
+              value={counselor || "Not Yet Assigned"}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
@@ -361,8 +368,9 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
         formData.followUpNote
       );
       onClose();
+      toast.success("Assign Counselor Successfully..!!");
     } catch (error) {
-      alert(`Failed to assign counselor: ${error.message}`);
+      toast.error(`Failed to assign counselor: ${error.message}`);
     }
   };
 
@@ -424,9 +432,14 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
               <input
                 type="date"
                 value={formData.followUpDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, followUpDate: e.target.value })
-                }
+                onChange={(e) => {
+                  const selectedDate = e.target.value;
+                  const today = new Date().toISOString().split("T")[0];
+                  if (selectedDate >= today) {
+                    setFormData({ ...formData, followUpDate: selectedDate });
+                  }
+                }}
+                min={new Date().toISOString().split("T")[0]}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 font-medium"
                 required
               />
@@ -444,6 +457,7 @@ const AssignCounselorModal = ({ onClose, onSubmit, enquiryId }) => {
                   setFormData({ ...formData, followUpNote: e.target.value })
                 }
                 rows="3"
+                maxLength={50}
                 placeholder="Add a note about this follow-up..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-900 resize-none"
                 required
@@ -656,6 +670,7 @@ const EnquiriesLeads = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster />
       <div className="p-6">
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

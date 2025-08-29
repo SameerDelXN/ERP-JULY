@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import connectDB from '@/lib/mongoose';
+//import mongoose from 'mongoose';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import { Salary, Payslip } from '@/models/payroll';
 import Staff from '@/models/staff';
 
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const { staffId, month } = await req.json();
 
@@ -70,7 +71,7 @@ export async function POST(req) {
 }
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const staffList = await Staff.find({}, 'staffId name'); // Only fetch staffId and name
@@ -93,7 +94,7 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const { staffId, month } = await req.json();
  

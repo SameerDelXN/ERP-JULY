@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import { Salary } from '@/models/payroll';
 import Staff from '@/models/staff';
 
 export async function POST(request) {
-  await connectDB();
+  await connectToDatabase();
   const data = await request.json();
 
   // ✅ Handle Single Salary Insert/Update
@@ -65,7 +66,7 @@ export async function POST(request) {
 
 // ✅ GET: Fetch All Salaries (with staff name & department from population)
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
   const salaries = await Salary.find(); // .populate('staffId') is not needed since staffId is string
   return NextResponse.json({ success: true, data: salaries });
 }

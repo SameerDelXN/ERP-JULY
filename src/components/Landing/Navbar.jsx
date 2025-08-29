@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X, User } from 'lucide-react';
-
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, X, User } from "lucide-react";
+import Image from "next/image";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
 
   const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Features', path: '/features' },
-    { name: 'Modules', path: '/modules' },
-    { name: 'Benefits', path: '/benefits' },
-    { name: 'Contact', path: '/contact' },
+    { name: "Home", path: "/" },
+    { name: "Features", path: "/features" },
+    { name: "Modules", path: "/modules" },
+    { name: "Benefits", path: "/benefits" },
+    { name: "Contact", path: "/contact" },
   ];
 
   useEffect(() => {
@@ -27,20 +27,32 @@ const Navbar = () => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <header className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-white/95 backdrop-blur-md'}`}>
+    <header
+      className={`fixed w-full z-50 transition-all duration-300 ${
+        isScrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-md"
+      }`}
+    >
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg flex items-center justify-center group-hover:from-blue-700 group-hover:to-blue-500 transition-all">
-              <span className="text-white font-bold text-xl">ERP</span>
+              <span className="text-white font-bold text-xl">TE</span>
             </div>
-            <span className="ml-3 text-xl font-semibold text-gray-800 hidden sm:block">EduManage</span>
+            <div className="w-full h-full">
+            <Image
+              width={100}
+              height={100}
+              src="\TechEdu.svg"
+              alt="TechEdu Logo"
+              className="w-full h-full object-cover "
+              />
+              </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -49,7 +61,11 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 href={item.path}
-                className={`relative px-3 py-2 text-sm font-medium transition-colors ${pathname === item.path ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
+                className={`relative px-3 py-2 text-sm font-medium transition-colors ${
+                  pathname === item.path
+                    ? "text-blue-600"
+                    : "text-gray-700 hover:text-blue-600"
+                }`}
               >
                 {item.name}
                 {pathname === item.path && (
@@ -81,7 +97,11 @@ const Navbar = () => {
             className="md:hidden p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -93,7 +113,11 @@ const Navbar = () => {
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`px-4 py-3 rounded-md text-base font-medium ${pathname === item.path ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                  className={`px-4 py-3 rounded-md text-base font-medium ${
+                    pathname === item.path
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}

@@ -1,21 +1,22 @@
-// app/admin/courses/page.jsx
 "use client";
+
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Save, X } from "lucide-react";
-import LoadingComponent from "@/components/Loading";
-export default function CourseManagement() {
+import {
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  Search,
+  Loader2,
+} from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
+export default function CourseManagementPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [newCourse, setNewCourse] = useState({
-    name: "",
-    description: "",
-    category: "Engineering",
-    duration: "",
-    isActive: true
-  });
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [loadingStates, setLoadingStates] = useState({});
 
   useEffect(() => {
     fetchCourses();
@@ -24,285 +25,328 @@ export default function CourseManagement() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/courses");
+      setError(null);
+      const response = await fetch("/api/department");
       if (!response.ok) throw new Error("Failed to fetch courses");
       const data = await response.json();
       setCourses(data);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "An unknown error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddCourse = async () => {
+  const toggleCourseStatus = async (id) => {
+    if (loadingStates[id]) return; // Prevent multiple toggles
+
+    console.log(id);
+
     try {
-      const response = await fetch("/api/courses", {
-        method: "POST",
+      setLoadingStates((prev) => ({ ...prev, [id]: true }));
+      setError(null);
+
+      // Find the current course
+      const courseToUpdate = courses.departments?.find(
+        (course) => course._id === id
+      );
+      
+      if (!courseToUpdate) {
+        console.log(courseToUpdate);
+        
+        throw new Error("Course not found in local state");
+      }
+
+      // Calculate new status
+      const newStatus = !courseToUpdate.isActive;
+
+      // Optimistic UI update
+      setCourses((prev) => ({
+        ...prev,
+        departments: prev.departments.map((course) =>
+          course.id === id ? { ...course, isActive: newStatus } : course
+        ),
+      }));
+
+      // API call - only send isActive status
+      const response = await fetch(`/api/department/${id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newCourse),
+        body: JSON.stringify({ isActive: newStatus }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to add course");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Failed to update status (HTTP ${response.status})`
+        );
       }
 
-      const addedCourse = await response.json();
-      setCourses([...courses, addedCourse]);
-      setNewCourse({
-        name: "",
-        description: "",
-        category: "Engineering",
-        duration: "",
-        isActive: true
-      });
+      toast.success(
+        `Department ${newStatus ? "activated" : "deactivated"} successfully`
+      );
+
+      // Optional: refresh data if needed
+      await fetchCourses();
     } catch (err) {
+      console.error("Toggle error:", err);
       setError(err.message);
+      // Revert optimistic update
+      setCourses((prev) => ({
+        ...prev,
+        departments: prev.departments.map((course) =>
+          course.id === id ? { ...course, isActive: !newStatus } : course
+        ),
+      }));
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [id]: false }));
     }
   };
 
-  const handleEdit = (course) => {
-    setEditingId(course._id);
-    setEditData({
-      name: course.name,
-      description: course.description,
-      category: course.category,
-      duration: course.duration,
-      isActive: course.isActive
-    });
-  };
+  const filteredCourses = courses.departments?.filter((course) => {
+    const matchesSearch = course.department
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-  const handleUpdate = async (id) => {
-    try {
-      const response = await fetch(`/api/admin/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(editData),
-      });
+    if (filter === "active") return matchesSearch && course.isActive;
+    if (filter === "inactive") return matchesSearch && !course.isActive;
+    return matchesSearch;
+  });
 
-      if (!response.ok) throw new Error("Failed to update course");
-
-      const updatedCourse = await response.json();
-      setCourses(courses.map(c => c._id === id ? updatedCourse : c));
-      setEditingId(null);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
-    
-    try {
-      const response = await fetch(`/api/courses/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete course");
-
-      setCourses(courses.filter(course => course._id !== id));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleToggleStatus = async (id, currentStatus) => {
-    try {
-      const response = await fetch(`/api/admin/courses/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isActive: !currentStatus }),
-      });
-
-      if (!response.ok) throw new Error("Failed to update course status");
-
-      const updatedCourse = await response.json();
-      setCourses(courses.map(c => c._id === id ? updatedCourse : c));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  if (loading) return <LoadingComponent/>;
-  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
-
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Course Management</h1>
-      
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-          {error}
+    console.log(filteredCourses);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-indigo-600 animate-spin mx-auto" />
+          <p className="mt-4 text-indigo-800">Loading courses...</p>
         </div>
-      )}
-
-      {/* Add New Course Form */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Add New Course</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Name*</label>
-            <input
-              type="text"
-              value={newCourse.name}
-              onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
-              className="w-full p-2 border rounded"
-              placeholder="Course name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Category</label>
-            <select
-              value={newCourse.category}
-              onChange={(e) => setNewCourse({...newCourse, category: e.target.value})}
-              className="w-full p-2 border rounded"
-            >
-              <option value="Engineering">Engineering</option>
-              <option value="Management">Management</option>
-              <option value="Diploma">Diploma</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Duration</label>
-            <input
-              type="text"
-              value={newCourse.duration}
-              onChange={(e) => setNewCourse({...newCourse, duration: e.target.value})}
-              className="w-full p-2 border rounded"
-              placeholder="e.g., 4 Years"
-            />
-          </div>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea
-            value={newCourse.description}
-            onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
-            className="w-full p-2 border rounded"
-            rows="2"
-            placeholder="Course description"
-          />
-        </div>
-        <button
-          onClick={handleAddCourse}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          disabled={!newCourse.name}
-        >
-          <Plus size={16} /> Add Course
-        </button>
       </div>
+    );
+  }
 
-      {/* Courses List */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {courses.map((course) => (
-                <tr key={course._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {editingId === course._id ? (
-                      <input
-                        type="text"
-                        value={editData.name}
-                        onChange={(e) => setEditData({...editData, name: e.target.value})}
-                        className="w-full p-1 border rounded"
-                      />
-                    ) : (
-                      <div className="font-medium">{course.name}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {editingId === course._id ? (
-                      <select
-                        value={editData.category}
-                        onChange={(e) => setEditData({...editData, category: e.target.value})}
-                        className="w-full p-1 border rounded"
-                      >
-                        <option value="Engineering">Engineering</option>
-                        <option value="Management">Management</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    ) : (
-                      course.category
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {editingId === course._id ? (
-                      <input
-                        type="text"
-                        value={editData.duration}
-                        onChange={(e) => setEditData({...editData, duration: e.target.value})}
-                        className="w-full p-1 border rounded"
-                      />
-                    ) : (
-                      course.duration
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => handleToggleStatus(course._id, course.isActive)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        course.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {course.isActive ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {editingId === course._id ? (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleUpdate(course._id)}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          <Save size={18} />
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          <X size={18} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(course)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(course._id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </td>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong>Error: </strong> {error}
+          <button
+            onClick={fetchCourses}
+            className="ml-4 text-indigo-600 underline"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
+  
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <Toaster />
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-indigo-900">
+            Course Management
+          </h1>
+          <p className="text-indigo-700 mt-2">
+            Manage your courses and their active status
+          </p>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search courses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search courses"
+              />
+            </div>
+
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2 rounded-lg border ${
+                  filter === "all"
+                    ? "bg-indigo-100 border-indigo-300 text-indigo-700"
+                    : "border-gray-300 text-gray-700"
+                }`}
+                aria-pressed={filter === "all"}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter("active")}
+                className={`px-4 py-2 rounded-lg border ${
+                  filter === "active"
+                    ? "bg-indigo-100 border-indigo-300 text-indigo-700"
+                    : "border-gray-300 text-gray-700"
+                }`}
+                aria-pressed={filter === "active"}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setFilter("inactive")}
+                className={`px-4 py-2 rounded-lg border ${
+                  filter === "inactive"
+                    ? "bg-indigo-100 border-indigo-300 text-indigo-700"
+                    : "border-gray-300 text-gray-700"
+                }`}
+                aria-pressed={filter === "inactive"}
+              >
+                Inactive
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Courses Table */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-indigo-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider"
+                  >
+                    Course Title
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider"
+                  >
+                    Program Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider"
+                  >
+                    HOD
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredCourses.length > 0 ? (
+                  filteredCourses.map((course) => (
+                    <tr key={course?._id} className="hover:bg-indigo-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {course?.department}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {course?.programType}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {course?.hod?.fullName}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {course?.isActive ? (
+                          <span className="bg-green-200 text-green-600 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="bg-red-200 text-red-600 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                            In Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {course.isActive ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500 mr-1" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500 mr-1" />
+                          )}
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={course.isActive ?? false}
+                              onChange={() => {
+                                toggleCourseStatus(course?._id);
+                              }}
+                              disabled={loadingStates[course?._id]}
+                            />
+                            <div
+                              className={`
+                                    w-11 h-6 rounded-full peer
+                                    ${
+                                      course.isActive
+                                        ? "bg-indigo-600"
+                                        : "bg-gray-200"
+                                    }
+                                    ${
+                                      loadingStates[course.id]
+                                        ? "opacity-50"
+                                        : ""
+                                    }
+                                    peer-checked:after:translate-x-full
+                                    peer-checked:after:border-white
+                                    after:content-['']
+                                    after:absolute
+                                    after:top-0.5
+                                    after:left-[2px]
+                                    after:bg-white
+                                    after:border-gray-300
+                                    after:border
+                                    after:rounded-full
+                                    after:h-5
+                                    after:w-5
+                                    after:transition-all
+                                  `}
+                            ></div>
+                            {loadingStates[course.id] && (
+                              <Loader2 className="ml-2 h-4 w-4 text-indigo-600 animate-spin" />
+                            )}
+                          </label>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
+                      No courses found matching your criteria
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

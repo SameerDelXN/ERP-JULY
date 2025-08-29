@@ -16,15 +16,21 @@
     |-- login5.jpg
     |-- login6.jpg
     |-- next.svg
+    |-- TechEdu.svg
     |-- vercel.svg
     |-- Welcome.svg
     |-- window.svg
+|-- rds-combined-ca-bundle.pem
 |-- README.md
 |-- src
     |-- app
         |-- admin
+            |-- academic-configuration
+                |-- page.jsx
             |-- admission-applications
                 |-- page.jsx
+                |-- [id]
+                    |-- page.jsx
             |-- courses
                 |-- page.jsx
             |-- enquiry&leads
@@ -33,6 +39,10 @@
             |-- manage-users
                 |-- page.jsx
             |-- page.jsx
+            |-- profile
+                |-- page.jsx
+            |-- settings
+                |-- page.jsx
             |-- staff-directory
                 |-- page.jsx
         |-- api
@@ -41,18 +51,34 @@
                 |-- [id]
                     |-- route.js
             |-- auth
+                |-- forgot-password
+                    |-- route.js
                 |-- logout
+                    |-- route.js
+                |-- reset-password
                     |-- route.js
                 |-- session
                     |-- route.js
             |-- check-verification
                 |-- route.js
             |-- courses
+                |-- course-plan
+                    |-- route.js
+                    |-- [id]
+                        |-- route.js
+                |-- route.js
+                |-- subject
+                    |-- route.js
+                    |-- [id]
+                        |-- route.js
+                |-- [id]
+                    |-- route.js
+            |-- dashboard
+                |-- route.js
+            |-- department
                 |-- route.js
                 |-- [id]
                     |-- route.js
-            |-- department
-                |-- route.js
             |-- enquiry
                 |-- route.js
                 |-- [id]
@@ -63,11 +89,15 @@
                     |-- academics
                         |-- route.js
                     |-- route.js
+                    |-- students
+                        |-- route.js
             |-- importData
                 |-- route.js
             |-- login
                 |-- route.js
             |-- register
+                |-- route.js
+            |-- sample
                 |-- route.js
             |-- send-otp
                 |-- route.js
@@ -77,14 +107,25 @@
                 |-- [userId]
                     |-- route.js
             |-- students
+                |-- route.js
                 |-- [id]
+                    |-- academics
+                        |-- route.js
+                    |-- admission
+                        |-- route.js
                     |-- route.js
             |-- teachers
                 |-- route.js
                 |-- [id]
                     |-- dashboard
+                        |-- attendance
+                            |-- route.js
+                        |-- result
+                            |-- route.js
                         |-- route.js
                     |-- route.js
+                    |-- students
+                        |-- route.js
             |-- upload
                 |-- multiple
                     |-- route.js
@@ -109,23 +150,34 @@
                 |-- page.jsx
             |-- layout.jsx
             |-- page.jsx
+            |-- student-management
+                |-- page.jsx
         |-- layout.js
         |-- lib
+            |-- cors.js
             |-- googleDriveUpload.js
+            |-- init-middleware.js
+            |-- logger.js
             |-- mongodb.js
         |-- login
             |-- page.jsx
         |-- models
             |-- academicSchema.js
             |-- admissionSchema.js
+            |-- attendanceSchema.js
             |-- course.js
+            |-- coursePlanSchema.js
             |-- EmailVerification.js
             |-- enquirySchema.js
+            |-- logSchema.js
+            |-- sampleSchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
             |-- userSchema.js
         |-- page.js
         |-- register
+            |-- page.jsx
+        |-- reset-password
             |-- page.jsx
         |-- staff
             |-- application-management
@@ -143,14 +195,50 @@
                 |-- page.jsx
             |-- certificates
                 |-- page.jsx
-            |-- grades
-                |-- page.jsx
             |-- layout.jsx
+            |-- myexams
+                |-- page.jsx
             |-- page.jsx
-            |-- profile
+            |-- studymaterial
                 |-- page.jsx
-            |-- schedule
+            |-- timetable
                 |-- page.jsx
+        |-- teacher
+            |-- attendance
+                |-- page.jsx
+            |-- course-plan
+                |-- execute
+                    |-- [id]
+                        |-- attendance
+                            |-- page.jsx
+                        |-- page.jsx
+                |-- page.jsx
+                |-- schedules
+                    |-- [id]
+                        |-- page.jsx
+                |-- syllabus
+                    |-- [id]
+                        |-- page.jsx
+                |-- [id]
+                    |-- course-view
+                        |-- page.jsx
+            |-- layout.jsx
+            |-- marks
+                |-- page.jsx
+            |-- my-classes
+                |-- page.jsx
+            |-- page.jsx
+            |-- report
+                |-- [id]
+                    |-- page.jsx
+                    |-- summary
+                        |-- page.jsx
+            |-- student-list
+                |-- page.jsx
+            |-- upload-notes
+                |-- page.jsx
+        |-- verification-failed
+            |-- page.jsx
         |-- verification-success
             |-- page.jsx
         |-- verify-email

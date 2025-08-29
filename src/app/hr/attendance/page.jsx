@@ -1,5 +1,5 @@
 // app/hr/attendance/page.tsx
-'use client';
+'use client'
 import { useState, useEffect } from 'react';
 import { CalendarDays, Clock, User, Check, X, Plus, Search } from 'lucide-react';
 
@@ -26,6 +26,8 @@ export default function AttendanceManagement() {
       try {
         const res = await fetch('/api/hr/attendance');
         const json = await res.json();
+
+        console.log("JSON",json);
         if (json.success) {
           setAttendanceRecords(json.data.map((rec) => ({
             id: rec._id,
@@ -163,6 +165,15 @@ export default function AttendanceManagement() {
     }
   };
 
+  const getInitials = (name) => {
+  if (!name) return '';
+  return name.split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
+
   if (loading) return <div className="text-center py-8">Loading attendance records...</div>;
 
   return (
@@ -219,7 +230,8 @@ export default function AttendanceManagement() {
                 <td className="px-6 py-4 w-1/4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="text-gray-600" size={16} />
+                      {/* <User className="text-gray-600" size={16} /> */}
+                      {getInitials(record.employeeName)}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{record.employeeName}</div>

@@ -46,6 +46,15 @@ export default function PayrollPage() {
     }
   }, [searchTerm, employees]);
 
+  const getInitials = (name) => {
+  if (!name) return '';
+  return name.split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -81,8 +90,8 @@ export default function PayrollPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff </th>
+                  
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
@@ -91,8 +100,21 @@ export default function PayrollPage() {
                 {filteredEmployees.length > 0 ? (
                   filteredEmployees.map((employee) => (
                     <tr key={employee._id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.staffId}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.name}</td>
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.staffId}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.name}</td> */}
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+            <div className="flex items-center">
+              <div className='flex-shrink-0 h-10 w-10 mr-2 rounded-full bg-gray-100 flex items-center justify-center text-gray-950 font-medium'>
+                {getInitials(employee.name)}
+              </div>
+              <div className='flex flex-col'>
+                <span className="text-sm font-medium text-gray-900">{employee.name}</span>
+              <span className="text-xs text-gray-500">{employee.staffId}</span>
+              </div>
+              
+            </div>
+          </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <Link

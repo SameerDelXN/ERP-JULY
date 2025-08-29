@@ -54,6 +54,7 @@ const DetailCard = ({ icon, label, value, bgColor, iconColor }) => (
     </div>
   </div>
 );
+
 const DetailCardDocuments = ({
   icon,
   label,
@@ -70,9 +71,13 @@ const DetailCardDocuments = ({
       <div className="flex items-center gap-2">
         {viewIcon}
         <p className="font-medium text-gray-900">
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-            {value || "N/A"}
-          </a>
+          {fileUrl ? (
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+              {value || "View Document"}
+            </a>
+          ) : (
+            value || "N/A"
+          )}
         </p>
       </div>
     </div>
@@ -133,8 +138,6 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
-
-  console.log(application);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -219,7 +222,13 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<Calendar className="w-5 h-5" />}
               label="Date of Birth"
-              value={application.dateOfBirth}
+              value={
+                application.dateOfBirth
+                  ? new Date(application.dateOfBirth)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               bgColor="bg-teal-50"
               iconColor="text-teal-600"
             />
@@ -268,6 +277,34 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               icon={<GraduationCap className="w-5 h-5" />}
               label="Admission Round"
               value={application.round}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Shift"
+              value={application.shift}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Fees Category"
+              value={application.feesCategory}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Admission Type"
+              value={application.admissionType}
+              bgColor="bg-orange-50"
+              iconColor="text-orange-600"
+            />
+            <DetailCard
+              icon={<GraduationCap className="w-5 h-5" />}
+              label="Quota"
+              value={application.quota}
               bgColor="bg-orange-50"
               iconColor="text-orange-600"
             />
@@ -335,7 +372,7 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
             <DetailCard
               icon={<ShieldCheck className="w-5 h-5" />}
               label="PRN"
-              value={application.prn || "Not Generated"}
+              value={!application.prn === true ? "Generated" : "Not Generated"}
               bgColor="bg-pink-50"
               iconColor="text-pink-600"
             />
@@ -492,8 +529,8 @@ const FormField = ({
                 } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 {...inputProps}
               >
-                {options.map((option) => (
-                  <option key={option.value} value={option.value}>
+                {options.map((option, index) => (
+                  <option key={index} value={option.value}>
                     {option.label}
                   </option>
                 ))}
@@ -632,7 +669,6 @@ const AddressFields = ({ control, errors, index }) => (
         label="Pincode"
         type="number"
         error={errors.address?.[index]?.pincode}
-        required
         numericOnly={true}
         minLength={6}
         maxLength={6}
@@ -694,7 +730,6 @@ const PersonalDetailsStep = ({ control, errors }) => {
           type="text"
           placeholder="Enter Middle Name"
           error={errors?.middleName}
-          required
           alphaOnly={true}
           minLength={3}
           maxLength={20}
@@ -890,118 +925,249 @@ const FamilyDetailsStep = ({ control, errors }) => {
   );
 };
 
-const AcademicDetailsStep = ({ control, errors }) => (
-  <div className="space-y-4">
-    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-      <School className="w-5 h-5 text-blue-600" />
-      Academic Information
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <FormField
-        control={control}
-        name="admissionYear"
-        label="Admission Year"
-        type="text"
-        placeholder="e.g. 2024-25"
-        error={errors.admissionYear}
-        required
-      />
+const AcademicDetailsStep = ({ control, errors, watch }) => {
+  const [coursesData, setCoursesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const selectedProgramType = watch ? watch("programType") : null;
 
-      <FormField
-        control={control}
-        name="programType"
-        label="Program Type"
-        type="select"
-        options={[
-          { value: "", label: "Select Program Type" },
-          { value: "Diploma", label: "Diploma" },
-          { value: "UG", label: "Undergraduate" },
-          { value: "PG", label: "Postgraduate" },
-        ]}
-        error={errors.programType}
-        required
-      />
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch("/api/courses");
+      if (!response.ok) {
+        throw new Error("Failed to fetch courses");
+      }
+      const data = await response.json();
+      console.log(data);
 
-      <FormField
-        control={control}
-        name="branch"
-        label="Branch/Course"
-        type="text"
-        alphaOnly={true}
-        error={errors.branch}
-        required
-        maxLength={20}
-        pattern={{
-          value: /^[a-zA-Z\s]*$/,
-          message: "Only alphabets are allowed",
-        }}
-      />
+      setCoursesData(data.courses || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
 
-      <FormField
-        control={control}
-        name="year"
-        label="Year"
-        type="select"
-        options={[
-          { value: "", label: "Select Year" },
-          { value: "1st Year", label: "1st Year" },
-          { value: "2nd Year", label: "2nd Year" },
-          { value: "3rd Year", label: "3rd Year" },
-          { value: "4th Year", label: "4th Year" },
-        ]}
-        error={errors.year}
-        required
-      />
+    fetchCourses();
+  }, []);
 
-      <FormField
-        control={control}
-        name="round"
-        label="Admission Round"
-        type="select"
-        options={[
-          { value: "", label: "Select Round" },
-          { value: "CAP1", label: "CAP Round 1" },
-          { value: "CAP2", label: "CAP Round 2" },
-          { value: "CAP3", label: "CAP Round 3" },
-          { value: "Institute Level", label: "Institute Level" },
-        ]}
-        error={errors.round}
-        required
-      />
+  console.log(coursesData);
+  
+  console.log("dawd = ", selectedProgramType);
+  // Get unique program types for the dropdown
+  const programTypeOptions = [
+    { value: "", label: "Select Program Type" },
+    ...Array.from(
+      new Set(coursesData?.map((course) => course.programType))
+    ).map((type) => ({
+      value: type,
+      label: type,
+    })),
+  ];
 
-      <FormField
-        control={control}
-        name="seatType"
-        label="Seat Type"
-        type="select"
-        options={[
-          { value: "", label: "Select Seat Type" },
-          { value: "GOV", label: "Government" },
-          { value: "MIN", label: "Minority" },
-          { value: "Management", label: "Management" },
-          { value: "TFWS", label: "TFWS" },
-        ]}
-        error={errors.seatType}
-        required
-      />
+  // Filter courses based on selected program type
+  const filteredCourses = selectedProgramType
+    ? coursesData.filter(
+        (course) => course.programType === selectedProgramType
+      )
+    : [];
 
-      <FormField
-        control={control}
-        name="admissionCategoryDTE"
-        label="Admission Category (DTE)"
-        type="select"
-        options={[
-          { value: "", label: "Select Category" },
-          { value: "CAP", label: "CAP" },
-          { value: "Institute Level", label: "Institute Level" },
-          { value: "Against CAP", label: "Against CAP" },
-        ]}
-        error={errors.admissionCategoryDTE}
-        required
-      />
+  const courseOptions = [
+    { value: "", label: selectedProgramType ? "Select Branch" : "First select Program Type" },
+    ...filteredCourses.map((course) => ({
+      value: course.name, // or whatever field contains the course name
+      label: course.name,
+    })),
+  ];
+
+  console.log(filteredCourses);
+
+  console.log(coursesData);
+  console.log(selectedProgramType);
+
+  if (loading) {
+    return <div>Loading courses...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  // const courseOptions = [
+  //   { value: "", label: "Select Branch/Course" },
+  //   ...courses?.map((course, index) => ({
+  //     key: index,
+  //     value: course, // or whatever unique identifier your course has
+  //     label: course, // or whatever field contains the display name
+  //   })),
+  // ];
+  // console.log(courseOptions);
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <School className="w-5 h-5 text-blue-600" />
+        Academic Information
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="admissionYear"
+          label="Admission Year"
+          type="text"
+          placeholder="e.g. 2024-25"
+          error={errors.admissionYear}
+          required
+        />
+
+        <FormField
+          control={control}
+          name="programType"
+          label="Program Type"
+          type="select"
+          options={programTypeOptions}
+          error={errors.programType}
+          required
+        />
+
+        <FormField
+          control={control}
+          name="branch"
+          label="Branch/Course"
+          type="select"
+          options={courseOptions}
+          error={errors.branch}
+          required
+          disabled={!selectedProgramType}
+        />
+
+        <FormField
+          control={control}
+          name="year"
+          label="Year"
+          type="select"
+          options={[
+            { value: "", label: "Select Year" },
+            { value: "1st", label: "1st Year" },
+            { value: "2nd", label: "2nd Year" },
+            { value: "3rd", label: "3rd Year" },
+            { value: "4th", label: "4th Year" },
+          ]}
+          error={errors.year}
+          required
+        />
+
+        <FormField
+          control={control}
+          name="round"
+          label="Admission Round"
+          type="select"
+          options={[
+            { value: "", label: "Select Round" },
+            { value: "CAP1", label: "CAP Round 1" },
+            { value: "CAP2", label: "CAP Round 2" },
+            { value: "CAP3", label: "CAP Round 3" },
+            { value: "Institute Level", label: "Institute Level" },
+          ]}
+          error={errors.round}
+          required
+        />
+
+        <FormField
+          control={control}
+          name="seatType"
+          label="Seat Type"
+          type="select"
+          options={[
+            { value: "", label: "Select Seat Type" },
+            { value: "GOV", label: "Government" },
+            { value: "MIN", label: "Minority" },
+            { value: "Management", label: "Management" },
+            { value: "TFWS", label: "TFWS" },
+          ]}
+          error={errors.seatType}
+          required
+        />
+
+        <FormField
+          control={control}
+          name="admissionCategoryDTE"
+          label="Admission Category (DTE)"
+          type="select"
+          options={[
+            { value: "", label: "Select Category" },
+            { value: "CAP", label: "CAP" },
+            { value: "Institute Level", label: "Institute Level" },
+            { value: "Against CAP", label: "Against CAP" },
+          ]}
+          error={errors.admissionCategoryDTE}
+          required
+        />
+        <FormField
+          control={control}
+          name="shift"
+          label="Shift"
+          type="select"
+          options={[
+            { value: "", label: "Select Shift" },
+            { value: "Morning", label: "Morning" },
+            { value: "Afternoon", label: "Afternoon" },
+            { value: "Evening", label: "Evening" },
+          ]}
+          error={errors.shift}
+        />
+        <FormField
+          control={control}
+          name="admissionType"
+          label="Admission Type"
+          type="text"
+          alphaOnly={true}
+          error={errors.admissionType}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+        <FormField
+          control={control}
+          name="dteApplicationNumber"
+          label="DTE Application Number"
+          type="text"
+          error={errors.dteApplicationNumber}
+          maxLength={20}
+        />
+        <FormField
+          control={control}
+          name="feesCategory"
+          label="Fees Category"
+          type="text"
+          alphaOnly={true}
+          error={errors.feesCategory}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+        <FormField
+          control={control}
+          name="quota"
+          label="Quota"
+          type="text"
+          alphaOnly={true}
+          error={errors.quota}
+          maxLength={20}
+          pattern={{
+            value: /^[a-zA-Z\s]*$/,
+            message: "Only alphabets are allowed",
+          }}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 const BackgroundDetailsStep = ({ control, errors }) => (
   <div className="space-y-4">
     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -1102,67 +1268,67 @@ const BackgroundDetailsStep = ({ control, errors }) => (
 );
 
 const DocumentUploadStep = ({
-    control,
-    errors,
-    watch,
-    uploadingFiles,
-    handleFileChange,
-  }) => {
-    const renderFileStatus = (fieldName) => {
-      const value = watch(`documents.${fieldName}`);
-      const isUploading = uploadingFiles[fieldName];
+  control,
+  errors,
+  watch,
+  uploadingFiles,
+  handleFileChange,
+}) => {
+  const renderFileStatus = (fieldName) => {
+    const value = watch(`documents.${fieldName}`);
+    const isUploading = uploadingFiles[fieldName];
 
-      if (isUploading) {
-        return (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Uploading...</span>
-          </div>
-        );
-      }
-
-      if (!value || (Array.isArray(value) && value.length === 0)) {
-        return <span className="text-sm text-gray-500">No file uploaded</span>;
-      }
-
-      if (Array.isArray(value)) {
-        return (
-          <div className="flex flex-col gap-1">
-            {value.map((doc, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <File className="w-4 h-4 text-gray-500" />
-                <span className="text-sm">
-                  {doc.type || `Document ${index + 1}`}
-                </span>
-                <a
-                  href={doc.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline text-xs"
-                >
-                  View
-                </a>
-              </div>
-            ))}
-          </div>
-        );
-      }
-
-  return (
-        <div className="flex items-center gap-2">
-          <File className="w-4 h-4 text-gray-500" />
-          <span className="text-sm">{value.type}</span>
-          <a
-            href={value.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline text-xs"
-          >
-            View
-          </a>
+    if (isUploading) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Uploading...</span>
         </div>
       );
-    };
+    }
+
+    if (!value || (Array.isArray(value) && value.length === 0)) {
+      return <span className="text-sm text-gray-500">No file uploaded</span>;
+    }
+
+    if (Array.isArray(value)) {
+      return (
+        <div className="flex flex-col gap-1">
+          {value.map((doc, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <File className="w-4 h-4 text-gray-500" />
+              <span className="text-sm">
+                {doc.type || `Document ${index + 1}`}
+              </span>
+              <a
+                href={doc.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline text-xs"
+              >
+                View
+              </a>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <File className="w-4 h-4 text-gray-500" />
+        <span className="text-sm">{value.type}</span>
+        <a
+          href={value.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:underline text-xs"
+        >
+          View
+        </a>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -1249,7 +1415,9 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState({});
-
+  const [completedSteps, setCompletedSteps] = useState([]);
+  const isStepCompleted = (stepId) => completedSteps.includes(stepId);
+  const { user } = useSession();
   const {
     control,
     handleSubmit,
@@ -1274,25 +1442,37 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
     },
   });
 
-   useEffect(() => {
+  useEffect(() => {
     if (admission?.documents) {
       const existingDocs = admission.documents;
-      
+
       // Group mark sheets separately
-      const markSheets = existingDocs.filter(doc => doc.type === "Mark Sheet");
-      
+      const markSheets = existingDocs.filter(
+        (doc) => doc.type === "Mark Sheet"
+      );
+
       // Set individual documents
-      setValue('documents.aadharCard', 
-        existingDocs.find(doc => doc.type === "Aadhar Card") || null);
-      setValue('documents.lcCertificate', 
-        existingDocs.find(doc => doc.type === "LC Certificate") || null);
-      setValue('documents.tcCertificate', 
-        existingDocs.find(doc => doc.type === "TC Certificate") || null);
-      setValue('documents.incomeCertificate', 
-        existingDocs.find(doc => doc.type === "Income Certificate") || null);
-      setValue('documents.casteCertificate', 
-        existingDocs.find(doc => doc.type === "Caste Certificate") || null);
-      setValue('documents.markSheets', markSheets);
+      setValue(
+        "documents.aadharCard",
+        existingDocs.find((doc) => doc.type === "Aadhar Card") || null
+      );
+      setValue(
+        "documents.lcCertificate",
+        existingDocs.find((doc) => doc.type === "LC Certificate") || null
+      );
+      setValue(
+        "documents.tcCertificate",
+        existingDocs.find((doc) => doc.type === "TC Certificate") || null
+      );
+      setValue(
+        "documents.incomeCertificate",
+        existingDocs.find((doc) => doc.type === "Income Certificate") || null
+      );
+      setValue(
+        "documents.casteCertificate",
+        existingDocs.find((doc) => doc.type === "Caste Certificate") || null
+      );
+      setValue("documents.markSheets", markSheets);
     }
   }, [admission, setValue]);
 
@@ -1393,8 +1573,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
         if (!response.ok) throw new Error("Failed to upload file");
         const result = await response.json();
 
-        console.log("Result : ",result);
-        
+        console.log("Result : ", result);
 
         setValue(`documents.${fieldName}`, {
           type: documentTypeMap[fieldName],
@@ -1436,95 +1615,99 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
   };
 
   const onSubmit = async (data) => {
-  setIsSubmitting(true);
+    setIsSubmitting(true);
 
-  try {
-    const isUpdate = !!admission?._id;
-    const url = isUpdate
-      ? `/api/admission/${admission?._id}`
-      : "/api/admission";
-    const method = isUpdate ? "PUT" : "POST";
+    try {
+      const isUpdate = !!admission?._id;
+      const url = isUpdate
+        ? `/api/admission/${admission?._id}`
+        : "/api/admission";
+      const method = isUpdate ? "PUT" : "POST";
 
-    // Prepare documents array by collecting all uploaded documents
-    const documents = [];
-    
-    // Add all document types to the documents array
-    const documentTypes = [
-      'aadharCard',
-      'lcCertificate',
-      'tcCertificate',
-      'incomeCertificate',
-      'casteCertificate'
-    ];
-    
-    // Handle single-file documents
-    documentTypes.forEach(type => {
-      if (data.documents?.[type]) {
-        documents.push(data.documents[type]);
+      // Prepare documents array by collecting all uploaded documents
+      const documents = [];
+
+      // Add all document types to the documents array
+      const documentTypes = [
+        "aadharCard",
+        "lcCertificate",
+        "tcCertificate",
+        "incomeCertificate",
+        "casteCertificate",
+      ];
+
+      // Handle single-file documents
+      documentTypes.forEach((type) => {
+        if (data.documents?.[type]) {
+          documents.push(data.documents[type]);
+        }
+      });
+
+      // Handle markSheets (array of files)
+      if (
+        data.documents?.markSheets &&
+        Array.isArray(data.documents.markSheets)
+      ) {
+        documents.push(...data.documents.markSheets);
       }
-    });
-    
-    // Handle markSheets (array of files)
-    if (data.documents?.markSheets && Array.isArray(data.documents.markSheets)) {
-      documents.push(...data.documents.markSheets);
-    }
-   
-    // Prepare the payload - create a new object without the nested documents structure
-    const payload = {
-      ...data,
-      documents, // Include the documents array
-      isForeignNational: data.isForeignNational === "true",
-      address: data.address || [{}],
-    };
 
-    // Remove the nested documents structure from the copied data
-    delete payload.documents?.aadharCard;
-    delete payload.documents?.lcCertificate;
-    delete payload.documents?.tcCertificate;
-    delete payload.documents?.incomeCertificate;
-    delete payload.documents?.casteCertificate;
-    delete payload.documents?.markSheets;
+      // Prepare the payload - create a new object without the nested documents structure
+      const payload = {
+        ...data,
+        documents, // Include the documents array
+        isForeignNational: data.isForeignNational === "true",
+        address: data.address || [{}],
+        ...(!isUpdate && { counsellorId: user.id }),
+      };
 
-    console.log("Final payload going to backend:", payload);
+      // Remove the nested documents structure from the copied data
+      delete payload.documents?.aadharCard;
+      delete payload.documents?.lcCertificate;
+      delete payload.documents?.tcCertificate;
+      delete payload.documents?.incomeCertificate;
+      delete payload.documents?.casteCertificate;
+      delete payload.documents?.markSheets;
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      console.log("Final payload going to backend:", payload);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message ||
-          (isUpdate
-            ? "Failed to update admission"
-            : "Failed to create admission")
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message ||
+            (isUpdate
+              ? "Failed to update admission"
+              : "Failed to create admission")
+        );
+      }
+
+      const result = await response.json();
+      onUpdate(isUpdate ? { ...admission, ...result.data } : result.data);
+      toast.success(
+        isUpdate
+          ? "Admission updated successfully"
+          : "Admission created successfully"
       );
+      onClose();
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const result = await response.json();
-    onUpdate(isUpdate ? { ...admission, ...result.data } : result.data);
-    toast.success(
-      isUpdate
-        ? "Admission updated successfully"
-        : "Admission created successfully"
-    );
-    onClose();
-  } catch (error) {
-    console.error("Submission error:", error);
-    toast.error(error.message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
 
   const nextStep = async () => {
     const isValid = await validateStep(currentStep);
     if (isValid) {
+      setCompletedSteps((prev) => [...new Set([...prev, currentStep])]);
       setCurrentStep((prev) => Math.min(prev + 1, steps.length));
     }
   };
@@ -1540,7 +1723,13 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
       case 2:
         return <FamilyDetailsStep control={control} errors={errors} />;
       case 3:
-        return <AcademicDetailsStep control={control} errors={errors} />;
+        return (
+          <AcademicDetailsStep
+            control={control}
+            errors={errors}
+            watch={watch}
+          />
+        );
       case 4:
         return <BackgroundDetailsStep control={control} errors={errors} />;
       case 5:
@@ -1592,34 +1781,58 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
         <div className="px-6 py-4 border-b border-gray-100">
           <div className="flex items-center justify-between">
             {steps.map((step) => (
-              <div key={step.id} className="flex flex-col items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    currentStep >= step.id
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {step.id < currentStep ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  ) : (
-                    step.icon
-                  )}
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      currentStep >= step.id
+                        ? "bg-blue-600 text-white"
+                        : isStepCompleted(step.id)
+                        ? "bg-green-100 text-green-600"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {step.id < currentStep || isStepCompleted(step.id) ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    ) : (
+                      step.icon
+                    )}
+                  </div>
+                  <span className="text-xs mt-1 text-gray-500">
+                    {step.name}
+                  </span>
                 </div>
-                <span className="text-xs mt-1 text-gray-500">{step.name}</span>
-              </div>
+                {step.id < steps.length && (
+                  <div
+                    className={`flex-1 h-1 mx-2 ${
+                      isStepCompleted(step.id + 1) || currentStep > step.id
+                        ? "bg-green-100"
+                        : "bg-gray-200"
+                    }`}
+                  >
+                    <div
+                      className={`h-full ${
+                        isStepCompleted(step.id + 1) ? "bg-green-500" : ""
+                      }`}
+                      style={{
+                        width: isStepCompleted(step.id + 1) ? "100%" : "0%",
+                      }}
+                    ></div>
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -1692,28 +1905,141 @@ const AdmissionApplications = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
 
-  useEffect(() => {
-    const fetchAdmission = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/admission");
-        if (!res.ok) throw new Error("Failed to fetch Admissions");
-        const admissionData = await res.json();
-
-        // Sort by createdAt date in descending order (newest first)
-        const sortedAdmissions = admissionData.data.sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        });
-
-        setAdmission(sortedAdmissions);
-      } catch (error) {
-        setError(error.message);
-        console.error("Failed to fetch admissions:", error);
-      } finally {
-        setLoading(false);
-      }
+  const calculateCompletionPercentage = (admission) => {
+    const sectionWeights = {
+      personal: 30, // 30% of total
+      family: 15, // 15% of total
+      academic: 35, // 35% of total
+      background: 20, // 20% of total
     };
 
+    let completion = 0;
+
+    // Personal Details (5 fields = 6% each)
+    if (admission.fullName) completion += 6;
+    if (admission.dateOfBirth) completion += 6;
+    if (admission.gender) completion += 6;
+    if (admission.email) completion += 6;
+    if (admission.studentWhatsappNumber) completion += 6;
+
+    // Family Details (4 fields = 3.75% each)
+    if (admission.motherName) completion += 3.75;
+    if (admission.fatherGuardianWhatsappNumber) completion += 3.75;
+    if (admission.motherMobileNumber) completion += 3.75;
+    if (admission.familyIncome !== undefined) completion += 3.75;
+
+    // Academic Details (7 fields = 5% each)
+    if (admission.admissionYear) completion += 5;
+    if (admission.programType) completion += 5;
+    if (admission.branch) completion += 5;
+    if (admission.year) completion += 5;
+    if (admission.round) completion += 5;
+    if (admission.seatType) completion += 5;
+    if (admission.admissionCategoryDTE) completion += 5;
+
+    // Background Details (4 fields = 5% each)
+    if (admission.casteAsPerLC) completion += 5;
+    if (admission.domicile) completion += 5;
+    if (admission.nationality) completion += 5;
+    if (admission.religionAsPerLC) completion += 5;
+
+    // Cap at 100%
+    return Math.min(Math.round(completion), 100);
+  };
+
+  // const handleStatusChange = async (id, newStatus) => {
+  //   try {
+  //     setLoading(true);
+
+  //     const response = await fetch(`/api/admission/${id}`, {
+  //       method: "PUT",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ status: newStatus }),
+  //     });
+
+  //     if (!response.ok) throw new Error("Failed to update status");
+
+  //     const updatedData = await response.json();
+  //     await fetchAdmission()
+  //     // setAdmission(updatedData)
+  //     toast.success(`Application ${newStatus} successfully`);
+  //   } catch (error) {
+  //     console.error("Error updating status:", error);
+  //     toast.error(error.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(`/api/admission/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          isPrnGenerated: true,
+          // Include any other fields that might be needed for student creation
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update status");
+      }
+
+      const updatedData = await response.json();
+
+      // Refresh the admission list
+      await fetchAdmission();
+
+      // Show success message
+      toast.success(`Application ${newStatus} successfully`);
+
+      // If approved, show additional success message about student creation
+      if (newStatus === "approved") {
+        toast.success("Student record created successfully");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAdmission = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admission");
+      if (!res.ok) throw new Error("Failed to fetch Admissions");
+      const admissionData = await res.json();
+      const specificAdmissions = admissionData.data.filter(
+        (ad) => ad.counsellorId === user.id
+      );
+
+      console.log(specificAdmissions);
+
+      // Sort by createdAt date in descending order (newest first)
+      const sortedAdmissions = specificAdmissions.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      setAdmission(sortedAdmissions);
+    } catch (error) {
+      setError(error.message);
+      console.error("Failed to fetch admissions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchAdmission();
   }, []);
 
@@ -1722,16 +2048,19 @@ const AdmissionApplications = () => {
       color: "bg-yellow-100 text-yellow-800",
       icon: Clock,
       label: "In Process",
+      showActions: true,
     },
     approved: {
       color: "bg-green-100 text-green-800",
       icon: CheckCircle,
       label: "Approved",
+      showActions: false,
     },
     rejected: {
       color: "bg-red-100 text-red-800",
       icon: XCircle,
       label: "Rejected",
+      showActions: false,
     },
   };
 
@@ -1761,41 +2090,53 @@ const AdmissionApplications = () => {
     setShowDetailsModal(true);
   };
 
-  if (loading) return <LoadingComponent />;
-
-  if (error)
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="p-6 text-red-600">Error: {error}</div>
-      </div>
-    );
   const handleExportToExcel = () => {
     if (!admission || admission.length === 0) {
-      alert("No data to export");
+      toast.error("No data to export");
       return;
     }
 
     const exportData = admission.map((app) => ({
+      DTEApplicationNumber: app.dteApplicationNumber || "",
+      FirstName: app.firstName || "",
+      MiddleName: app.middleName || "",
+      LastName: app.lastName || "",
       FullName: app.fullName || "",
+      NameAsPerAadhar: app.nameAsPerAadhar || "",
       Email: app.email || "",
-      WhatsApp: app.studentWhatsappNumber || "",
+      StudentWhatsappNo: app.studentWhatsappNumber || "",
       Branch: app.branch || "",
       ProgramType: app.programType || "",
       Year: app.year || "",
       Round: app.round || "",
       SeatType: app.seatType || "",
+      Shift: app.shift || "",
+      Round: app.round || "",
+      Quota: app.quota || "",
+      SeatType: app.seatType || "",
       AdmissionCategory: app.admissionCategoryDTE || "",
       Gender: app.gender || "",
       MotherName: app.motherName || "",
-      ParentWhatsApp: app.fatherGuardianWhatsappNumber || "",
-      Caste: app.casteAsPerLC || "",
+      FatherGuardianWhatsAppMobileNo: app.fatherGuardianWhatsappNumber || "",
+      CastAsPerLC: app.casteAsPerLC || "",
       Domicile: app.domicile || "",
       Nationality: app.nationality || "",
       FamilyIncome: app.familyIncome || "",
       AdmissionYear: app.admissionYear || "",
-      PRN: app.prn || "",
       DateOfBirth: app.dateOfBirth || "",
       Status: app.status || "",
+      AddressLine: app.address?.[0]?.addressLine || "",
+      City: app.address?.[0]?.city || "",
+      State: app.address?.[0]?.state || "",
+      Pincode: app.address?.[0]?.pincode || "",
+      Country: app.address?.[0]?.country || "",
+      FeesCategory: app.feesCategory || "",
+      AdmissionType: app.admissionType || "",
+      SubCastAsPerLC: app.subCasteAsPerLC || "",
+      ReligionAsPerLC: app.religionAsPerLC || "",
+      FamilyIncome: app.familyIncome || "",
+      MothersMobileNo: app.motherMobileNumber || "",
+      IsForeignNational: app.isForeignNational || "",
       CreatedAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : "",
       UpdatedAt: app.updatedAt ? new Date(app.updatedAt).toLocaleString() : "",
     }));
@@ -1816,9 +2157,18 @@ const AdmissionApplications = () => {
     saveAs(data, "admissions.xlsx");
   };
 
+  if (loading) return <LoadingComponent />;
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-6 text-red-600">Error: {error}</div>
+      </div>
+    );
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-    <Toaster />
+      <Toaster />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex gap-4 pb-4 justify-end">
@@ -1952,6 +2302,9 @@ const AdmissionApplications = () => {
                     Submitted
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Completion
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -1960,6 +2313,8 @@ const AdmissionApplications = () => {
                 {currentItems.map((application) => {
                   const status = application?.status || "inProcess";
                   const config = statusConfig[status] || statusConfig.inProcess;
+                  const completionPercentage =
+                    calculateCompletionPercentage(application);
                   return (
                     <tr key={application?._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -2003,6 +2358,23 @@ const AdmissionApplications = () => {
                           ? new Date(application.createdAt).toLocaleDateString()
                           : "N/A"}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-24 mr-2">
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-green-500"
+                                style={{
+                                  width: `${completionPercentage}%`,
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {completionPercentage}%
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button
@@ -2020,6 +2392,33 @@ const AdmissionApplications = () => {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          {completionPercentage === 100 &&
+                            application?.status === "inProcess" && (
+                              <>
+                                <button
+                                  className="text-green-600 hover:text-green-900"
+                                  onClick={() =>
+                                    handleStatusChange(
+                                      application?._id,
+                                      "approved"
+                                    )
+                                  }
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="text-red-600 hover:text-red-900"
+                                  onClick={() =>
+                                    handleStatusChange(
+                                      application?._id,
+                                      "rejected"
+                                    )
+                                  }
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
                         </div>
                       </td>
                     </tr>
@@ -2121,7 +2520,7 @@ const AdmissionApplications = () => {
               );
             } else {
               // Add new admission
-              setAdmission((prev) => [...prev, updatedData]);
+              setAdmission((prev) => [updatedData, ...prev]);
             }
           }}
         />

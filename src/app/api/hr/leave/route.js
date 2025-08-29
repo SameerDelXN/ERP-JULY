@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import Leave from '@/models/leave';
 import Staff from '@/models/staff';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const body = await req.json();
@@ -60,10 +61,13 @@ export async function POST(req) {
 */
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
-    const leaves = await Leave.find({})
+    const leaves = await Leave.find({}).populate({
+      path: 'staffId',
+      select: 'name staffId'
+    });
      
 
     return NextResponse.json({ success: true, data: leaves });
@@ -76,7 +80,7 @@ export async function GET() {
 
 
 export async function PUT(request) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const { leaveId, status } = await request.json();
 

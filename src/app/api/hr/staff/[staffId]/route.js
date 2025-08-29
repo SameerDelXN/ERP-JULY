@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import Staff from '@/models/staff';
 
 // GET /api/staff/[staffId]
@@ -7,7 +8,7 @@ export async function GET(req, { params }) {
   const { staffId } = params;
 
   try {
-    await connectDB();
+    await connectToDatabase();
 
     const staff = await Staff.findOne({ staffId });
 

@@ -1,32 +1,49 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+//import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import Staff from '@/models/staff';
+import teacher from '@/app/models/teacherSchema';
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
   try {
     const staffList = await Staff.find().sort({ joiningDate: -1 });
-    return NextResponse.json({ success: true, data: staffList });
+    const teacherList = await teacher.find().sort({dateOfJoining:-1});
+
+    return NextResponse.json({ success: true, staff: staffList , teacher:teacherList});
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request) {
-  await connectDB();
+  await connectToDatabase();
   try {
-    const data = await request.json();
+    const body = await request.json();
 
-    // Check if data is an array (bulk insert)
-    if (Array.isArray(data)) {
-      const staffList = await Staff.insertMany(data);
-      return NextResponse.json({ success: true, data: staffList });
+    const existing = await Staff.findOne({staffId:body.staffId});
+    if(existing){
+      return NextResponse.json(
+        {success:false,error:"staff Id already present"},
+        {status:404}
+      );
     }
 
-    // Single insert
-    const newStaff = new Staff(data);
-    await newStaff.save();
-    return NextResponse.json({ success: true, data: newStaff });
+    const newStaff = await Staff.create(body);
+
+    if(body.designation && body.designation.toLowerCase() === "teacher"){
+      await teacher.create({
+        teacherId:newStaff.staffId,
+        fullName : newStaff.name,
+        email : newStaff.email,
+        department:newStaff.department,
+        role:newStaff.designation,
+        dateOfJoining : newStaff.joiningData,
+        phone : newStaff.phone
+      });
+    }
+
+    return NextResponse.json({success:true,data:newStaff},{status:200});
 
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -34,7 +51,7 @@ export async function POST(request) {
 }
 // PUT: Update staff by ID
 export async function PUT(request) {
-  await connectDB();
+  await connectToDatabase();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
@@ -52,7 +69,7 @@ export async function PUT(request) {
 }
 // DELETE: Remove staff by ID
 export async function DELETE(request) {
-  await connectDB();
+  await connectToDatabase();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

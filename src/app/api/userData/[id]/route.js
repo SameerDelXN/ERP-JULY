@@ -1,5 +1,3 @@
-// app/api/users/[id]/route.js
-//PUT and DELETE handler to update and delete user by id
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '../../../lib/mongodb';
 import userSchema from '../../../models/userSchema';
@@ -8,6 +6,7 @@ import userSchema from '../../../models/userSchema';
 export async function PUT(req, { params }) {
   const { id } = params;
   const data = await req.json();
+  console.log('Update user data:', data);
 
   try {
     await connectToDatabase();
@@ -22,6 +21,19 @@ export async function PUT(req, { params }) {
       });
     }
 
+    // Check if email is being updated and if it already exists for another user
+    if (data.email) {
+      const existingUser = await userSchema.findOne({ email: data.email, _id: { $ne: id } });
+      if (existingUser) {
+        return NextResponse.json({
+          success: false,
+          message: "Email already exists for another user."
+        }, {
+          status: 400
+        });
+      }
+    }
+
     const updatedUser = await userSchema.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
@@ -30,14 +42,16 @@ export async function PUT(req, { params }) {
 
     if (!updatedUser) {
       return NextResponse.json({
-        success: false, message: 'User not found'
+        success: false,
+        message: 'User not found'
       }, {
         status: 404
       });
     }
 
     return NextResponse.json({
-      success: true, user: updatedUser
+      success: true,
+      user: updatedUser
     }, {
       status: 200
     });
@@ -64,7 +78,8 @@ export async function DELETE(req, { params }) {
 
     if (!deletedUser) {
       return NextResponse.json({
-        success: false, message: 'User not found'
+        success: false,
+        message: 'User not found'
       }, {
         status: 404
       });

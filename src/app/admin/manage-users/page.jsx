@@ -18,9 +18,7 @@ import {
 } from "lucide-react";
 import { roles } from "@/data/data";
 import LoadingComponent from "@/components/Loading";
-
-
-
+import toast, { Toaster } from "react-hot-toast";
 
 const UserManagementPage = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -113,7 +111,7 @@ const UserManagementPage = () => {
       setUserPerformance(data);
       setShowPerformanceModal(true);
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
       console.error("Performance fetch error:", err);
     } finally {
       setLoading(false);
@@ -148,9 +146,9 @@ const UserManagementPage = () => {
       }
 
       await fetchAllUsers();
-      alert("User deleted successfully");
+      toast.success("User deleted successfully");
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
       console.error("Delete error:", err);
     } finally {
       setLoading(false);
@@ -204,8 +202,7 @@ const UserManagementPage = () => {
       </div>
     );
 
-  // ... (keep all your existing modal components: AddUserModal and EditUserModal)
-     const AddUserModal = () => {
+  const AddUserModal = () => {
     const [formData, setFormData] = useState({
       fullName: "",
       email: "",
@@ -218,12 +215,42 @@ const UserManagementPage = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+    const [courseOptions, setCourseOptions] = useState([]);
+    const [loadingCourses, setLoadingCourses] = useState(true);
+
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch("/api/courses");
+        if (!response.ok) throw new Error("Failed to fetch departments");
+        const departments = await response.json();
+
+        setCourseOptions(departments.courses);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchDepartments();
+    }, []);
 
     const handleChange = (e) => {
       const { name, value } = e.target;
 
       // Clear any existing error for this field
       setErrors((prev) => ({ ...prev, [name]: "" }));
+
+      // Special handling for password (no spaces allowed)
+      if (name === "password" || name === "confirmPassword") {
+        const noSpaceValue = value.replace(/\s/g, "");
+        setFormData((prev) => ({
+          ...prev,
+          [name]: noSpaceValue,
+        }));
+        return;
+      }
 
       // Special validation for fullName (only letters and spaces)
       if (name === "fullName" && value && !/^[a-zA-Z\s]*$/.test(value)) {
@@ -293,6 +320,8 @@ const UserManagementPage = () => {
         newErrors.password = "Password is required";
       } else if (formData.password.length < 8) {
         newErrors.password = "Password must be at least 8 characters";
+      } else if (/\s/.test(formData.password)) {
+        newErrors.password = "Password cannot contain spaces";
       }
 
       // Teacher/HOD-specific validation
@@ -362,11 +391,11 @@ const UserManagementPage = () => {
           throw new Error(data.error || "Registration failed");
         }
 
-        alert("User registered successfully!");
+        toast.success("User registered successfully!");
         setShowAddUserModal(false);
         fetchAllUsers();
       } catch (err) {
-        alert(err.message);
+        toast.error(err.message);
         console.error("Registration error:", err);
       } finally {
         setIsSubmitting(false);
@@ -375,6 +404,7 @@ const UserManagementPage = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Toaster/>
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">Add New User</h2>
@@ -440,7 +470,7 @@ const UserManagementPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Department *
                     </label>
-                    <input
+                    {/* <input
                       type="text"
                       name="department"
                       value={formData.department}
@@ -455,6 +485,29 @@ const UserManagementPage = () => {
                       <p className="mt-1 text-sm text-red-600">
                         {errors.department}
                       </p>
+                    )} */}
+                    {!loadingCourses ? (
+                      <select
+                        id="department"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleChange}
+                        required
+                        className={
+                          "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
+                        }
+                      >
+                        <option value="">{"Select a Department"}</option>
+                        {courseOptions.map((course, index) => (
+                          <option key={`course-${index}`} value={course.name}>
+                            {course.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
+                        Loading courses...
+                      </div>
                     )}
                   </div>
                 )}
@@ -605,6 +658,28 @@ const UserManagementPage = () => {
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [courseOptions, setCourseOptions] = useState([]);
+    const [loadingCourses, setLoadingCourses] = useState(true);
+
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch("/api/courses");
+        if (!response.ok) throw new Error("Failed to fetch departments");
+        const departments = await response.json();
+
+        console.log(departments);
+
+        setCourseOptions(departments.courses);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchDepartments();
+    }, []);
 
     const handleChange = (e) => {
       const { name, value } = e.target;
@@ -743,10 +818,10 @@ const UserManagementPage = () => {
 
         // Refresh user list
         await fetchAllUsers();
-        alert("User updated successfully!");
+        toast.success("User updated successfully!");
         setShowEditUserModal(false);
       } catch (err) {
-        alert(err.message);
+        toast.error(err.message);
         console.error("Update error:", err);
       } finally {
         setIsSubmitting(false);
@@ -755,6 +830,7 @@ const UserManagementPage = () => {
     console.log(formData);
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Toaster/>
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">Edit User</h2>
@@ -820,21 +896,28 @@ const UserManagementPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Department *
                     </label>
-                    <input
-                      type="text"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleChange}
-                      maxLength={20}
-                      className={`w-full px-3 py-2 border ${
-                        errors.department ? "border-red-500" : "border-gray-200"
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                      placeholder="Enter department"
-                    />
-                    {errors.department && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.department}
-                      </p>
+                    {!loadingCourses ? (
+                      <select
+                        id="department"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleChange}
+                        required
+                        className={
+                          "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
+                        }
+                      >
+                        <option value="">{"Select a Department"}</option>
+                        {courseOptions.map((course, index) => (
+                          <option key={`course-${index}`} value={course.name}>
+                            {course.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
+                        Loading courses...
+                      </div>
                     )}
                   </div>
                 )}
@@ -935,12 +1018,18 @@ const UserManagementPage = () => {
   const PerformanceModal = () => {
     if (!userPerformance) return null;
 
-    const conversionRate = userPerformance.totalEnquiries > 0 
-      ? ((userPerformance.convertedEnquiries / userPerformance.totalEnquiries) * 100).toFixed(2)
-      : 0;
+    const conversionRate =
+      userPerformance.totalEnquiries > 0
+        ? (
+            (userPerformance.convertedEnquiries /
+              userPerformance.totalEnquiries) *
+            100
+          ).toFixed(2)
+        : 0;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Toaster/>
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">
@@ -1045,6 +1134,7 @@ const UserManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster/>
       <div className="p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
           <div className="flex border-b border-gray-100">
@@ -1138,6 +1228,8 @@ const UserManagementPage = () => {
                                   ? "bg-blue-100 text-blue-800"
                                   : role === "hod"
                                   ? "bg-purple-100 text-purple-800"
+                                  : role === "hr"
+                                  ? "bg-yellow-100 text-yellow-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >

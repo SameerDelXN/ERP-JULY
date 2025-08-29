@@ -15,10 +15,10 @@ export default function StaffManagement() {
   // Form state
   const [formData, setFormData] = useState({
     staffId: '',
-    fullName: '',
+    name: '',
     email: '',
     department: 'Select Department',
-    position: '',
+    designation: '',
     salary: '',
     contactNumber: ''
   });
@@ -28,9 +28,11 @@ export default function StaffManagement() {
     const fetchStaff = async () => {
       try {
         const res = await fetch('/api/hr/staff');
-        const data = await res.json();
-        setStaff(data.data);
-        setFilteredStaff(data.data);
+        const {staff:staff,teacher} = await res.json();
+        const combined = [...staff,...teacher];
+        console.log("Staff",combined);
+        setStaff(combined);
+        setFilteredStaff(combined);
       } catch (error) {
         console.error('Failed to fetch staff:', error);
       } finally {
@@ -42,12 +44,24 @@ export default function StaffManagement() {
 
   // Search functionality
   useEffect(() => {
-    const results = staff.filter(person =>
-      person?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person?.staffId?.toLowerCase().includes(searchTerm.toLowerCase())
+    let results = staff;
+
+      if(searchTerm){
+     results = staff.filter(person =>
+      person?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+       person?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person?.staffId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person?.teacherId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+  }
+
+    if(roleFilter !== 'all'){
+      results = results.filter(person=> 
+        roleFilter === 'teaching' ? person.department === 'Teacher': person.department !== 'Teacher'
+      );
+    }
     setFilteredStaff(results);
-  }, [searchTerm, staff]);
+  }, [searchTerm, staff, roleFilter]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -61,10 +75,32 @@ export default function StaffManagement() {
   // Create or Update staff
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const isTeacher = formData.department === 'Teacher';
+    const endpoint = isTeacher ? '/api/hr/teacher' : '/api/hr/staff'
     const url = currentStaff 
-      ? `/api/hr/staff/${currentStaff._id}`
-      : '/api/hr/staff';
+      ? `${endpoint}/${currentStaff._id}`
+      : `${endpoint}`;
     const method = currentStaff ? 'PUT' : 'POST';
+
+
+    const apiData = isTeacher ?{
+      fullName : formData.name,
+      email: formData.email,
+      phone: formData.contactNumber,
+      department: formData.department,
+      role: formData.designation,
+      salary: formData.salary,
+      teacherId: formData.staffId
+    } : {
+      name: formData.name,
+      email: formData.email,
+      contactNumber: formData.contactNumber,
+      department: formData.department,
+      designation: formData.designation,
+      salary: formData.salary,
+      staffId: formData.staffId
+    };
 
     try {
       const res = await fetch(url, {
@@ -238,17 +274,17 @@ const getInitials = (name) => {
           <td className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
               <div className='flex-shrink-0 h-10 w-10 mr-2 rounded-full bg-gray-100 flex items-center justify-center text-gray-950 font-medium'>
-                {getInitials(person.name)}
+                {getInitials(person.name || person.fullName)}
               </div>
               <div className='flex flex-col'>
-                <span className="text-sm font-medium text-gray-900">{person.name}</span>
-              <span className="text-xs text-gray-500">{person.staffId}</span>
+                <span className="text-sm font-medium text-gray-900">{person.name || person.fullName}</span>
+              <span className="text-xs text-gray-500">{person.staffId || person.teacherId}</span>
               </div>
               
             </div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department}</td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation}</td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation || person.role}</td>
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             <button
               onClick={() => handleEdit(person)}
@@ -294,8 +330,21 @@ const getInitials = (name) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
                 type="text"
+                name="staffId"
+                value={formData.staffId || formData.teacherId}
+                onChange={handleInputChange}
+                placeholder="Enter Staff ID"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <input
+                type="text"
                 name="fullName"
-                value={formData.fullName}
+                value={formData.fullName || formData.name}
                 onChange={handleInputChange}
                 placeholder="Enter full name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -327,10 +376,10 @@ const getInitials = (name) => {
               >
                 <option value="">Select Department</option>
                 <option value="HR">HR</option>
-                <option value="Finance">Finance</option>
-                <option value="IT">IT</option>
-                <option value="Operations">Operations</option>
-                <option value="Marketing">Marketing</option>
+                <option value="teacher">Teacher</option>
+                <option value="account">Account</option>
+                {/* <option value="hod">HOD</option> */}
+                <option value="library">Library</option>
               </select>
             </div>
           </div>
@@ -342,7 +391,7 @@ const getInitials = (name) => {
               <input
                 type="text"
                 name="position"
-                value={formData.position}
+                value={formData.position || formData.role}
                 onChange={handleInputChange}
                 placeholder="Enter position"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -368,7 +417,7 @@ const getInitials = (name) => {
               <input
                 type="tel"
                 name="contactNumber"
-                value={formData.contactNumber}
+                value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="Enter phone number"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

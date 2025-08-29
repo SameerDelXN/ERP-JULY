@@ -22,24 +22,73 @@ export async function GET() {
     });
   }
 }
+//sample
+// export async function POST(req) {
+//   try {
+//     await connectToDatabase();
+//     const body = await req.json();
+//     const {firstName,middleName,lastName,phone,email,course,source,notes}= body
+//     const enquiry = new enquirySchema({
+//       first : firstName,
+//       middle : middleName,
+//       last : lastName,
+//       phone,
+//       email,
+//       courseInterested:course,
+//       source,
+//       notes,
+
+//     });
+//     await enquiry.save();
+
+//     return NextResponse.json({
+//       success: true,
+//       message: 'Enquiry submitted successfully'
+//     }, {
+//       status: 201
+//     });
+
+//   } catch (error) {
+//     console.error('Error creating enquiry:', error);
+//     return NextResponse.json({
+//       success: false,
+//       message: error.message,
+//     }, {
+//       status: 400
+//     });
+//   }
+// }
+
 
 export async function POST(req) {
   try {
     await connectToDatabase();
+
     const body = await req.json();
-    const {firstName,middleName,lastName,phone,email,course,source,notes}= body
+    const { firstName, middleName, lastName, phone, email, programType, course, source, notes } = body
+    console.log("prooooooooooo = ", body)
     const enquiry = new enquirySchema({
-      first : firstName,
-      middle : middleName,
-      last : lastName,
+      first: firstName,
+      middle: middleName,
+      last: lastName,
       phone,
       email,
-      courseInterested:course,
+      programType: programType,
+      courseInterested: course,
       source,
       notes,
+      counsellorId, // optional
+    } = body);
 
-    });
-    await enquiry.save();
+    // Basic validation (you can enhance this)
+    if (!firstName || !lastName || !phone) {
+      return NextResponse.json(
+        { message: 'First name, last name, and phone are required.' },
+        { status: 400 }
+      );
+    }
+
+    console.log(enquiry);
 
     return NextResponse.json({
       success: true,
@@ -48,13 +97,17 @@ export async function POST(req) {
       status: 201
     });
 
+    await newEnquiry.save();
+
+    return NextResponse.json(
+      { message: 'Enquiry created successfully', enquiry: newEnquiry },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error creating enquiry:', error);
-    return NextResponse.json({
-      success: false,
-      message: error.message,
-    }, {
-      status: 400
-    });
+    return NextResponse.json(
+      { message: 'Server error', error: error.message },
+      { status: 500 }
+    );
   }
 }

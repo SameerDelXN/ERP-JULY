@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "staff", "teacher","hod"],
+      enum: ["admin", "staff", "teacher", "hod","hr"],
       default: "student",
     },
 
@@ -59,13 +59,15 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       refPath: "role",
     },
-    sessionToken:{
-      type:String
+    sessionToken: {
+      type: String
     }
   },
   { timestamps: true }
 );
-delete mongoose.models.user
+if (mongoose.models && mongoose.models.user) {
+  delete mongoose.models.user;
+}
 const user = mongoose.models.user || mongoose.model("user", userSchema);
 
 export default user;

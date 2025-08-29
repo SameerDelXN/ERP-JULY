@@ -25,5 +25,4 @@ delete mongoose.models.EmailVerification
 // Auto-delete expired verifications
 emailVerificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export default mongoose.models.EmailVerification || 
-       mongoose.model('EmailVerification', emailVerificationSchema);
+export default mongoose.models.EmailVerification || mongoose.model('EmailVerification', emailVerificationSchema);

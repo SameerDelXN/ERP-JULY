@@ -13,6 +13,7 @@ export async function GET() {
     const teachers = await teacherSchema.find().select('-password'); // Remove password from response
 
     return NextResponse.json(teachers, { status: 200 });
+    
   } catch (error) {
     console.error('Error fetching teachers:', error);
     return NextResponse.json({ 
