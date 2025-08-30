@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 //import connectDB from '@/lib/mongoose';
 import { connectToDatabase } from '@/app/lib/mongodb';
 import Staff from '@/models/staff';
-import teacher from '@/app/models/teacherSchema';
+import Teacher from '@/app/models/teacherSchema';
 
 export async function GET() {
   try {
@@ -10,10 +10,10 @@ export async function GET() {
 
     // Fetch staff and teacher records, sorted by joining date
     const staffList = await Staff.find().sort({ joiningDate: -1 }).lean();
-    const teacherList = await teacher.find().sort({ dateOfJoining: -1 }).lean();
+    const teacherList = await Teacher.find().sort({ dateOfJoining: -1 }).lean();
 
 
-    console.log(staffList);
+    console.log(teacherList);
     // Normalize fields to a consistent structure
     const combinedList = [
       ...staffList.map((item) => ({
