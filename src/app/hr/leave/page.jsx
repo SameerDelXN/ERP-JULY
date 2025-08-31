@@ -1,426 +1,486 @@
-'use client';
+'use client'
+
 import { useState, useEffect } from 'react';
-import { CalendarDays, Clock, User, Check, X, Plus, Eye } from 'lucide-react';
-// Remove useParams import since we're not using it
+import { Search, Eye, Check, X, Calendar, Clock, User, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function LeaveManagement() {
-  // Remove the useParams since we're not using dynamic routes
+const LeaveApplicationPage = () => {
+  const [leaveApplications, setLeaveApplications] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [staffLeaveHistory, setStaffLeaveHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
-const [showRejectionModal, setShowRejectionModal] = useState(false);
-const [currentRejectedRequest, setCurrentRejectedRequest] = useState(null);
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    staffId: '',
-    leaveType: 'Casual',
-    startDate: '',
-    endDate: '',
-    reason: '',
-    contactNumber: ''
-  });
+  const [selectedApplicationForRejection, setSelectedApplicationForRejection] = useState(null);
 
-  // Fetch leave requests from backend
+  // Mock data - replace with actual API call
+ 
 
-  const fetchLeaveRequests = async () => {
-  setLoading(true);
-  try {
-    const res = await fetch('/api/hr/leave', { method: 'GET' });
-    const json = await res.json();
-    console.log('Fetched leave requests:', json);
-    if (json.success) {
-      setLeaveRequests(json.data);
-    } else {
-      console.error('Failed to fetch:', json.error);
-    }
-  } catch (error) {
-    console.error('Failed to fetch leave requests:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  useEffect(() => {
+    const fetchLeaveApplication = async () => {
+      try{
+        setIsLoading(true);
+        const response = await fetch('/api/hr/leave');
+        console.log("Response",response);
+        const data = await response.json();
 
-useEffect(()=>{
-  fetchLeaveRequests()
-},[])
+        console.log("Data",data);
 
+        if(data.success){
+          setLeaveApplications(data.data || []);
+        }
+        else{
+          console.error('Failed to fetch leave applications:', data.error);
+        }
+      }catch{
+        console.error('Error fetching leave applications:', error);
+      }finally {
+        setIsLoading(false);
+      }
+      fetchLeaveApplication();
+    };
 
-  // useEffect(() => {
-  //   const fetchLeaveRequests = async () => {
-  //     setLoading(true);
-  //     try {
-  //       // Fetch all leave requests (you'll need a different endpoint)
-  //       const res = await fetch('/api/hr/leave', { method: 'GET' });
-  //       const json = await res.json();
-  //       if (json.success) {
-  //         setLeaveRequests(json.data);
-  //       } else {
-  //         console.error('Failed to fetch:', json.error);
-  //       }
-  //     } catch (error) {
-  //       console.error('Failed to fetch leave requests:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchLeaveRequests();
-  // }, []); // Remove id dependency
-
-  
-  
-
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Submit new leave request to backend
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     
-    setLoading(true);
+  }, []);
+
+  const filteredApplications = leaveApplications.filter(app =>
+    app.staffId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.leaveType.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleViewHistory = async (staffId, staffName) => {
+    setSelectedStaff({ id: staffId, name: staffName });
+    setShowHistoryModal(true);
+    setHistoryLoading(true);
+    
     try {
-      // Create new leave request
-      const res = await fetch('/api/hr/leave', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          staffId: formData.staffId,
-          fromDate: formData.startDate,
-          toDate: formData.endDate,
-          reason: formData.reason,
-          type: formData.leaveType
-        }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        setLeaveRequests(prev => [json.data, ...prev]);
-        setIsModalOpen(false);
-        // Reset form
-        setFormData({
-          staffId: '',
-          leaveType: 'Casual',
-          startDate: '',
-          endDate: '',
-          reason: '',
-          contactNumber: ''
-        });
+      const response = await fetch(`/api/hr/leave/${staffId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setStaffLeaveHistory(data.data || []);
       } else {
-        alert(json.error || 'Failed to submit leave request');
+        console.error('Failed to fetch leave history:', data.error);
+        setStaffLeaveHistory([]);
       }
     } catch (error) {
-      console.error('Submit error:', error);
-      alert('Failed to submit leave request');
+      console.error('Error fetching leave history:', error);
+      setStaffLeaveHistory([]);
     } finally {
-      setLoading(false);
+      setHistoryLoading(false);
     }
   };
 
-  // Approve leave request via backend
-  const handleReject = async (leaveId) => {
-  const reason = prompt("Please enter the reason for rejection:");
-  if (reason === null) return; // User cancelled
+  const handleApprove = async (leaveId) => {
+    try {
+      const response = await fetch(`/api/hr/leave/${leaveId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          approvedBy: 'HR Manager', // Replace with actual current user
+          approvedDate: new Date().toISOString().split('T')[0]
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update local state
+        setLeaveApplications(prev => 
+          prev.map(app => 
+            app.id === leaveId 
+              ? { ...app, status: 'approved' }
+              : app
+          )
+        );
+      } else {
+        console.error('Failed to approve application:', data.error);
+        alert('Failed to approve application. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error approving leave application:', error);
+      alert('Failed to approve application. Please try again.');
+    }
+  };
+
+  const handleRejectClick = (application) => {
+    setSelectedApplicationForRejection(application);
+    setRejectionReason('');
+    setShowRejectModal(true);
+  };
+
   
-  setLoading(true);
-  console.log('Rejecting leave with ID:', leaveId, 'Reason:', reason);
-  
-  try {
-    const res = await fetch(`/api/hr/leave/${leaveId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        status: 'rejected',
-        rejectionReason: reason 
-      }),
-    });
-    const json = await res.json();
-    console.log('Reject response:', json);
-    
-    if (json.success) {
-      setLeaveRequests(prev =>
-        prev.map(req => req._id === leaveId ? { 
-          ...req, 
-          status: 'rejected',
-          rejectionReason: reason 
-        } : req)
-      );
-    } else {
-      alert(json.error || 'Failed to reject leave');
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      alert('Please provide a reason for rejection');
+      return;
     }
-  } catch (error) {
-    console.error('Reject error:', error);
-    alert('Failed to reject leave');
-  } finally {
-    setLoading(false);
-  }
-};
 
-//Approve leave request via backend
+   try {
+      const response = await fetch(`/api/hr/leave/${leaveId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rejectionReason: rejectionReason,
+          rejectedBy: 'HR Manager', // Replace with actual current user
+          rejectedDate: new Date().toISOString().split('T')[0]
+        })
+      });
 
-const handleApprove = async (leaveId) =>{
-  setLoading(true)
-  console.log('Approving leave with ID:', leaveId);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update local state
+        setLeaveApplications(prev => 
+          prev.map(app => 
+            app.id === selectedApplicationForRejection.id 
+              ? { 
+                  ...app, 
+                  status: 'rejected',
+                  rejectionReason: rejectionReason,
+                  rejectedDate: new Date().toISOString().split('T')[0],
+                  rejectedBy: 'HR Manager'
+                }
+              : app
+          )
+        );
 
-  try{
-    const res = await fetch(`/api/hr/leave/${leaveId}`,{
-      method:'PUT',
-      headers:{'Content-Type': 'application/json'},
-      body:JSON.stringify({status:'approved'}),
-    });
-
-    const json = await res.json()
-    console.log('Approve response:', json);
-
-    if(json.success){
-      setLeaveRequests(prev => prev.map(req=> req._id === leaveId ? {...req,status:'approved'}:req))
+        // Close modal and reset state
+        setShowRejectModal(false);
+        setSelectedApplicationForRejection(null);
+        setRejectionReason('');
+      } else {
+        console.error('Failed to reject application:', data.error);
+        alert('Failed to reject application. Please try again.');
+      }
+      
+    } catch (error) {
+      console.error('Error rejecting leave application:', error);
+      alert('Failed to reject application. Please try again.');
     }
-    else{
-      alert(json.error || 'Failed to approve')
-    }
-  }
-  catch(error){
-    console.error('Approve error',error)
-    alert('Failed to approve')
-  }finally{
-    setLoading(false)
-  }
-}
+  };
 
-  // Reject leave request via backend
-  // const handleReject = async (leaveId) => {
-  //   setLoading(true);
-  //   try {
-  //     // Fixed: Use backticks and correct URL structure (leaveId in URL, not body)
-  //     const res = await fetch(`/api/hr/leave/${leaveId}`, {
-  //       method: 'PUT',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ status: 'rejected' }),
-  //     });
-  //     const json = await res.json();
-  //     if (json.success) {
-  //       setLeaveRequests(prev =>
-  //         prev.map(req => req._id === leaveId ? { ...req, status: 'rejected' } : req)
-  //       );
-  //     } else {
-  //       alert(json.error || 'Failed to reject leave');
-  //     }
-  //   } catch (error) {
-  //     console.error('Reject error:', error);
-  //     alert('Failed to reject leave');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const cancelRejection = () => {
+    setShowRejectModal(false);
+    setSelectedApplicationForRejection(null);
+    setRejectionReason('');
+  };
 
-  const filteredRequests = leaveRequests.filter(request => {
-    if (filter === 'all') return true;
-    return request.status === filter;
-  });
-
-  const getStatusColor = (status) => {
+  const getStatusBadge = (status) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-yellow-100 text-yellow-800';
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getInitials = (name) => {
-  if (!name) return '';
-  return name.split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
-};
-
-  if (loading) return <div className="text-center py-8">Loading leave requests...</div>;
-
-  console.log('Leave requests:', leaveRequests);
-  console.log('Filtered requests:', filteredRequests);
-
-
-  const totalApplication = filteredRequests.length;
-  const totalPending = filteredRequests.filter(sta => {
-    const pending = sta.status === "pending"
-    return pending
-  })
-
-  const totalApproved = filteredRequests.filter(sta => {
-    const approved = sta.status === "approved"
-    return approved
-  })
-
-  console.log(totalPending.length);
-  
-
+  const getLeaveTypeBadge = (leaveType) => {
+    switch (leaveType) {
+      case 'Sick Leave':
+        return 'bg-red-100 text-red-800';
+      case 'Annual Leave':
+        return 'bg-blue-100 text-blue-800';
+      case 'Casual Leave':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <div className="p-2 sm:p-4 md:p-6 max-w-6xl mx-auto w-full">
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6'>
-        <div className='bg-white rounded-lg shadow p-4 border-l-4 border-blue-500' >
-          <div className='flex justify-between items-start'>
-            <div>
-              <p className='text-sm font-medium text-gray-500'>Total Application</p>
-              <p className='text-2xl font-bold text-gray-900'>{totalApplication}</p>
-            </div>
-            <div className='p-3 rounded-full bg-blue-100 text-blue-600'>
-              <CalendarDays size={20}/>
-            </div>
-          </div>
-          <p className='text-xs text-gray-500 mt-2'>This month</p>
-        </div>
-
-        {/* Approved Card*/}
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Approved</p>
-              <p className="text-2xl font-bold text-gray-900">{totalApproved.length}</p>
-            </div>
-            <div className="p-3 rounded-full bg-green-100 text-green-600">
-              <Check size={20} />
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Applications</p>
+                <p className="text-2xl font-bold text-gray-900">24</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <FileText className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">This month</p>
-        </div>
 
-        {/* Pending Card */}
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{totalPending.length}</p>
-            </div>
-            <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
-              <Clock size={20} />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-yellow-600">8</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-lg">
+                <Clock className="w-6 h-6 text-yellow-600" />
+              </div>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">This month</p>
-        </div>
-      </div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
-        {/* <h1 className="text-xl sm:text-2xl font-bold text-gray-950">Leave Applications</h1> */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="border rounded-md px-3 py-2 text-gray-950 w-full sm:w-auto"
-          >
-            <option value="all">All Requests</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto text-sm sm:text-base"
-          >
-            <Plus className="mr-2" size={18} />
-            Apply Leave
-          </button>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leave Type</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dates</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRequests.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approved</p>
+                <p className="text-2xl font-bold text-green-600">12</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg">
+                <Check className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Rejected</p>
+                <p className="text-2xl font-bold text-red-600">4</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-lg">
+                <X className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6">
+            <h1 className="text-2xl font-bold text-gray-800">Leave Applications</h1>
+            
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by staff ID, name, or leave type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full text-sm transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="6" className="px-4 sm:px-6 py-4 text-center text-gray-500">
-                    No leave requests found.
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Leave Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                filteredRequests.map((request) => (
-                  <tr key={request._id}>
-                    <td className="px-4 sm:px-6 py-4">
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredApplications.map((application) => (
+                  <tr key={application.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-base">
-                          {getInitials(request.staffId?.name)}
+                        <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-gray-500" />
                         </div>
-                        <div className="ml-2 sm:ml-4">
-                          <div className="text-xs sm:text-sm font-medium text-gray-900">{request.staffId?.name || 'N/A'}</div>
-                          <div className="text-xs sm:text-sm text-gray-500">{request.staffId?.staffId || 'N/A'}</div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {application.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {application.staffId}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500 capitalize">
-                      {request.type || request.leaveType} leave
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <CalendarDays className="mr-1" size={14} />
-                        {new Date(request.fromDate).toLocaleDateString()} - {new Date(request.toDate).toLocaleDateString()}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLeaveTypeBadge(application.leaveType)}`}>
+                          {application.leaveType}
+                        </span>
+                        <p className="text-sm text-gray-600 mt-1 max-w-xs truncate">
+                          {application.reason}
+                        </p>
                       </div>
                     </td>
-                    <td className="px-4 sm:px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                        {request.status}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {application.startDate} to {application.endDate}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {application.days} day{application.days > 1 ? 's' : ''}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusBadge(application.status)}`}>
+                        {application.status}
                       </span>
                     </td>
-                    <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
-                      {request.status === 'pending' && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApprove(request._id)}
-                            className="p-1 text-green-600 hover:text-green-800"
-                            title="Approve"
-                          >
-                            <Check size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleReject(request._id)}
-                            className="p-1 text-red-600 hover:text-red-800"
-                            title="Reject"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleViewHistory(application.staffId, application.name)}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View History"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {application.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(application.id)}
+                              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Approve"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleRejectClick(application)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Reject"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredApplications.length === 0 && (
+            <div className="p-12 text-center">
+              <div className="text-gray-400">
+                <FileText className="w-12 h-12 mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2">No applications found</p>
+                <p className="text-sm">Try adjusting your search criteria</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Rejection Reason Modal */}
-      {showRejectionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base sm:text-lg font-medium text-gray-900">Rejection Reason</h3>
-              <button 
-                onClick={() => setShowRejectionModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+      {/* Leave History Modal */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Leave History</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedStaff?.name} ({selectedStaff?.id})
+                </p>
+              </div>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <X size={20} />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <div className="mb-4 p-3 sm:p-4 bg-gray-50 rounded">
-              <p className="text-gray-700 text-xs sm:text-sm">{rejectionReason}</p>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              {historyLoading ? (
+                <div className="flex justify-center items-center h-40">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : staffLeaveHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-lg font-medium text-gray-600 mb-2">No Leave History</p>
+                  <p className="text-gray-500">This employee has no previous leave records</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {staffLeaveHistory.map((leave) => (
+                    <div key={leave.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLeaveTypeBadge(leave.leaveType)}`}>
+                            {leave.leaveType}
+                          </span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusBadge(leave.status)}`}>
+                            {leave.status}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {leave.days} day{leave.days > 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-1">Leave Period</p>
+                          <p className="text-sm text-gray-600">
+                            {leave.startDate} to {leave.endDate}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-1">Applied Date</p>
+                          <p className="text-sm text-gray-600">{leave.appliedDate}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <p className="text-sm font-medium text-gray-700 mb-1">Reason</p>
+                          <p className="text-sm text-gray-600">{leave.reason}</p>
+                        </div>
+                        {leave.status === 'approved' && (
+                          <div>
+                            <p className="text-sm font-medium text-green-700 mb-1">Approved By</p>
+                            <p className="text-sm text-green-600">
+                              {leave.approvedBy} on {leave.approvedDate}
+                            </p>
+                          </div>
+                        )}
+                        {leave.status === 'rejected' && (
+                          <>
+                            <div>
+                              <p className="text-sm font-medium text-red-700 mb-1">Rejected By</p>
+                              <p className="text-sm text-red-600">
+                                {leave.rejectedBy} on {leave.rejectedDate}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-red-700 mb-1">Rejection Reason</p>
+                              <p className="text-sm text-red-600">{leave.rejectionReason}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex justify-end">
+
+            {/* Modal Footer */}
+            <div className="flex justify-end p-6 border-t border-gray-200">
               <button
-                onClick={() => setShowRejectionModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs sm:text-sm"
+                onClick={() => setShowHistoryModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Close
               </button>
@@ -429,113 +489,115 @@ const handleApprove = async (leaveId) =>{
         </div>
       )}
 
-      {/* Inline Modal Implementation */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-2 max-h-[90vh] overflow-y-auto relative">
-            <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-lg sm:text-xl"
-            >
-              ×
-            </button>
-            <h2 className="text-lg sm:text-xl font-bold mb-4">Apply for Leave</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-                  <input
-                    name="staffId"
-                    value={formData.staffId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-md text-xs sm:text-sm"
-                    placeholder="Enter staff ID (e.g., STF001)"
-                    required
-                  />
-                </div>
+      {/* Rejection Reason Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Reject Leave Application</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedApplicationForRejection?.name} ({selectedApplicationForRejection?.staffId})
+                </p>
+              </div>
+              <button
+                onClick={cancelRejection}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
 
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Leave Type</label>
-                  <select
-                    name="leaveType"
-                    value={formData.leaveType}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-md text-xs sm:text-sm"
-                    required
-                  >
-                    <option value="Casual">Casual Leave</option>
-                    <option value="Sick">Sick Leave</option>
-                    <option value="Other">Other Leave</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Modal Content */}
+            <div className="p-6">
+              {/* Application Summary */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md text-xs sm:text-sm"
-                      required
-                    />
+                    <p className="text-gray-600 font-medium">Leave Type</p>
+                    <p className="text-gray-900">{selectedApplicationForRejection?.leaveType}</p>
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">End Date</label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md text-xs sm:text-sm"
-                      required
-                    />
+                    <p className="text-gray-600 font-medium">Duration</p>
+                    <p className="text-gray-900">{selectedApplicationForRejection?.days} day{selectedApplicationForRejection?.days > 1 ? 's' : ''}</p>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Reason</label>
-                  <input
-                    type="text"
-                    name="reason"
-                    value={formData.reason}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-md text-xs sm:text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                  <input
-                    type="text"
-                    name="contactNumber"
-                    value={formData.contactNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border rounded-md text-xs sm:text-sm"
-                  />
+                  <div className="col-span-2">
+                    <p className="text-gray-600 font-medium">Period</p>
+                    <p className="text-gray-900">
+                      {selectedApplicationForRejection?.startDate} to {selectedApplicationForRejection?.endDate}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-600 font-medium">Reason</p>
+                    <p className="text-gray-900">{selectedApplicationForRejection?.reason}</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border rounded-md text-xs sm:text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs sm:text-sm"
-                >
-                  Submit
-                </button>
+              {/* Rejection Reason Input */}
+              <div className="mb-6">
+                <label htmlFor="rejectionReason" className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Rejection <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="rejectionReason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Please provide a clear reason for rejecting this leave application..."
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This reason will be sent to the employee and stored in their leave history.
+                </p>
               </div>
-            </form>
+
+              {/* Predefined Reasons */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">Common reasons:</p>
+                <div className="space-y-2">
+                  {[
+                    'Insufficient leave balance',
+                    'Peak work period - critical project deadline',
+                    'Inadequate notice period',
+                    'Overlapping with team member leave',
+                    'Documentation incomplete',
+                    'Business requirement - cannot spare employee'
+                  ].map((reason) => (
+                    <button
+                      key={reason}
+                      onClick={() => setRejectionReason(reason)}
+                      className="text-left w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors"
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={cancelRejection}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={!rejectionReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Reject Application
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default LeaveApplicationPage;

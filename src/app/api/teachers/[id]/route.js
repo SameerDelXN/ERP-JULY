@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 export async function GET(req, { params }) {
   try {
     await connectToDatabase();
-    const { id } = params;
+    const { id } = await params;
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({

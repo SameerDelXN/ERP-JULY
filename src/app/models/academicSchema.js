@@ -32,7 +32,7 @@ const academicSchema = new mongoose.Schema({
           },
           subjects: [
             {
-              code:{type:String, required:true},
+              code: { type: String },
               name: { type: String, required: true }, // e.g. OOPs, CNS
               teacher: {
                 type: mongoose.Schema.Types.ObjectId,
@@ -63,6 +63,9 @@ const academicSchema = new mongoose.Schema({
               subject: { type: String, required: true },
               totalMarks: { type: Number, required: true },
               date: { type: Date, required: true },
+              duration: {
+                type: Number, // in minutes
+              },
               result: [
                 {
                   student: {

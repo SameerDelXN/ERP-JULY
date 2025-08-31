@@ -15,7 +15,8 @@ import {
   BookOpenCheck,
   CalendarClock,
   BookMarked,
-  FileCheck
+  FileCheck,
+  File
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -60,6 +61,7 @@ export const teacherSidebarItems = [
   {id: "student-list", label: "Student List", icon: Users},
   {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
   {id: "marks", label: "Exam Marks", icon: FileCheck},
+  {id: "exam", label: "All Exam", icon: File},
 ]
 
 

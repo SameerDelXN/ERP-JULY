@@ -11,6 +11,8 @@ export default function StaffManagement() {
   const [currentStaff, setCurrentStaff] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [error, setError] = useState(null);
+
 
   // Form state
   const [formData, setFormData] = useState({
@@ -31,9 +33,11 @@ export default function StaffManagement() {
         setError(null);
         const res = await fetch('/api/hr/staff');
         const data = await res.json();
-        if (data.success) {
-          setStaff(data.data);
-          setFilteredStaff(data.data);
+
+        //console.log("Data",data);
+        if (data?.success) {
+          setStaff(data?.data);
+          setFilteredStaff(data?.data);
         } else {
           setError(data.error || 'Failed to fetch staff');
         }
@@ -79,11 +83,10 @@ export default function StaffManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const isTeacher = formData.department === 'Teacher';
-    const endpoint = isTeacher ? '/api/hr/teacher' : '/api/hr/staff'
+    
     const url = currentStaff 
-      ? `${endpoint}/${currentStaff._id}`
-      : `${endpoint}`;
+      ? `/api/hr/staff?id=${currentStaff._id}`
+      : `/api/hr/staff`;
     const method = currentStaff ? 'PUT' : 'POST';
 
 
@@ -95,7 +98,7 @@ export default function StaffManagement() {
       department: formData.department,
       designation: formData.designation,
       salary: formData.salary ? parseFloat(formData.salary) : null,
-      password: isTeacher ? formData.password : undefined,
+      password: formData.password || undefined,
     };
 
     try {
@@ -134,12 +137,12 @@ export default function StaffManagement() {
   };
 
   // Delete staff
-  const handleDelete = async (id) => {
+  const handleDelete = async (staffId) => {
     if (!confirm('Are you sure you want to delete this staff member?')) return;
-    
+    console.log("ID",staffId);
     try {
-      await fetch(`/api/hr/staff/${id}`, { method: 'DELETE' });
-      setStaff(staff.filter(s => s._id !== id));
+      await fetch(`/api/hr/staff/${staffId}`, { method: 'DELETE' });
+      setStaff(staff.filter(s => s._id !== staffId));
     } catch (error) {
       console.error('Error deleting staff:', error);
     }
@@ -235,7 +238,6 @@ console.log("Staff",staff);
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salary</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -256,9 +258,9 @@ console.log("Staff",staff);
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.department || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.designation || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {person.salary ? `₹${Number(person.salary).toLocaleString()}` : 'N/A'}
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <button
                       onClick={() => handleEdit(person)}
@@ -364,7 +366,7 @@ console.log("Staff",staff);
                     <input
                       type="text"
                       name="designation"
-                      value={formData.designation}
+                      value={formData.designation || formData.role}
                       onChange={handleInputChange}
                       placeholder="Enter position"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -388,7 +390,7 @@ console.log("Staff",staff);
                     <input
                       type="tel"
                       name="contactNumber"
-                      value={formData.contactNumber}
+                      value={formData.contactNumber || formData.phone}
                       onChange={handleInputChange}
                       placeholder="Enter phone number"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -405,7 +407,7 @@ console.log("Staff",staff);
                         onChange={handleInputChange}
                         placeholder="Enter password"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
+                        
                       />
                     </div>
                   )}
