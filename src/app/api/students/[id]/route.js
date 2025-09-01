@@ -1,14 +1,23 @@
+
 //get and put route to fetch particular student detail through id and also update it 
  
 import { connectToDatabase } from '../../../lib/mongodb';
 import studentSchema from '../../../models/studentSchema'; // adjust the import path if needed
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import connectDB from '@/lib/mongoose';
+import Student from '@/models/student';
 
-export async function GET(request, { params }) {
+export async function GET(req, { params }) {
+  await connectDB();
+
+  const { id } = params;
+
   try {
-    await connectToDatabase();
+    const student = await Student.findById(id);
 
+    if (!student) {
+      return NextResponse.json({ success: false, message: 'Student not found' }, { status: 404 });
+    }
     const { id } =await params;
 
     const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
@@ -26,10 +35,10 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    return NextResponse.json(studentData, { status: 200 });
+    return NextResponse.json({ success: true, data: student }, { status: 200 });
   } catch (error) {
-    console.error('[GET_STUDENT_ERROR]', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('GET /students/[id] error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
