@@ -16,93 +16,187 @@ export default function SalaryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [staffInfo,setStaffInfo] = useState(null);
 
   useEffect(() => {
-    setIsLoading(true);
-    // Fetch salary records
-    fetch('/api/hr/salary')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setSalaryRecords(data.data);
-      })
-      .catch(() => setSalaryRecords([]))
-      .finally(() => setIsLoading(false));
-    // Fetch staff list
-    fetch('/api/hr/staff')
-      .then(res => res.json())
-      .then(data => {
+    const fetchStaffList = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch('/api/hr/staff');
+        const data = await res.json();
         if (data.success) setStaffList(data.data);
-      })
-      .catch(() => setStaffList([]));
+      } catch (error) {
+        console.error('Error fetching staff list:', error);
+        setStaffList([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStaffList();
   }, []);
 
-  // Enhanced input change handler for syncing
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    let updatedForm = { ...formData, [name]: value };
 
-    // Helper: find in salaryRecords
-    const findInSalary = (key, val) => salaryRecords.find(r => r[key] === val);
-    // Helper: find in staffList
-    const findInStaff = (key, val) => staffList.find(s => s[key] === val);
+  useEffect(() => {
+    if (formData.staffId || formData.name) {
+      searchStaff();
+    } else {
+      setStaffInfo(null);
+      setSearchTerm('');
+    }
+  }, [formData.staffId, formData.name]);
 
-    if (name === 'staffId') {
-      // Try to find in salary records first
-      const salaryRec = findInSalary('staffId', value);
-      if (salaryRec) {
-        updatedForm = {
-          staffId: salaryRec.staffId.staffId,
-          name: salaryRec.name,
-          baseSalary: salaryRec.baseSalary?.toString() || '',
-          allowances: salaryRec.allowances?.toString() || '',
-          deductions: salaryRec.deductions?.toString() || '',
-          leaveDeduction: salaryRec.leaveDeduction?.toString() || ''
-        };
-        setEditingId(salaryRec._id);
-      } else {
-        // Not in salary, try staff list
-        const staff = findInStaff('staffId', value);
-        if (staff) {
-          updatedForm.name = staff.name;
-        }
-        // Clear salary fields for new entry
-        updatedForm.baseSalary = '';
-        updatedForm.allowances = '';
-        updatedForm.deductions = '';
-        updatedForm.leaveDeduction = '';
-        setEditingId(null);
+  const searchStaff = async () => {
+    setSearchTerm('Searching...');
+    
+    try {
+      // Check if we have the staff in our local list first
+      const foundStaff = staffList.find(staff => 
+        staff.staffId === formData.staffId || staff.name === formData.name
+      );
+      
+      if (foundStaff) {
+        setStaffInfo(foundStaff);
+        setSearchTerm('Staff found!');
+        
+        // Check if this staff already has a salary record
+        await checkExistingSalary(foundStaff.staffId);
+        return;
       }
-    }
-    if (name === 'name') {
-      // Try to find in salary records first
-      const salaryRec = findInSalary('name', value);
-      if (salaryRec) {
-        updatedForm = {
-          staffId: salaryRec.staffId._id,
-          name: salaryRec.name,
-          baseSalary: salaryRec.baseSalary?.toString() || '',
-          allowances: salaryRec.allowances?.toString() || '',
-          deductions: salaryRec.deductions?.toString() || '',
-          leaveDeduction: salaryRec.leaveDeduction?.toString() || ''
-        };
-        setEditingId(salaryRec._id);
-      } else {
-        // Not in salary, try staff list
-        const staff = findInStaff('name', value);
-        if (staff) {
-          updatedForm.staffId = staff.staffId;
+      
+      // If not found in local list, try to fetch from API
+      const res = await fetch('/api/hr/staff');
+      const data = await res.json();
+      
+      if (data.success) {
+        const staffFromApi = data.data.find(staff => 
+          staff.staffId === formData.staffId || staff.name === formData.name
+        );
+        
+        if (staffFromApi) {
+          setStaffInfo(staffFromApi);
+          setSearchTerm('Staff found!');
+          await checkExistingSalary(staffFromApi.staffId);
+        } else {
+          setStaffInfo(null);
+          setSearchTerm('Staff not found. Please check the Staff ID or Name.');
         }
-        // Clear salary fields for new entry
-        updatedForm.baseSalary = '';
-        updatedForm.allowances = '';
-        updatedForm.deductions = '';
-        updatedForm.leaveDeduction = '';
-        setEditingId(null);
+      } else {
+        setStaffInfo(null);
+        setSearchTerm('Error searching for staff.');
       }
+    } catch (error) {
+      console.error('Error searching for staff:', error);
+      setStaffInfo(null);
+      setSearchTerm('Error searching for staff.');
     }
-    setFormData(updatedForm);
   };
 
+
+  const checkExistingSalary = async (staffId) =>{
+    try{
+      const res = await fetch('/api/hr/salary');
+      const data = await res.json();
+
+      if(data.success){
+        const existingSalary = data.data.find(record => record.staffId === staffId || record.staffId?.staffId === staffId);
+
+        if(existingSalary){
+          setEditingId(existingSalary._id);
+          setFormData(prev =>({
+            ...prev,
+            baseSalary:existingSalary.baseSalary?.toString() || '',
+            allowances:existingSalary.allowances?.toString() || '',
+            deductions:existingSalary.deductions?.toString() || '',
+            leaveDeduction:existingSalary.leaveDeduction?.toString() || ''
+          }));
+        }else{
+          setEditingId(null);
+          setFormData(prev => ({
+            ...prev,
+            baseSalary:'',
+            allowances:'',
+            deductions:'',
+            leaveDeduction:''
+          }));
+        }
+      }
+    }catch(error){
+      console.error('Error check existing',error);
+    }
+  }
+
+  // Enhanced input change handler for syncing
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   let updatedForm = { ...formData, [name]: value };
+
+  //   // Helper: find in salaryRecords
+  //   const findInSalary = (key, val) => salaryRecords.find(r => r[key] === val);
+  //   // Helper: find in staffList
+  //   const findInStaff = (key, val) => staffList.find(s => s[key] === val);
+
+  //   if (name === 'staffId') {
+  //     // Try to find in salary records first
+  //     const salaryRec = findInSalary('staffId', value);
+  //     if (salaryRec) {
+  //       updatedForm = {
+  //         staffId: salaryRec.staffId.staffId,
+  //         name: salaryRec.name,
+  //         baseSalary: salaryRec.baseSalary?.toString() || '',
+  //         allowances: salaryRec.allowances?.toString() || '',
+  //         deductions: salaryRec.deductions?.toString() || '',
+  //         leaveDeduction: salaryRec.leaveDeduction?.toString() || ''
+  //       };
+  //       setEditingId(salaryRec._id);
+  //     } else {
+  //       // Not in salary, try staff list
+  //       const staff = findInStaff('staffId', value);
+  //       if (staff) {
+  //         updatedForm.name = staff.name;
+  //       }
+  //       // Clear salary fields for new entry
+  //       updatedForm.baseSalary = '';
+  //       updatedForm.allowances = '';
+  //       updatedForm.deductions = '';
+  //       updatedForm.leaveDeduction = '';
+  //       setEditingId(null);
+  //     }
+  //   }
+  //   if (name === 'name') {
+  //     // Try to find in salary records first
+  //     const salaryRec = findInSalary('name', value);
+  //     if (salaryRec) {
+  //       updatedForm = {
+  //         staffId: salaryRec.staffId._id,
+  //         name: salaryRec.name,
+  //         baseSalary: salaryRec.baseSalary?.toString() || '',
+  //         allowances: salaryRec.allowances?.toString() || '',
+  //         deductions: salaryRec.deductions?.toString() || '',
+  //         leaveDeduction: salaryRec.leaveDeduction?.toString() || ''
+  //       };
+  //       setEditingId(salaryRec._id);
+  //     } else {
+  //       // Not in salary, try staff list
+  //       const staff = findInStaff('name', value);
+  //       if (staff) {
+  //         updatedForm.staffId = staff.staffId;
+  //       }
+  //       // Clear salary fields for new entry
+  //       updatedForm.baseSalary = '';
+  //       updatedForm.allowances = '';
+  //       updatedForm.deductions = '';
+  //       updatedForm.leaveDeduction = '';
+  //       setEditingId(null);
+  //     }
+  //   }
+  //   setFormData(updatedForm);
+  // };
+
+  const handleInputChange = (e) =>{
+    const {name,value} = e.target;
+    setFormData(prev =>({...prev,[name]:value}));
+  }
   const calculateNetSalary = () => {
     const base = parseFloat(formData.baseSalary) || 0;
     const allowances = parseFloat(formData.allowances) || 0;
@@ -112,14 +206,18 @@ export default function SalaryPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.staffId || !formData.name || !formData.baseSalary) return;
+    if (!staffInfo || !formData.baseSalary) {
+      alert('Please find a staff member first');
+      return};
+
     setIsLoading(true);
     try {
       const res = await fetch('/api/hr/salary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          staffId: formData.staffId?.staffId,
+         // staffId: formData.staffId?.staffId,
+         staffId:staffInfo._id || staffInfo.staffId,
           name: formData.name,
           baseSalary: parseFloat(formData.baseSalary),
           allowances: parseFloat(formData.allowances) || 0,
@@ -129,42 +227,38 @@ export default function SalaryPage() {
       });
       const data = await res.json();
       if (data.success) {
-        if (editingId) {
-          setSalaryRecords(prev =>
-            prev.map(record => record._id === data.data._id ? data.data : record)
-          );
+          alert(editingId?'Salary updated successfully!':'Salary structured added successfully!');
+          setFormData({
+            staffId:'',
+            name:'',
+            baseSalary:'',
+            allowances:'',
+            deductions:'',
+            leaveDeduction:''
+          });
+          setStaffInfo(null);
           setEditingId(null);
-        } else {
-          setSalaryRecords(prev => [...prev, data.data]);
+          setSearchTerm('');
+        }else{
+          alert(data.error || 'Failed to save salary');
         }
-        setFormData({
-          staffId: '',
-          name: '',
-          baseSalary: '',
-          allowances: '',
-          deductions: '',
-          leaveDeduction: ''
-        });
-      } else {
-        alert(data.error || 'Failed to save salary');
-      }
     } catch (err) {
       alert('Error saving salary');
     }
     setIsLoading(false);
   };
 
-  const handleEdit = (record) => {
-    setFormData({
-      staffId: record.staffId?.staffId || record.staffId,
-      name: record.name,
-      baseSalary: record.baseSalary.toString(),
-      allowances: record.allowances.toString(),
-      deductions: record.deductions.toString(),
-      leaveDeduction: record.leaveDeduction.toString()
-    });
-    setEditingId(record._id);
-  };
+  // const handleEdit = (record) => {
+  //   setFormData({
+  //     staffId: record.staffId?.staffId || record.staffId,
+  //     name: record.name,
+  //     baseSalary: record.baseSalary.toString(),
+  //     allowances: record.allowances.toString(),
+  //     deductions: record.deductions.toString(),
+  //     leaveDeduction: record.leaveDeduction.toString()
+  //   });
+  //   setEditingId(record._id);
+  // };
 
   // No backend delete implemented yet
   // const handleDelete = (id) => {
@@ -382,7 +476,7 @@ console.log(salaryRecords)
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     <button
                       className="text-blue-600 hover:text-blue-900 mr-2"
-                      onClick={() => handleEdit(record)}
+                       onClick={() => handleEdit(record)}
                     >
                       Edit
                     </button>
