@@ -83,6 +83,7 @@ export async function GET() {
     // If HOD, search in teacher schema
     if (role === 'hod' || role === "teacher") {
       const hod = await teacherSchema.findOne({ sessionToken }).select('-password');
+      console.log(hod)
       if (!hod) {
         return Response.json({ user: null }, { status: 404 });
       }

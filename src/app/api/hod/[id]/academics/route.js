@@ -131,8 +131,8 @@ export async function POST(request, { params }) {
 
         // Validate exams
         for (const exam of division.exams) {
-          if (!exam.type || !exam.subject || !exam.totalMarks || !exam.date) {
-            return NextResponse.json({ error: 'Each exam must have type, subject, totalMarks, and date' }, { status: 400 });
+          if (!exam.type || !exam.subject || !exam.totalMarks || !exam.date || !exam.duration) {
+            return NextResponse.json({ error: 'Each exam must have type, subject, totalMarks, duration,and date' }, { status: 400 });
           }
         }
 

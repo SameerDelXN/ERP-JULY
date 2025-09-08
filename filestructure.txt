@@ -1,6 +1,7 @@
 |-- .env
 |-- .gitignore
 |-- jsconfig.json
+|-- middleware.js
 |-- next.config.mjs
 |-- package-lock.json
 |-- package.json
@@ -22,7 +23,6 @@
     |-- Welcome.svg
     |-- window.svg
 |-- rds-combined-ca-bundle.pem
-|-- README.md
 |-- src
     |-- app
         |-- admin
@@ -51,6 +51,14 @@
                 |-- [id]
                     |-- page.jsx
         |-- api
+            |-- admin
+                |-- dashboard
+                    |-- route.js
+                |-- route.js
+                |-- settings
+                    |-- route.js
+                |-- user-dashboard
+                    |-- route.js
             |-- admission
                 |-- route.js
                 |-- [id]
@@ -58,7 +66,11 @@
             |-- auth
                 |-- forgot-password
                     |-- route.js
+                |-- login
+                    |-- route.js
                 |-- logout
+                    |-- route.js
+                |-- register
                     |-- route.js
                 |-- reset-password
                     |-- route.js
@@ -96,6 +108,31 @@
                 |-- route.js
                 |-- [id]
                     |-- route.js
+            |-- fee
+                |-- discounts
+                    |-- route.js
+                |-- installments
+                    |-- route.js
+                |-- late-fee
+                    |-- route.js
+                |-- receipts
+                    |-- pdf
+                        |-- route.js
+                    |-- route.js
+                |-- reminders
+                    |-- route.js
+                |-- route.js
+                |-- scholarships
+                    |-- route.js
+                |-- summary
+                    |-- [studentId]
+                        |-- route.js
+                |-- [id]
+                    |-- route.js
+            |-- fee-structure
+                |-- route.js
+                |-- [id]
+                    |-- route.js
             |-- hod
                 |-- route.js
                 |-- [id]
@@ -103,6 +140,27 @@
                         |-- route.js
                     |-- route.js
                     |-- students
+                        |-- route.js
+            |-- hr
+                |-- attendance
+                    |-- route.js
+                |-- leave
+                    |-- route.js
+                    |-- [leaveId]
+                        |-- route.js
+                |-- payslip
+                    |-- pdf
+                        |-- [staffId]
+                            |-- route.js
+                    |-- route.js
+                    |-- [staffId]
+                        |-- route.js
+                |-- route.js
+                |-- salary
+                    |-- route.js
+                |-- staff
+                    |-- route.js
+                    |-- [staffId]
                         |-- route.js
             |-- importData
                 |-- route.js
@@ -119,12 +177,31 @@
             |-- staff-performance
                 |-- [userId]
                     |-- route.js
+            |-- staffinfo
+                |-- aggregate
+                    |-- route.js
+                |-- [id]
+                    |-- route.js
             |-- students
-                |-- route.js
+                |-- attendance
+                    |-- mark
+                        |-- route.js
+                    |-- pdf
+                        |-- [studentId]
+                            |-- route.js
+                    |-- route.js
+                |-- myexams
+                    |-- route.js
+                    |-- [id]
+                        |-- route.js
                 |-- [id]
                     |-- academics
                         |-- route.js
                     |-- admission
+                        |-- route.js
+                    |-- fee
+                        |-- installments
+                            |-- route.js
                         |-- route.js
                     |-- route.js
             |-- teachers
@@ -135,6 +212,10 @@
                             |-- route.js
                         |-- result
                             |-- route.js
+                        |-- route.js
+                    |-- exam
+                        |-- route.js
+                    |-- exams
                         |-- route.js
                     |-- route.js
                     |-- students
@@ -155,6 +236,8 @@
         |-- enquiry-form
             |-- page.jsx
         |-- favicon.ico
+        |-- fee
+            |-- page.jsx
         |-- forgot-password
             |-- page.jsx
         |-- globals.css
@@ -164,6 +247,23 @@
             |-- layout.jsx
             |-- page.jsx
             |-- student-management
+                |-- page.jsx
+        |-- hr
+            |-- attendance
+                |-- page.jsx
+            |-- home
+                |-- page.jsx
+            |-- layout.jsx
+            |-- leave
+                |-- page.jsx
+            |-- page.jsx
+            |-- payslip
+                |-- page.jsx
+                |-- [staffId]
+                    |-- page.jsx
+            |-- salary
+                |-- page.jsx
+            |-- staff
                 |-- page.jsx
         |-- layout.js
         |-- lib
@@ -183,6 +283,7 @@
             |-- EmailVerification.js
             |-- enquirySchema.js
             |-- logSchema.js
+            |-- questionAndAnswer.js
             |-- sampleSchema.js
             |-- studentSchema.js
             |-- teacherSchema.js
@@ -201,6 +302,8 @@
             |-- page.jsx
             |-- profile
                 |-- page.jsx
+        |-- staffinfo
+            |-- page.js
         |-- student
             |-- assignments
                 |-- page.jsx
@@ -211,11 +314,20 @@
             |-- layout.jsx
             |-- myexams
                 |-- page.jsx
+                |-- [id]
+                    |-- page.jsx
             |-- page.jsx
             |-- studymaterial
                 |-- page.jsx
             |-- timetable
                 |-- page.jsx
+        |-- students
+            |-- new
+                |-- page.jsx
+            |-- [id]
+                |-- fee
+                    |-- installments
+                        |-- page.jsx
         |-- teacher
             |-- attendance
                 |-- page.jsx
@@ -235,6 +347,8 @@
                 |-- [id]
                     |-- course-view
                         |-- page.jsx
+            |-- exam
+                |-- page.jsx
             |-- layout.jsx
             |-- marks
                 |-- page.jsx
@@ -262,6 +376,7 @@
         |-- Container.jsx
         |-- DashboardSidebar.jsx
         |-- Header.jsx
+        |-- installmentTable.jsx
         |-- Landing
             |-- Benefits.jsx
             |-- Contact.jsx
@@ -274,9 +389,42 @@
             |-- Testimonials.jsx
         |-- Loader.jsx
         |-- Loading.jsx
+        |-- PayrollPDF.jsx
+        |-- payslipPdf.jsx
+        |-- studentAttendancePDF.jsx
         |-- TableData.jsx
         |-- Unauthorized.jsx
     |-- context
         |-- SessionContext.js
     |-- data
         |-- data.js
+    |-- lib
+        |-- mongoose.js
+        |-- pdfGenerator.js
+    |-- models
+        |-- admin.js
+        |-- attendanceSchema.js
+        |-- course.js
+        |-- discount.js
+        |-- faculty.js
+        |-- feeHead.js
+        |-- feeReceipt.js
+        |-- feeReminderRule.js
+        |-- feeStructure.js
+        |-- hr.js
+        |-- installment.js
+        |-- installmentPlan.js
+        |-- lateFeeRule.js
+        |-- leave.js
+        |-- payroll.js
+        |-- scholarship.js
+        |-- staff.js
+        |-- staffinfo.js
+        |-- student.js
+        |-- studentAttendance.js
+        |-- subject.js
+        |-- systemSetting.js
+        |-- user.js
+    |-- utils
+        |-- fetchinstallments.js
+        |-- generateFeeReceiptPdf.js
