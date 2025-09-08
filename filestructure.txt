@@ -18,6 +18,7 @@
     |-- login6.jpg
     |-- Logo.png
     |-- next.svg
+    |-- TechEdu-remove-bg.png
     |-- TechEdu.png
     |-- TechEdu.svg
     |-- vercel.svg

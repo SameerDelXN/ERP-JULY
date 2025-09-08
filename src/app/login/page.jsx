@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/context/SessionContext";
-
+import Image from "next/image";
 const Login = () => {
   const router = useRouter();
   const { login } = useSession();
@@ -57,7 +57,7 @@ const Login = () => {
       } else {
         setEmailError("");
       }
-      
+
       if (password && !validatePassword(password)) {
         setPasswordError("Password must be at least 8 characters");
       } else {
@@ -72,7 +72,6 @@ const Login = () => {
       );
     }
   }, [email, password, selectedRole]);
-  
 
   // const handelForgotPassword = () =>{
   //   router.push('/forgot-password')
@@ -96,7 +95,7 @@ const Login = () => {
       setLoading(false);
     }
   };
-      
+
   if (loading) {
     return (
       <div className="h-screen bg-gray-50 flex items-center justify-center overflow-hidden">
@@ -127,8 +126,14 @@ const Login = () => {
           <div className="mb-6">
             <div className="relative">
               {/* Central Building Icon */}
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4 border border-gray-100">
-                <Building2 className="w-10 h-10 text-blue-600" />
+              <div className="inline-flex items-center justify-center w-56 h-38 rounded-2xl  border border-gray-100">
+                <Image
+                  width={1920}
+                  height={1080}
+                  src="/TechEdu-remove-bg.png"
+                  alt="TechEdu Logo"
+                  className="w-full h-full object-cover rounded-2xl"
+                />
               </div>
 
               {/* Floating Icons */}
@@ -151,7 +156,7 @@ const Login = () => {
           </div>
 
           <h1 className="text-2xl font-bold text-gray-800 mb-3">
-            Enterprise Resource Planning
+            TechEdu ERP System
           </h1>
           <p className="text-gray-600 leading-relaxed text-sm">
             Streamline your business operations with our comprehensive ERP
@@ -234,11 +239,6 @@ const Login = () => {
                     {
                       role: "student",
                       label: "Student",
-                      icon: User,
-                    },
-                    {
-                      role: "hr",
-                      label: "HR",
                       icon: User,
                     },
                   ].map(({ role, label, icon: Icon }) => (
