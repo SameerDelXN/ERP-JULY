@@ -4,20 +4,12 @@
 import { connectToDatabase } from '../../../lib/mongodb';
 import studentSchema from '../../../models/studentSchema'; // adjust the import path if needed
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
-import Student from '@/models/student';
+// import Student from '@/app/models/studentSchema';
 
-export async function GET(req, { params }) {
-  await connectDB();
-
-  const { id } = params;
-
+export async function GET(request, { params }) {
   try {
-    const student = await Student.findById(id);
+    await connectToDatabase();
 
-    if (!student) {
-      return NextResponse.json({ success: false, message: 'Student not found' }, { status: 404 });
-    }
     const { id } =await params;
 
     const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
@@ -35,12 +27,13 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: student }, { status: 200 });
+    return NextResponse.json(studentData, { status: 200 });
   } catch (error) {
-    console.error('GET /students/[id] error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('[GET_STUDENT_ERROR]', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
 
 
 export async function PUT(req, { params }) {

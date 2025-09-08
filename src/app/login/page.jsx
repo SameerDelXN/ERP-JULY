@@ -96,7 +96,7 @@ const Login = () => {
       setLoading(false);
     }
   };
-
+      
   if (loading) {
     return (
       <div className="h-screen bg-gray-50 flex items-center justify-center overflow-hidden">
@@ -234,6 +234,11 @@ const Login = () => {
                     {
                       role: "student",
                       label: "Student",
+                      icon: User,
+                    },
+                    {
+                      role: "hr",
+                      label: "HR",
                       icon: User,
                     },
                   ].map(({ role, label, icon: Icon }) => (

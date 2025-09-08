@@ -28,15 +28,29 @@ const DashboardSidebar = ({
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-100 bg-white">
-            <div className="w-full h-18 mt-9">
+            {/* <div className="w-full h-14 pt-5 bg-red-500">
               <Image
-                width={1920}
-                height={1080}
-                src="\TechEdu.svg"
+                width={540}
+                height={480}
+                src="/TechEdu.png"
                 alt="TechEdu Logo"
-                className="w-full h-full object-cover "
+                className="object-contain w-full  object-cover  h-full  "
               />
+            </div> */}
+            <div className="mt-10">
+              <div className="w-40 h-40 flex items-center justify-center ">
+                {" "}
+                {/* Increase width/height */}
+                <Image
+                  width={1920}
+                  height={1080}
+                  src="/TechEdu.png"
+                  alt="TechEdu Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
+
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
               onClick={onClose}

@@ -66,7 +66,7 @@ export async function GET() {
   try {
     await connectToDatabase();
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionToken = cookieStore.get('sessionToken')?.value;
     const role = cookieStore.get('role')?.value;
 
@@ -123,6 +123,9 @@ export async function GET() {
 
     // ✅ Other roles (admin, staff, parents)
     const user = await userSchema.findOne({ sessionToken }).select('-password');
+
+    console.log("userrrrrrrrr",user);
+    
     if (!user) {
       return Response.json({ user: null }, { status: 200 });
     }

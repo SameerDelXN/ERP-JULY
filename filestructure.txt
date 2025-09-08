@@ -18,6 +18,7 @@
     |-- login6.jpg
     |-- Logo.png
     |-- next.svg
+    |-- TechEdu.png
     |-- TechEdu.svg
     |-- vercel.svg
     |-- Welcome.svg
@@ -141,6 +142,8 @@
                     |-- route.js
                     |-- students
                         |-- route.js
+                    |-- timetable
+                        |-- route.js
             |-- hr
                 |-- attendance
                     |-- route.js
@@ -247,6 +250,8 @@
             |-- layout.jsx
             |-- page.jsx
             |-- student-management
+                |-- page.jsx
+            |-- timetable
                 |-- page.jsx
         |-- hr
             |-- attendance

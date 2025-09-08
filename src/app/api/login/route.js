@@ -5,7 +5,7 @@ import teacherSchema from "../../models/teacherSchema";
 import studentSchema from "../../models/studentSchema";
 import { connectToDatabase } from "../../lib/mongodb";
 import { cookies } from "next/headers";
-import crypto from 'crypto';
+import crypto from "crypto";
 
 // export async function POST(req) {
 //   try {
@@ -206,7 +206,14 @@ export async function POST(req) {
     }
 
     // Validate role
-    const validRoles = ["admin", "student", "staff", "parents", "hod","teacher"];
+    const validRoles = [
+      "admin",
+      "student",
+      "staff",
+      "parents",
+      "hod",
+      "teacher",
+    ];
     if (!validRoles.includes(role)) {
       return new Response(JSON.stringify({ message: "Invalid role" }), {
         status: 400,
@@ -215,8 +222,9 @@ export async function POST(req) {
 
     await connectToDatabase();
 
+    const cookieStore = await cookies();
+
     if (role === "hod" || role === "teacher") {
-      // Use findOne instead of find to get a single document
       const hodUser = await teacherSchema.findOne({
         email,
         role,
@@ -237,10 +245,9 @@ export async function POST(req) {
 
       const passwordMatch = await bcrypt.compare(password, hodUser.password);
       if (!passwordMatch) {
-        return new Response(
-          JSON.stringify({ message: "Incorrect password" }),
-          { status: 401 }
-        );
+        return new Response(JSON.stringify({ message: "Incorrect password" }), {
+          status: 401,
+        });
       }
 
       const sessionToken = crypto.randomBytes(32).toString("hex");
@@ -248,14 +255,14 @@ export async function POST(req) {
       hodUser.lastLogin = new Date();
       await hodUser.save();
 
-      cookies().set("sessionToken", sessionToken, {
+      cookieStore.set("sessionToken", sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 60 * 60,
         path: "/",
       });
-      cookies().set("role", role, {
+      cookieStore.set("role", role, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
@@ -290,30 +297,29 @@ export async function POST(req) {
       }
 
       const studentUser = await studentSchema.findOne({ studentId: email });
-     
+
       if (!studentUser) {
-        return new Response(
-          JSON.stringify({ message: "Student not found" }),
-          { status: 404 }
-        );
+        return new Response(JSON.stringify({ message: "Student not found" }), {
+          status: 404,
+        });
       }
 
       // Generate session token
       const sessionToken = crypto.randomBytes(32).toString("hex");
       studentUser.sessionToken = sessionToken;
-      studentUser.save()
-      cookies().set("sessionToken", sessionToken, {
+      studentUser.save();
+      cookieStore.set("sessionToken", sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 60 * 60 ,
+        maxAge: 60 * 60,
         path: "/",
       });
-      cookies().set("role", role, {
+      cookieStore.set("role", role, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 60 * 60 ,
+        maxAge: 60 * 60,
         path: "/",
       });
 
@@ -335,6 +341,9 @@ export async function POST(req) {
     // ✅ 3. Default Login Logic for other roles
     const userFromDB = await userSchema.findOne({ email, role });
 
+    console.log("User From DB : ",userFromDB);
+    
+
     if (!userFromDB) {
       return new Response(
         JSON.stringify({ message: "Invalid email or role" }),
@@ -344,10 +353,9 @@ export async function POST(req) {
 
     const passwordMatch = await bcrypt.compare(password, userFromDB.password);
     if (!passwordMatch) {
-      return new Response(
-        JSON.stringify({ message: "Incorrect password" }),
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ message: "Incorrect password" }), {
+        status: 401,
+      });
     }
 
     const sessionToken = crypto.randomBytes(32).toString("hex");
@@ -355,14 +363,14 @@ export async function POST(req) {
     userFromDB.lastLogin = new Date();
     await userFromDB.save();
 
-    cookies().set("sessionToken", sessionToken, {
+    cookieStore.set("sessionToken", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 60 * 60 ,
+      maxAge: 60 * 60,
       path: "/",
     });
-    cookies().set("role", role, {
+   cookieStore.set("role", role, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
