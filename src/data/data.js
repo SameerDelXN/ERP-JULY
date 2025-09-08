@@ -60,7 +60,7 @@ export const teacherSidebarItems = [
   {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
   {id: "student-list", label: "Student List", icon: Users},
   {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
-  {id: "marks", label: "Exam Marks", icon: FileCheck},
+  // {id: "marks", label: "Exam Marks", icon: FileCheck},
   {id: "exam", label: "All Exam", icon: File},
 ]
 

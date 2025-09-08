@@ -233,26 +233,6 @@ export default function CoursePlanList() {
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex space-x-2">
-              <Link
-                href="course-plans/export"
-                className="flex items-center gap-1 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-indigo-600"
-                title="Export All"
-              >
-                <FileText size={16} />
-                <span className="hidden md:inline">Export</span>
-              </Link>
-              <Link
-                href="course-plans/new"
-                className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                title="Add New"
-              >
-                <Plus size={16} />
-                <span className="hidden md:inline">New</span>
-              </Link>
-            </div>
           </div>
         </div>
 

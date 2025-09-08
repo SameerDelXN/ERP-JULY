@@ -238,8 +238,8 @@ export default function StudentProfilePage() {
               <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
                 <User size={40} className="text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">{student.fullName || 'Loading...'}</h2>
-              <p className="text-gray-600">{student.email}</p>
+              <h2 className="text-xl font-bold text-gray-800">{student.fullName || user.fullName || 'Loading...'}</h2>
+              <p className="text-gray-600">{student.email || user.email}</p>
               <p className="text-sm text-gray-500 mt-1">Student ID: {student?.studentId}</p>
             </div>
 
@@ -290,7 +290,7 @@ export default function StudentProfilePage() {
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Full Name</label>
                       <p className="text-gray-900 font-medium">
-                        {student.fullName || <span className="text-gray-400">Not provided</span>}
+                        {student.fullName || user.fullName || <span className="text-gray-400">Not provided</span>}
                       </p>
                     </div>
 
@@ -298,7 +298,7 @@ export default function StudentProfilePage() {
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Email</label>
                       <p className="text-gray-900 font-medium">
-                        {student.email || <span className="text-gray-400">Not provided</span>}
+                        {student.email || user.email ||<span className="text-gray-400">Not provided</span>}
                       </p>
                     </div>
 
