@@ -1,7 +1,7 @@
 import { Building2, X } from "lucide-react";
 import Image from "next/image";
 import React from "react";
-
+//sample
 const DashboardSidebar = ({
   items,
   activeTab,
@@ -40,6 +40,7 @@ const DashboardSidebar = ({
             <div className="mt-10">
               <div className="w-40 h-40 flex items-center justify-center ">
                 {" "}
+                
                 {/* Increase width/height */}
                 <Image
                   width={1920}
