@@ -671,9 +671,6 @@ export default function StaffOverview() {
   );
 }
 
-<<<<<<< HEAD
-export default StaffOverview;
-=======
 // ... (Keep all the existing helper functions and components below)
 
 function StatCard({ title, value, icon, color }) {
@@ -779,4 +776,3 @@ function DashboardSkeleton() {
     </div>
   );
 }
->>>>>>> cfb6010a74237a16ba4e44fe44df36c190a97a13
