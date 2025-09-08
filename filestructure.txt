@@ -319,13 +319,6 @@
                 |-- page.jsx
             |-- timetable
                 |-- page.jsx
-        |-- students
-            |-- new
-                |-- page.jsx
-            |-- [id]
-                |-- fee
-                    |-- installments
-                        |-- page.jsx
         |-- teacher
             |-- attendance
                 |-- page.jsx
