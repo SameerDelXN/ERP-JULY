@@ -151,13 +151,6 @@
                     |-- route.js
                     |-- [leaveId]
                         |-- route.js
-                |-- payslip
-                    |-- pdf
-                        |-- [staffId]
-                            |-- route.js
-                    |-- route.js
-                    |-- [staffId]
-                        |-- route.js
                 |-- route.js
                 |-- salary
                     |-- route.js
