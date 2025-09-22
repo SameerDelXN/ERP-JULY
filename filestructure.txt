@@ -214,6 +214,8 @@
                         |-- route.js
                     |-- exams
                         |-- route.js
+                        |-- [examId]
+                            |-- route.js
                     |-- route.js
                     |-- students
                         |-- route.js
