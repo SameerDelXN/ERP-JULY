@@ -65,6 +65,11 @@ const academicSchema = new mongoose.Schema({
               date: { type: Date, required: true },
               duration: {
                 type: Number, // in minutes
+                required: true,
+              },
+              resultPublished: {
+                type: Boolean,
+                default: false, // Results are not published by default
               },
               result: [
                 {
@@ -97,7 +102,6 @@ const academicSchema = new mongoose.Schema({
                 type: Boolean,
                 required: true,
               },
-
               recordedBy: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "User", // recorded by teacher

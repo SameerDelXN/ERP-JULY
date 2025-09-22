@@ -43,9 +43,11 @@ function ExamModal({
     year: selectedSubject?.year || "",
     semester: selectedSubject?.semester || "",
     division: selectedSubject?.division || "",
+    resultPublished: false,
   });
 
   const [errors, setErrors] = useState({});
+
   useEffect(() => {
     if (selectedSubject) {
       setExamData((prev) => ({
@@ -82,7 +84,6 @@ function ExamModal({
 
   const handleInputChange = (field, value) => {
     setExamData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -108,7 +109,6 @@ function ExamModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Exam Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Exam Type *
@@ -136,7 +136,6 @@ function ExamModal({
             )}
           </div>
 
-          {/* Subject */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Subject *
@@ -160,7 +159,6 @@ function ExamModal({
             )}
           </div>
 
-          {/* Total Marks */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Hash size={16} className="mr-1" />
@@ -185,7 +183,6 @@ function ExamModal({
             )}
           </div>
 
-          {/* Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Calendar size={16} className="mr-1" />
@@ -208,7 +205,6 @@ function ExamModal({
             )}
           </div>
 
-          {/* Duration */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Clock size={16} className="mr-1" />
@@ -233,7 +229,27 @@ function ExamModal({
             )}
           </div>
 
-          {/* Academic Info (Read-only) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+              <CheckCircle size={16} className="mr-1" />
+              Publish Results
+            </label>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={examData.resultPublished}
+                onChange={(e) => handleInputChange("resultPublished", e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={loading}
+              />
+              <span className="ml-2 text-sm text-gray-600">
+                {examData.resultPublished
+                  ? "Results will be visible to students"
+                  : "Results will be hidden from students"}
+              </span>
+            </div>
+          </div>
+
           {selectedSubject && (
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
               <p className="text-sm text-blue-700 font-medium">
@@ -256,7 +272,6 @@ function ExamModal({
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -291,13 +306,10 @@ function ExamModal({
 }
 
 export default function ExamManagement() {
-  // State for subjects, exams, and questions
   const [subjects, setSubjects] = useState([]);
   const [exams, setExams] = useState([]);
   const [questions, setQuestions] = useState([]);
   const { user } = useSession();
-
-  // State for UI controls
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
@@ -320,11 +332,9 @@ export default function ExamManagement() {
     key: null,
     direction: "ascending",
   });
-
   const [showExamModal, setShowExamModal] = useState(false);
   const [examLoading, setExamLoading] = useState(false);
 
-  // Fetch subjects and exams from API
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -332,10 +342,7 @@ export default function ExamManagement() {
         const response = await fetch(`/api/teachers/${user.id}/dashboard`);
         const data = await response.json();
 
-        console.log("API Response:", data);
-
         if (data) {
-          // Transform the API data to separate each subject individually
           const transformedSubjects = [];
           let subjectId = 1;
 
@@ -348,33 +355,22 @@ export default function ExamManagement() {
                 year: subjectGroup.year,
                 semester: subjectGroup.semester,
                 division: subjectGroup.division,
-                groupId: groupIndex + 1, // To identify which group this subject belongs to
-                studentCount: Math.floor(Math.random() * 50) + 30, // Mock data for demo
+                groupId: groupIndex + 1,
+                studentCount: Math.floor(Math.random() * 50) + 30,
               });
-              console.log("Subject", subjectName);
             });
           });
 
-          console.log(transformedSubjects);
           setSubjects(transformedSubjects);
 
-          // Transform exams to include subjectId reference
-          console.log("Exam data from API:", data.myExam);
-
-          // Extract all exams from the nested structure
           const allExams = data.myExam.flatMap((examGroup) => examGroup.exams);
 
-          // Now transform each exam to include subjectId
-          // Update the exam status calculation in your useEffect where you transform exams
           const transformedExams = allExams.map((exam) => {
             const examDate = new Date(exam.date);
             const today = new Date();
-
-            // Reset time parts to compare only dates (not time)
             today.setHours(0, 0, 0, 0);
             examDate.setHours(0, 0, 0, 0);
 
-            // Calculate the difference in days
             const diffTime = examDate - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -387,7 +383,6 @@ export default function ExamManagement() {
               status = "completed";
             }
 
-            // Try to find a matching subject based on subject name
             const matchingSubject = transformedSubjects.find(
               (s) => s.name.toLowerCase() === exam.subject.toLowerCase()
             );
@@ -396,10 +391,10 @@ export default function ExamManagement() {
               ...exam,
               subjectId: matchingSubject?.id || null,
               status: status,
+              resultPublished: exam.resultPublished || false,
             };
           });
 
-          console.log("Transformed exams:", transformedExams);
           setExams(transformedExams);
         } else {
           setError("Failed to fetch data");
@@ -439,7 +434,7 @@ export default function ExamManagement() {
 
       const requestData = {
         ...examData,
-        teacherId: user.id, // Add teacherId to the request body
+        teacherId: user.id,
       };
 
       const response = await fetch(`/api/teachers/${user.id}/exams`, {
@@ -457,9 +452,6 @@ export default function ExamManagement() {
 
       const result = await response.json();
 
-      console.log(result);
-
-      // Add the new exam to the local state
       const newExam = {
         ...result.exam,
         subjectId: selectedSubject?.id,
@@ -469,18 +461,46 @@ export default function ExamManagement() {
       setExams((prevExams) => [...prevExams, newExam]);
       setShowExamModal(false);
       setError(null);
-
-      // Show success message (you can implement a toast notification here)
-      console.log("Exam created successfully:", result.exam);
     } catch (err) {
       setError("Error creating exam: " + err.message);
-      console.error("Error creating exam:", err);
     } finally {
       setExamLoading(false);
     }
   };
 
-  // Toggle subject expansion
+  const handleToggleResultPublished = async (examId, currentStatus) => {
+    try {
+      setExamLoading(true);
+
+      const response = await fetch(`/api/teachers/${user.id}/exams/${examId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ resultPublished: !currentStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update result visibility");
+      }
+
+      const result = await response.json();
+
+      setExams((prevExams) =>
+        prevExams.map((exam) =>
+          exam.id === examId
+            ? { ...exam, resultPublished: result.exam.resultPublished }
+            : exam
+        )
+      );
+    } catch (err) {
+      setError("Error updating result visibility: " + err.message);
+    } finally {
+      setExamLoading(false);
+    }
+  };
+
   const toggleSubjectExpansion = (subjectId) => {
     setExpandedSubjects((prev) => ({
       ...prev,
@@ -488,7 +508,6 @@ export default function ExamManagement() {
     }));
   };
 
-  // Handle sorting
   const handleSort = (key) => {
     let direction = "ascending";
     if (sortConfig.key === key && sortConfig.direction === "ascending") {
@@ -497,7 +516,6 @@ export default function ExamManagement() {
     setSortConfig({ key, direction });
   };
 
-  // Sort subjects
   const sortedSubjects = [...subjects].sort((a, b) => {
     if (sortConfig.key) {
       if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -510,43 +528,30 @@ export default function ExamManagement() {
     return 0;
   });
 
-  // Filter subjects by search term
   const filteredSubjects = sortedSubjects.filter(
     (subject) =>
       subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       subject.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  console.log(filteredSubjects);
-  console.log(selectedSubject);
 
-  // Filter exams by selected subject
   const filteredExams = selectedSubject
     ? exams.filter((exam) => exam.subjectId === selectedSubject.id)
     : [];
 
-  console.log("filteredExams", filteredExams);
-
-  // Filter questions by selected exam
   const filteredQuestions = selectedExam
-    ? questions.filter((question) => {
-        return question.examId === selectedExam.id;
-      })
+    ? questions.filter((question) => question.examId === selectedExam.id)
     : [];
 
-  // Add this function to handle API calls
   const addQuestionToAPI = async (questionData) => {
     try {
-      // Prepare the data in the correct format expected by your API
       const requestData = {
         question: questionData.question,
-        options: questionData.options.map((opt) => opt.text), // Send only the text, not objects
-        correctOption: questionData.answer, // Send the index of the correct answer
+        options: questionData.options.map((opt) => opt.text),
+        correctOption: questionData.answer,
         examId: selectedExam.id,
         createdBy: user.id,
         marks: questionData.marks || 1,
       };
-
-      console.log("Sending to API:", JSON.stringify(requestData, null, 2));
 
       const response = await fetch(`/api/teachers/${user.id}/exam`, {
         method: "POST",
@@ -556,11 +561,8 @@ export default function ExamManagement() {
         body: JSON.stringify(requestData),
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("API Error response:", errorData);
         throw new Error(
           `Failed to add question: ${response.status} ${
             errorData.message || "Unknown error"
@@ -569,26 +571,21 @@ export default function ExamManagement() {
       }
 
       const data = await response.json();
-      console.log("API Success response:", data);
-
       return {
         id: data._id || data.id,
         examId: selectedExam.id,
         question: data.question,
         options: data.options || [],
-        answer: data.correctOption || 0, // Use correctOption from response
-        marks : data.marks,
+        answer: data.correctOption || 0,
+        marks: data.marks,
       };
     } catch (error) {
-      console.error("API Error details:", error);
       setError("Error adding question: " + error.message);
       throw error;
     }
   };
 
-  // Update the handleAddQuestion function
   const handleAddQuestion = async () => {
-    // Check if all options have text
     const allOptionsFilled = newQuestion.options.every(
       (opt) => opt.text.trim() !== ""
     );
@@ -598,8 +595,8 @@ export default function ExamManagement() {
         setLoading(true);
         const savedQuestion = await addQuestionToAPI(newQuestion);
 
-        fetchQuestionsForExam()
-        // Reset form with correct object structure
+        setQuestions((prevQuestions) => [...prevQuestions, savedQuestion]);
+
         setNewQuestion({
           question: "",
           options: [
@@ -614,7 +611,6 @@ export default function ExamManagement() {
         setIsAddingQuestion(false);
       } catch (error) {
         console.error("Error in handleAddQuestion:", error);
-        // Error message is already set in addQuestionToAPI
       } finally {
         setLoading(false);
       }
@@ -622,55 +618,46 @@ export default function ExamManagement() {
       setError("Please fill in all fields and select an exam");
     }
   };
-   const fetchQuestionsForExam = async () => {
-      if (!selectedExam) {
+
+  const fetchQuestionsForExam = async () => {
+    if (!selectedExam) {
+      setQuestions([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/teachers/${user.id}/exam`);
+
+      if (response.ok) {
+        const questionsData = await response.json();
+        const queData = questionsData.questions;
+
+        const transformedQuestions = queData.map((q) => ({
+          id: q._id || q.id,
+          examId: q.examId || selectedExam.id,
+          question: q.questionText || q.question,
+          options: q.options || [],
+          answer: q.options.findIndex((opt) => opt.isCorrect === true) || 0,
+          marks: q.marks || 1,
+        }));
+
+        setQuestions(transformedQuestions);
+      } else {
+        setError("Failed to fetch questions");
         setQuestions([]);
-        return;
       }
+    } catch (err) {
+      setError("Error fetching questions: " + err.message);
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/teachers/${user.id}/exam`);
-
-        if (response.ok) {
-          const questionsData = await response.json();
-
-          console.log(questionsData);
-
-          const queData = questionsData.questions;
-          // Transform the API response to match our expected format
-          // In your useEffect that fetches questions
-          const transformedQuestions = queData.map((q) => ({
-            id: q._id || q.id,
-            examId: q.examId || selectedExam.id,
-            question: q.questionText || q.question,
-            options: q.options || [],
-            answer: q.options.findIndex((opt) => opt.isCorrect === true) || 0, // Use correctOption from response
-            marks: q.marks || 1
-          }));
-
-          console.log(transformedQuestions);
-
-          setQuestions(transformedQuestions);
-        } else {
-          setError("Failed to fetch questions");
-          setQuestions([]);
-        }
-      } catch (err) {
-        setError("Error fetching questions: " + err.message);
-        setQuestions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-  // Add this useEffect to fetch questions for the selected exam
   useEffect(() => {
-   
-
     fetchQuestionsForExam();
   }, [selectedExam, user?.id]);
-
-  console.log(questions);
 
   const handleDeleteQuestion = (id) => {
     setQuestions(questions.filter((q) => q.id !== id));
@@ -723,9 +710,8 @@ export default function ExamManagement() {
           Create and manage exams for your subjects
         </p>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Subjects Panel */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800 flex items-center">
@@ -828,7 +814,6 @@ export default function ExamManagement() {
           </div>
         </div>
 
-        {/* Exams Panel */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800 flex items-center">
@@ -903,6 +888,20 @@ export default function ExamManagement() {
                       <div className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100">
                         Total Marks: {exam.totalMarks}
                       </div>
+                      <div className="ml-2 flex items-center">
+                        <label className="text-xs font-medium text-gray-600 mr-2">
+                          Results Published:
+                        </label>
+                        <input
+                          type="checkbox"
+                          checked={exam.resultPublished}
+                          onChange={() =>
+                            handleToggleResultPublished(exam.id, exam.resultPublished)
+                          }
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          disabled={examLoading}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -920,13 +919,16 @@ export default function ExamManagement() {
         </div>
       </div>
 
-      {/* Questions Panel */}
       <div className="mt-6 bg-white rounded-xl shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">
             {selectedExam ? `Questions for ${selectedExam.type}` : "Questions"}
           </h2>
-          {selectedExam ? <span className="bg-blue-100 p-0.5 px-6 rounded-xl text-blue-600">{`Total No Of Question: ${filteredQuestions.length}`}</span> : ""}
+          {selectedExam ? (
+            <span className="bg-blue-100 p-0.5 px-6 rounded-xl text-blue-600">{`Total No Of Question: ${filteredQuestions.length}`}</span>
+          ) : (
+            ""
+          )}
           <button
             onClick={() => setIsAddingQuestion(true)}
             disabled={!selectedExam}
@@ -1039,13 +1041,10 @@ export default function ExamManagement() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                 {question.options.map((option, optIndex) => {
-                  // Extract the text from the option (handles both string and object formats)
                   const optionText =
                     typeof option === "string" ? option : option.text;
                   const optionId =
-                    typeof option === "object"
-                      ? option._id || optIndex
-                      : optIndex;
+                    typeof option === "object" ? option._id || optIndex : optIndex;
 
                   return (
                     <div
@@ -1086,7 +1085,7 @@ export default function ExamManagement() {
         onSave={handleCreateExam}
         selectedSubject={selectedSubject}
         loading={examLoading}
-        teacherId={user.id}
+        teacherId={user?.id}
       />
     </div>
   );
