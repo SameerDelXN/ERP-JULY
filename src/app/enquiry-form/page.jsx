@@ -72,7 +72,7 @@ export default function EnquiryForm() {
     });
 
     console.log(formData);
-    
+
     // Filter courses based on selected program type
     if (programType) {
       const filtered = courseOptions.filter(
@@ -83,6 +83,7 @@ export default function EnquiryForm() {
       setFilteredCourseOptions(courseOptions);
     }
   };
+
   const handleSendOTP = async () => {
     if (!formData.phone || formData.phone.length !== 10) {
       setErrors({ ...errors, phone: "Valid phone number required" });
@@ -110,8 +111,7 @@ export default function EnquiryForm() {
       setErrors({ ...errors, submit: error.message });
     }
   };
-  // Add this useEffect to handle verification status checks
-  // Replace your existing verification useEffect with this optimized version
+
   useEffect(() => {
     let intervalId;
 
@@ -140,10 +140,7 @@ export default function EnquiryForm() {
     };
 
     if (formData.email && !emailVerified) {
-      // Check immediately when email changes
       checkVerificationStatus();
-
-      // Then set up polling every 3 seconds
       intervalId = setInterval(checkVerificationStatus, 3000);
     }
 
@@ -151,10 +148,9 @@ export default function EnquiryForm() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [formData.email, emailVerified]);
-  // Add this useEffect to check verification status when email is entered
+
   useEffect(() => {
     if (formData.email) {
-      // Check localStorage first
       const isVerified =
         localStorage.getItem(`verifiedEmail_${formData.email}`) === "true";
       if (isVerified) {
@@ -163,7 +159,6 @@ export default function EnquiryForm() {
         return;
       }
 
-      // Then check server status
       const checkServerVerification = async () => {
         try {
           const response = await fetch("/api/check-verification", {
@@ -186,6 +181,7 @@ export default function EnquiryForm() {
       checkServerVerification();
     }
   }, [formData.email]);
+
   useEffect(() => {
     return () => {
       if (verificationCheckInterval) {
@@ -193,9 +189,8 @@ export default function EnquiryForm() {
       }
     };
   }, [verificationCheckInterval]);
-  // Add this useEffect at the top of your component
+
   useEffect(() => {
-    // Check URL parameters for verification status
     const urlParams = new URLSearchParams(window.location.search);
     const verified = urlParams.get("verified");
     const verificationError = urlParams.get("verificationError");
@@ -204,21 +199,17 @@ export default function EnquiryForm() {
       setEmailVerified(true);
       setShowEmailSection(false);
       localStorage.setItem(`verifiedEmail_${formData.email}`, "true");
-
-      // Clean up the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     if (verificationError === "true") {
       setErrors({ ...errors, emailVerification: "Email verification failed" });
-
-      // Clean up the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [formData.email]);
+
   const verifyMobileOTP = () => {
     if (mobileOTP === generatedOTP) {
-      // In production, verify against DB-stored OTP
       setMobileVerified(true);
       setShowOTPSection(false);
       sendVerificationEmail();
@@ -278,10 +269,10 @@ export default function EnquiryForm() {
       setErrors({ ...errors, emailVerification: error.message });
     }
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Handle name fields (firstName, middleName, lastName)
     if (name === "lastName" || name === "middleName" || name === "firstName") {
       if (!/^[a-zA-Z\s]*$/.test(value)) {
         setErrors({
@@ -292,7 +283,6 @@ export default function EnquiryForm() {
       }
     }
 
-    // Handle phone field
     if (name === "phone") {
       if (/\D/.test(value)) {
         setErrors({
@@ -316,13 +306,11 @@ export default function EnquiryForm() {
       return;
     }
 
-    // Handle all other fields
     setFormData({
       ...formData,
       [name]: value,
     });
 
-    // Clear error for this field if it exists
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -341,7 +329,7 @@ export default function EnquiryForm() {
       setIsSubmitting(false);
       return;
     }
-    console.log("formmmmmmm ",formData)
+
     try {
       const response = await fetch("/api/enquiry", {
         method: "POST",
@@ -354,7 +342,6 @@ export default function EnquiryForm() {
       const data = await response.json();
 
       console.log(data);
-      
 
       if (response.ok) {
         setIsSubmitted(true);
@@ -369,9 +356,6 @@ export default function EnquiryForm() {
           source: "",
           notes: "",
         });
-
-        console.log(response);
-        
       } else {
         throw new Error(data.message || "Failed to submit enquiry");
       }
@@ -443,6 +427,11 @@ export default function EnquiryForm() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
+          <img
+            src="/TechEdu-remove-bg.png"
+            alt="TechEdu Logo"
+            className="mx-auto mb-4 h-48 w-auto"
+          />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Institute Enquiry Form
           </h1>
@@ -453,14 +442,12 @@ export default function EnquiryForm() {
 
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <form onSubmit={handleSubmit} className="p-6 sm:p-8">
-            {/* Error message for submission */}
             {errors.submit && (
               <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
                 {errors.submit}
               </div>
             )}
 
-            {/* Personal Information Section */}
             <div className="mb-10">
               <div className="flex items-center mb-6">
                 <div className="p-2 rounded-lg bg-blue-50 text-blue-600 mr-3">
@@ -518,7 +505,7 @@ export default function EnquiryForm() {
                     minLength={2}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
                     placeholder="Enter middle name"
-                  />{" "}
+                  />
                   {errors.middleName && (
                     <p className="mt-1 text-sm text-red-600">
                       {errors.middleName}
@@ -681,7 +668,6 @@ export default function EnquiryForm() {
                 </div>
               </div>
 
-              {/* OTP Verification Section */}
               {showOTPSection && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center mb-3">
@@ -713,11 +699,8 @@ export default function EnquiryForm() {
                   )}
                 </div>
               )}
-
-              {/* Email Verification Section */}
             </div>
 
-            {/* Enquiry Details Section */}
             <div className="mb-10">
               <div className="flex items-center mb-6">
                 <div className="p-2 rounded-lg bg-blue-50 text-blue-600 mr-3">
@@ -860,7 +843,6 @@ export default function EnquiryForm() {
               </div>
             </div>
 
-            {/* Submit Button */}
             <div className="flex justify-end">
               <button
                 type="submit"
@@ -890,7 +872,6 @@ export default function EnquiryForm() {
               </button>
             </div>
 
-            {/* Verification Status */}
             {(showOTPSection ||
               showEmailSection ||
               !mobileVerified ||

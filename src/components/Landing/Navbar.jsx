@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, User } from "lucide-react";
 import Image from "next/image";
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -41,10 +42,11 @@ const Navbar = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg flex items-center justify-center group-hover:from-blue-700 group-hover:to-blue-500 transition-all">
-              <span className="text-white font-bold text-xl">TE</span>
-            </div>
-          
+            <img
+              src="/TechEdu-remove-bg.png"
+              alt="TechEdu Logo"
+              className="h-14 w-auto group-hover:opacity-80 transition-opacity"
+            />
           </Link>
 
           {/* Desktop Navigation */}
