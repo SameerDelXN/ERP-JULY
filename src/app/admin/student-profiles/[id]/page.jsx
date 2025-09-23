@@ -10,30 +10,25 @@ const StudentProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch(`/api/students/${params.id}`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch student");
-        }
-        const data = await res.json();
-        console.log(data);
-        
-        setStudent(data);
-        setIsLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setIsLoading(false);
-        console.error("Failed to load student:", err);
-      }
-    };
-
-    if (params.id) {
-      fetchStudent();
+useEffect(() => {
+  const fetchStudent = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/students/${params.id}`);
+      if (!res.ok) throw new Error(`Failed to fetch student: ${res.status}`);
+      const data = await res.json();
+      setStudent(data);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setIsLoading(false);
     }
-  }, [params.id]);
+  };
+
+  if (params.id) fetchStudent();
+}, [params.id]);
+
+
 
   if (isLoading) {
     return (

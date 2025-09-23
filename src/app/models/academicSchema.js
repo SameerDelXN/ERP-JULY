@@ -4,6 +4,14 @@ const academicSchema = new mongoose.Schema({
   department: {
     type: String,
     required: true, // e.g. "Computer Science", "Mechanical", etc.
+    enum: [
+    "Computer Science Engineering",
+    "Information Technology",
+    "Electronics and Communication Engineering",
+    "Mechanical Engineering",
+    "Civil Engineering",
+    "Electrical Engineering",
+  ], // only these values allowed
   },
   years: [
     {

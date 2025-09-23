@@ -11,16 +11,14 @@ const StudentsDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch all students from API
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
       const res = await fetch('/api/students');
-      if (!res.ok) {
-        throw new Error("Failed to fetch Students");
-      }
-      const data = await res.json();
-      const stud = data.data;
-      setStudents(stud);
+      if (!res.ok) throw new Error("Failed to fetch Students");
+      const data = await res.json(); // <-- API returns array directly
+      setStudents(data);
       setIsLoading(false);
     } catch (err) {
       setError(err.message);
@@ -31,36 +29,30 @@ const StudentsDashboard = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, []); // Empty dependency array to run only once
+  }, []);
 
-  console.log(students);
-  
   // Get all unique program types
-  const programTypes = [...new Set(students.map((student) => student.programType))].filter(Boolean);
-  
+  const programTypes = [...new Set(students.map(s => s.programType))].filter(Boolean);
+
   // Get branches based on selected program type
   const getFilteredBranches = () => {
     if (programTypeFilter === "all") {
-      return [...new Set(students.map((student) => student.branch))].filter(Boolean);
+      return [...new Set(students.map(s => s.branch))].filter(Boolean);
     }
-    return [...new Set(students
-      .filter(student => student.programType === programTypeFilter)
-      .map(student => student.branch)
-    )].filter(Boolean);
+    return [...new Set(students.filter(s => s.programType === programTypeFilter).map(s => s.branch))].filter(Boolean);
   };
 
-  const filteredStudents = students.filter((student) => {
+  // Filter students based on search and filters
+  const filteredStudents = students.filter(student => {
     const matchesSearch =
       student.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.branch?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || student.status === statusFilter;
-    const matchesCourse =
-      courseFilter === "all" || student.branch === courseFilter;
-    const matchesProgramType = 
-      programTypeFilter === "all" || student.programType === programTypeFilter;
-    
+
+    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+    const matchesCourse = courseFilter === "all" || student.branch === courseFilter;
+    const matchesProgramType = programTypeFilter === "all" || student.programType === programTypeFilter;
+
     return matchesSearch && matchesStatus && matchesCourse && matchesProgramType;
   });
 
@@ -90,89 +82,68 @@ const StudentsDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Search and Filter Section */}
+
+        {/* Search & Filters */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Search & Filters</h2>
-          </div>
-          
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Search & Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search Input */}
+            {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                Search Students
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search Students</label>
               <input
                 type="text"
-                id="search"
                 placeholder="Search by name, email or branch"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            {/* Program Type Filter */}
+
+            {/* Program Type */}
             <div>
-              <label htmlFor="programType" className="block text-sm font-medium text-gray-700 mb-1">
-                Filter by Program Type
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Program Type</label>
               <select
-                id="programType"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={programTypeFilter}
                 onChange={(e) => setProgramTypeFilter(e.target.value)}
               >
                 <option value="all">All Program Types</option>
-                {programTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
+                {programTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </select>
             </div>
-            
-            {/* Branch Filter */}
+
+            {/* Branch */}
             <div>
-              <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-1">
-                Filter by Branch
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
               <select
-                id="branch"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={courseFilter}
                 onChange={(e) => setCourseFilter(e.target.value)}
                 disabled={getFilteredBranches().length === 0}
               >
                 <option value="all">All Branches</option>
-                {getFilteredBranches().map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
+                {getFilteredBranches().map(branch => (
+                  <option key={branch} value={branch}>{branch}</option>
                 ))}
               </select>
               {getFilteredBranches().length === 0 && programTypeFilter !== "all" && (
                 <p className="text-xs text-gray-500 mt-1">No branches available for this program type</p>
               )}
             </div>
-            
-            {/* Status Filter */}
+
+            {/* Status */}
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                Filter by Status
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <select
-                id="status"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="all">All Statuses</option>
-                {statusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
+                {statusOptions.map(status => (
+                  <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
                 ))}
               </select>
             </div>
@@ -185,70 +156,51 @@ const StudentsDashboard = () => {
         </div>
 
         {/* Students Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Program Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Branch
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
-                    <tr key={student._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900 hover:text-blue-600">
-                            <Link  href={`/admin/student-profiles/${student._id}`}>{student.fullName || student.name}</Link>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {student.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {student.programType || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {student.branch}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${
-                            student.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {student.status ? student.status.charAt(0).toUpperCase() + student.status.slice(1) : "N/A"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                      No students found matching your criteria
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map(student => (
+                  <tr key={student._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 hover:text-blue-600">
+                      <Link href={`/admin/student-profiles/${student.studentId}`}>
+                        {student.fullName || student.name}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{student.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{student.programType || "N/A"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{student.branch}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          student.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {student.status ? student.status.charAt(0).toUpperCase() + student.status.slice(1) : "N/A"}
+                      </span>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                    No students found matching your criteria
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

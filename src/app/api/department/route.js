@@ -297,6 +297,12 @@ export async function POST(request) {
       throw err;
     }
   } catch (error) {
+    if (error.name === "ValidationError" && error.errors?.department?.kind === "enum") {
+      return NextResponse.json(
+        { error: "Enter valid department name" },
+        { status: 400 }
+      );
+    }
     console.error("Error creating department:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },

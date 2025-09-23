@@ -1,23 +1,14 @@
-
-//get and put route to fetch particular student detail through id and also update it 
- 
 import { connectToDatabase } from '../../../lib/mongodb';
-import studentSchema from '../../../models/studentSchema'; // adjust the import path if needed
+import studentSchema from '../../../models/studentSchema';
 import { NextResponse } from 'next/server';
-// import Student from '@/app/models/studentSchema';
+import mongoose from 'mongoose';
 
-export async function GET(request, { params }) {
+export async function GET(req, { params }) {
   try {
     await connectToDatabase();
-
-    const { id } =await params;
+    const { id } = params;
 
     const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
-
-    // Fetch student by _id or studentId, exclude admissionId
-    // const studentData = isValidObjectId
-    //   ? await studentSchema.findOne({ $or: [{ _id: id }, { studentId: id }] }, { admissionId: 0 })
-    //   : await studentSchema.findOne({ studentId: id }, { admissionId: 0 });
 
     const studentData = isValidObjectId
       ? await studentSchema.findOne({ $or: [{ _id: id }, { studentId: id }] })
@@ -34,16 +25,14 @@ export async function GET(request, { params }) {
   }
 }
 
-
-
 export async function PUT(req, { params }) {
-  await connectToDatabase();
-
-  const { id } = params; // MongoDB _id or studentId, depending on what you're using
-  const data = await req.json();
-
   try {
-    const updatedStudent = await studentSchema.findByIdAndUpdate(id, data, {
+    await connectToDatabase();
+    const { id } = params;
+    const data = await req.json();
+
+    const filter = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { studentId: id };
+    const updatedStudent = await studentSchema.findOneAndUpdate(filter, data, {
       new: true,
       runValidators: true,
     });
@@ -54,7 +43,7 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json({ message: 'Student updated successfully', student: updatedStudent });
   } catch (error) {
-    console.error('Update error:', error);
+    console.error('[UPDATE_STUDENT_ERROR]', error);
     return NextResponse.json({ message: 'Error updating student', error }, { status: 500 });
   }
 }
