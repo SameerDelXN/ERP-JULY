@@ -13,6 +13,7 @@ import {
   BarChart3,
   Users,
   Database,
+  UserCheck2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/context/SessionContext";
@@ -234,12 +235,17 @@ const Login = () => {
                     {
                       role: "teacher",
                       label: "Teacher Member",
-                      icon: User,
+                      icon: Users,
                     },
                     {
                       role: "student",
                       label: "Student",
-                      icon: User,
+                      icon: Users,
+                    },
+                    { 
+                      role: "hr", 
+                      label: "HR", 
+                      icon: User 
                     },
                   ].map(({ role, label, icon: Icon }) => (
                     <button
