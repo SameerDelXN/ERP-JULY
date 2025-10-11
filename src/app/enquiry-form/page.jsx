@@ -427,11 +427,11 @@ export default function EnquiryForm() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <img
+          {/* <img
             src="/TechEdu-remove-bg.png"
             alt="TechEdu Logo"
             className="mx-auto mb-4 h-48 w-auto"
-          />
+          /> */}
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Institute Enquiry Form
           </h1>

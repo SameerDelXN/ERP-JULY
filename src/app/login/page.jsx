@@ -127,13 +127,14 @@ const Login = () => {
             <div className="relative">
               {/* Central Building Icon */}
               <div className="inline-flex items-center justify-center w-56 h-38 rounded-2xl  border border-gray-100">
-                <Image
+                {/* <Image
                   width={1920}
                   height={1080}
                   src="/TechEdu-remove-bg.png"
                   alt="TechEdu Logo"
                   className="w-full h-full object-cover rounded-2xl"
-                />
+                /> */}
+                <h1 className="text-2xl font-bold">ERP-Manage</h1>
               </div>
 
               {/* Floating Icons */}

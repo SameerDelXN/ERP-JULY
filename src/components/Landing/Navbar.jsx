@@ -42,11 +42,12 @@ const Navbar = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
-            <img
+            {/* <img
               src="/TechEdu-remove-bg.png"
               alt="TechEdu Logo"
               className="h-14 w-auto group-hover:opacity-80 transition-opacity"
-            />
+            /> */}
+            <h1 className="text-2xl font-bold">ERP-Manage</h1>
           </Link>
 
           {/* Desktop Navigation */}
