@@ -1,4 +1,3 @@
-//database schema for users
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
@@ -30,7 +29,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "staff", "teacher", "hod","hr"],
+      enum: ["admin", "staff", "teacher", "hod", "hr"],
       default: "student",
     },
 
@@ -59,15 +58,33 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       refPath: "role",
     },
-    sessionToken: {
-      type: String
-    }
+
+    sessionToken: String,
+
+    // --- STAFF FIELDS ---
+    staffId: {
+      type: String,
+      unique: true,
+    },
+    designation: String,
+    department: String,
+    salary: Number,
+    joiningDate: {
+      type: Date,
+      default: Date.now,
+    },
+    leaveCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
+
 if (mongoose.models && mongoose.models.user) {
   delete mongoose.models.user;
 }
+
 const user = mongoose.models.user || mongoose.model("user", userSchema);
 
 export default user;

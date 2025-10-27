@@ -24,6 +24,54 @@ export async function GET(req, { params }) {
   }
 }
 
+export async function POST(req, { params }) {
+  await connectToDatabase();
+  const { staffId } = params;
+  const { month, year } = await req.json();
+
+  try {
+    const staff = await Staff.findOne({ staffId });
+    if (!staff) {
+      return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
+    }
+
+    // Here you calculate/generate the payslip
+    const payslip = {
+      staffId: staff.staffId,
+      name: staff.name,
+      department: staff.department,
+      designation: staff.designation,
+      month,
+      year,
+      dateOfIssue: new Date(),
+      earnings: {
+        basic: staff.salary,
+        hra: staff.salary * 0.2,
+        da: staff.salary * 0.1,
+        specialallowance: 500,
+        bonus: 1000,
+        grossEarnings: staff.salary + staff.salary * 0.2 + staff.salary * 0.1 + 500 + 1000,
+      },
+      deductions: {
+        pf: 200,
+        tds: 150,
+        loan: 0,
+        leave: 0,
+        other: 0,
+      },
+      totalDeductions: 350,
+      netSalary:  staff.salary + staff.salary * 0.2 + staff.salary * 0.1 + 500 + 1000 - 350,
+      paymentStatus: 'Paid'
+    };
+
+    return NextResponse.json({ success: true, data: [payslip] });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+  }
+}
+
+
 export async function PUT(request, { params }) {
   await connectToDatabase();
   const { id } = params;

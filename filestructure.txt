@@ -34,6 +34,8 @@
                 |-- page.jsx
                 |-- [id]
                     |-- page.jsx
+            |-- attendance-overview
+                |-- page.jsx
             |-- courses
                 |-- page.jsx
             |-- enquiry&leads
@@ -65,6 +67,8 @@
                 |-- route.js
                 |-- [id]
                     |-- route.js
+            |-- attendance
+                |-- route.js
             |-- auth
                 |-- forgot-password
                     |-- route.js
@@ -187,10 +191,13 @@
                         |-- [studentId]
                             |-- route.js
                     |-- route.js
+                |-- fetch-notes
+                    |-- route.js
                 |-- myexams
                     |-- route.js
                     |-- [id]
                         |-- route.js
+                |-- route.js
                 |-- [id]
                     |-- academics
                         |-- route.js
@@ -268,6 +275,7 @@
                 |-- page.jsx
         |-- layout.js
         |-- lib
+            |-- cloudinary.js
             |-- cors.js
             |-- googleDriveUpload.js
             |-- init-middleware.js
@@ -278,12 +286,15 @@
         |-- models
             |-- academicSchema.js
             |-- admissionSchema.js
+            |-- attendanceRecordSchema.js
             |-- attendanceSchema.js
             |-- course.js
             |-- coursePlanSchema.js
             |-- EmailVerification.js
             |-- enquirySchema.js
             |-- logSchema.js
+            |-- noteSchema.js
+            |-- payslip.js
             |-- questionAndAnswer.js
             |-- sampleSchema.js
             |-- studentSchema.js

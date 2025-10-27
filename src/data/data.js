@@ -27,7 +27,7 @@ export const adminSidebarItems = [
   { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   { id: "courses", label: "CRM Management", icon: BookImage },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
-  // { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
+   { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   // { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
   // { id: "staff-directory", label: "Staff Directory", icon: Users },
   // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
@@ -59,7 +59,7 @@ export const teacherSidebarItems = [
   // {id: "attendance", label: "Mark Attendance", icon: UserCheck},
   {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
   {id: "student-list", label: "Student List", icon: Users},
-  {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
+  // {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
   // {id: "marks", label: "Exam Marks", icon: FileCheck},
   {id: "exam", label: "All Exam", icon: File},
 ]

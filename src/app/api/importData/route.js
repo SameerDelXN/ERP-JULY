@@ -1145,4 +1145,4 @@ async function addStudentToAcademicStructure(
     console.error("Error in addStudentToAcademicStructure:", error);
     throw error;
   }
-} 
+}

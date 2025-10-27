@@ -1,52 +1,45 @@
-
-"use client"
-import { useState, useEffect } from 'react';
-import { UploadCloud, FileText, Loader2 } from 'lucide-react';
-import { useSession } from '@/context/SessionContext';
+"use client";
+import { useState, useEffect } from "react";
+import { UploadCloud, FileText, Loader2 } from "lucide-react";
+import { useSession } from "@/context/SessionContext";
 
 export default function NoteUpload({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [subject, setSubject] = useState('');
-  const [year, setYear] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
+  const [year, setYear] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [fileName, setFileName] = useState('');
+  const [fileName, setFileName] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
   const { user } = useSession();
 
   useEffect(() => {
     const fetchTeacherData = async () => {
+      if (!user || user.role !== "teacher") {
+        setLoading(false);
+        return;
+      }
       try {
-        // Check if user is a teacher
-        if (!user || user.role !== 'teacher') {
-          setLoading(false);
-          return;
-        }
-
         const response = await fetch(`/api/teachers/${user.id}/dashboard`);
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Extract unique subjects from mySubjects
-          const uniqueSubjects = data.mySubjects 
-            ? [...new Set(data.mySubjects.flatMap(yearData => yearData.subjects || []))]
-            : [];
-          
-          // Extract unique years from mySubjects
-          const uniqueYears = data.mySubjects
-            ? [...new Set(data.mySubjects.map(yearData => yearData.year).filter(Boolean))]
-            : [];
-          
-          setSubjects(uniqueSubjects);
-          setYears(uniqueYears);
-        } else {
-          console.error('Failed to fetch teacher data');
-        }
-      } catch (error) {
-        console.error('Error fetching teacher data:', error);
+        if (!response.ok) throw new Error("Failed to fetch teacher data");
+        const data = await response.json();
+
+        setSubjects(
+          data.mySubjects
+            ? [...new Set(data.mySubjects.flatMap((y) => y.subjects || []))]
+            : []
+        );
+        setYears(
+          data.mySubjects
+            ? [...new Set(data.mySubjects.map((y) => y.year).filter(Boolean))]
+            : []
+        );
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -58,11 +51,11 @@ export default function NoteUpload({ onUploadSuccess }) {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && selectedFile.size > 10 * 1024 * 1024) {
-      alert('File size exceeds 10MB limit');
+      alert("File size exceeds 10MB limit");
       return;
     }
     setFile(selectedFile);
-    setFileName(selectedFile ? selectedFile.name : '');
+    setFileName(selectedFile?.name || "");
   };
 
   const handleSubmit = async (e) => {
@@ -70,40 +63,42 @@ export default function NoteUpload({ onUploadSuccess }) {
     if (!file) return;
 
     setIsUploading(true);
-    
     const formData = new FormData();
-    formData.append('files', file);
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('subject', subject);
-    formData.append('year', year);
-    formData.append('teacherId', user.id);
+    formData.append("files", file);
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("subject", subject);
+    formData.append("year", year);
+    formData.append("teacherId", user.id);
 
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        onUploadSuccess(data);
-        // Reset form
-        setFile(null);
-        setTitle('');
-        setDescription('');
-        setSubject('');
-        setYear('');
-        setFileName('');
-        // Reset file input
-        document.getElementById('file').value = '';
-      } else {
-        console.error('Upload failed:', await response.text());
-        alert('Upload failed. Please try again.');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSuccessMessage(data.error || "Upload failed. Please try again.");
+        return;
       }
+
+      setSuccessMessage(data.message || `File "${fileName}" uploaded successfully!`);
+      setTimeout(() => setSuccessMessage(""), 5000);
+
+      onUploadSuccess?.(data);
+
+      setFile(null);
+      setTitle("");
+      setDescription("");
+      setSubject("");
+      setYear("");
+      setFileName("");
+      document.getElementById("file").value = "";
     } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
+      console.error(error);
+      setSuccessMessage("Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -117,25 +112,20 @@ export default function NoteUpload({ onUploadSuccess }) {
     );
   }
 
-  // Check if user is not a teacher or has no subjects/years
-  if (!user || user.role !== 'teacher') {
+  if (!user || user.role !== "teacher") {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md">
-        <div className="text-center py-8">
-          <p className="text-gray-600">Only teachers can upload notes.</p>
-        </div>
+      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md text-center py-8">
+        <p className="text-gray-600">Only teachers can upload notes.</p>
       </div>
     );
   }
 
-  if (subjects.length === 0 || years.length === 0) {
+  if (!subjects.length || !years.length) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md">
-        <div className="text-center py-8">
-          <p className="text-gray-600">
-            You need to be assigned to subjects and years before you can upload notes.
-          </p>
-        </div>
+      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md text-center py-8">
+        <p className="text-gray-600">
+          You need to be assigned to subjects and years before uploading notes.
+        </p>
       </div>
     );
   }
@@ -154,7 +144,7 @@ export default function NoteUpload({ onUploadSuccess }) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <div>
             <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
               Subject
             </label>
@@ -166,13 +156,15 @@ export default function NoteUpload({ onUploadSuccess }) {
               required
             >
               <option value="">Select a subject</option>
-              {subjects.map((subj) => (
-                <option key={subj} value={subj}>{subj}</option>
+              {subjects.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-2">
+          <div>
             <label htmlFor="year" className="block text-sm font-medium text-gray-700">
               Year
             </label>
@@ -184,14 +176,16 @@ export default function NoteUpload({ onUploadSuccess }) {
               required
             >
               <option value="">Select year</option>
-              {years.map((yr) => (
-                <option key={yr} value={yr}>{yr}</option>
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700">
             Title
           </label>
@@ -206,7 +200,7 @@ export default function NoteUpload({ onUploadSuccess }) {
           />
         </div>
 
-        <div className="space-y-2">
+        <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700">
             Description
           </label>
@@ -219,13 +213,13 @@ export default function NoteUpload({ onUploadSuccess }) {
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            File
-          </label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">File</label>
           <label
             htmlFor="file"
-            className={`flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-lg cursor-pointer ${file ? 'border-indigo-300 bg-indigo-50' : 'border-gray-300 hover:border-indigo-300 hover:bg-indigo-50'} transition`}
+            className={`flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-lg cursor-pointer ${
+              file ? "border-indigo-300 bg-indigo-50" : "border-gray-300 hover:border-indigo-300 hover:bg-indigo-50"
+            } transition`}
           >
             {file ? (
               <div className="flex items-center text-indigo-600">
@@ -238,26 +232,25 @@ export default function NoteUpload({ onUploadSuccess }) {
                 <p className="mt-2 text-sm text-gray-600">
                   <span className="font-medium text-indigo-600">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-gray-500">
-                  PDF, DOC, DOCX, TXT, PPT, PPTX (MAX. 10MB)
-                </p>
+                <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT, PPT, PPTX (MAX. 10MB)</p>
               </div>
             )}
-            <input
-              id="file"
-              type="file"
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".pdf,.doc,.docx,.txt,.ppt,.pptx"
-              required
-            />
+            <input id="file" type="file" onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx" required />
           </label>
         </div>
+
+        {successMessage && (
+          <div className="mt-4 p-3 rounded-md bg-green-50 border border-green-300 text-green-700 text-sm text-center">
+            {successMessage}
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={isUploading}
-          className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isUploading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition`}
+          className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+            isUploading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
+          } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition`}
         >
           {isUploading ? (
             <>
@@ -265,7 +258,7 @@ export default function NoteUpload({ onUploadSuccess }) {
               Uploading...
             </>
           ) : (
-            'Upload Note'
+            "Upload Note"
           )}
         </button>
       </form>
