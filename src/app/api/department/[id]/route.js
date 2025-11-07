@@ -161,36 +161,23 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const requestData = await request.json();
+    const { departmentName, hodId, programType, description, isActive } =
+      await request.json();
 
-    // Check if this is just an isActive toggle
-    if (Object.keys(requestData).length === 1 && 'isActive' in requestData) {
+    // ✅ If it's just isActive toggle
+    if (Object.keys({ departmentName, hodId, programType, description }).every(v => v === undefined) && isActive !== undefined) {
       const updatedDepartment = await academicSchema.findByIdAndUpdate(
         id,
-        { isActive: requestData.isActive },
+        { isActive },
         { new: true }
       );
-
-      if (!updatedDepartment) {
-        return NextResponse.json(
-          { error: "Department not found" },
-          { status: 404 }
-        );
-      }
-
       return NextResponse.json(
-        {
-          message: "Department status updated successfully",
-          department: updatedDepartment,
-        },
+        { message: "Department status updated", department: updatedDepartment },
         { status: 200 }
       );
     }
 
-    // Existing full update logic
-    const { departmentName, hodId, programType, description } = requestData;
-
-    // Validate input
+    // ✅ Validate input
     if (!departmentName || !hodId) {
       return NextResponse.json(
         { error: "Department name and HOD ID are required" },
@@ -198,52 +185,37 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Start transaction for complex update
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      // Check if department exists
+      // ✅ Check if department exists
       const department = await academicSchema.findById(id).session(session);
       if (!department) {
-        await session.abortTransaction();
-        session.endSession();
-        return NextResponse.json(
-          { error: "Department not found" },
-          { status: 404 }
-        );
+        throw new Error("Department not found");
       }
 
-      // Check if new HOD exists
+      // ✅ Check if HOD exists
       const newHod = await teacherSchema.findById(hodId).session(session);
       if (!newHod) {
-        await session.abortTransaction();
-        session.endSession();
-        return NextResponse.json(
-          { error: "Teacher not found" },
-          { status: 404 }
-        );
+        throw new Error("Teacher not found");
       }
 
-      // Check if new HOD is already a HOD of another department
-      const existingHod = await teacherSchema
+      // ✅ Check if this teacher is already HOD of ANOTHER department
+      const hodOfAnotherDept = await academicSchema
         .findOne({
-          role: "hod",
-          _id: { $ne: hodId },
-          department: departmentName,
+          _id: { $ne: id }, // exclude current department
+          hod: hodId, // field storing HOD reference
         })
         .session(session);
 
-      if (existingHod) {
-        await session.abortTransaction();
-        session.endSession();
-        return NextResponse.json(
-          { error: "Another teacher is already HOD of this department" },
-          { status: 400 }
+      if (hodOfAnotherDept) {
+        throw new Error(
+          `This teacher is already assigned as HOD of ${hodOfAnotherDept.department}`
         );
       }
 
-      // Get current HOD if exists
+      // ✅ Get current HOD (if exists)
       const currentHod = await teacherSchema
         .findOne({
           department: department.department,
@@ -251,18 +223,19 @@ export async function PUT(request, { params }) {
         })
         .session(session);
 
-      // Update department
+      // ✅ Update department
       const updatedDepartment = await academicSchema.findByIdAndUpdate(
         id,
-        { 
+        {
           department: departmentName,
-          description: description,
-          programType: programType
+          description,
+          programType,
+          hod: hodId, // update HOD ref
         },
         { new: true, session }
       );
 
-      // Remove HOD role from current HOD if exists and it's different from new HOD
+      // ✅ Remove HOD role from old HOD (if different)
       if (currentHod && currentHod._id.toString() !== hodId) {
         await teacherSchema.findByIdAndUpdate(
           currentHod._id,
@@ -274,46 +247,40 @@ export async function PUT(request, { params }) {
         );
       }
 
-      // Assign new HOD role (if different from current or if no current HOD)
-      if (!currentHod || currentHod._id.toString() !== hodId) {
-        await teacherSchema.findByIdAndUpdate(
-          hodId,
-          {
-            department: departmentName,
-            role: "hod",
-            $addToSet: { roles: "hod" },
-          },
-          { session }
-        );
-      }
+      // ✅ Assign HOD role to new HOD
+      await teacherSchema.findByIdAndUpdate(
+        hodId,
+        {
+          department: departmentName,
+          role: "hod",
+          $addToSet: { roles: "hod" },
+        },
+        { session }
+      );
 
       await session.commitTransaction();
       session.endSession();
 
       return NextResponse.json(
-        {
-          message: "Department updated successfully",
-          department: updatedDepartment,
-        },
+        { message: "HOD updated successfully", department: updatedDepartment },
         { status: 200 }
       );
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
-      console.error("Transaction error:", err);
       return NextResponse.json(
-        { error: "Failed to update department: " + err.message },
-        { status: 500 }
+        { error: err.message || "Failed to update department" },
+        { status: 400 }
       );
     }
   } catch (error) {
-    console.error("Error updating department:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
     );
   }
 }
+
 
 
 export async function DELETE(request, { params }) {

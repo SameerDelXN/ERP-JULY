@@ -63,6 +63,24 @@ const StudentsDashboard = () => {
     setCourseFilter("all");
   }, [programTypeFilter]);
 
+  // Handle delete student
+  const handleDelete = async (studentId, studentName) => {
+    if (window.confirm(`Are you sure you want to delete ${studentName}?`)) {
+      try {
+        const res = await fetch(`/api/students/${studentId}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) throw new Error("Failed to delete student");
+        // Refresh students list
+        fetchStudents();
+        alert("Student deleted successfully");
+      } catch (err) {
+        console.error("Delete error:", err);
+        alert("Failed to delete student");
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
@@ -160,26 +178,27 @@ const StudentsDashboard = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredStudents.length > 0 ? (
                 filteredStudents.map(student => (
-                  <tr key={student._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 hover:text-blue-600">
+                  <tr key={student._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-3 py-3 whitespace-nowrap font-medium text-gray-900 hover:text-blue-600 text-sm">
                       <Link href={`/admin/student-profiles/${student.studentId}`}>
                         {student.fullName || student.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{student.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{student.programType || "N/A"}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{student.branch}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.email}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.programType || "N/A"}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.branch}</td>
+                    <td className="px-3 py-3 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           student.status === "active"
@@ -190,11 +209,22 @@ const StudentsDashboard = () => {
                         {student.status ? student.status.charAt(0).toUpperCase() + student.status.slice(1) : "N/A"}
                       </span>
                     </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleDelete(student.studentId, student.fullName || student.name)}
+                        className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50"
+                        title="Delete"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                     No students found matching your criteria
                   </td>
                 </tr>

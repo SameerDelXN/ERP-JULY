@@ -61,11 +61,12 @@ export default function DepartmentManagement() {
         throw new Error("Failed to fetch teachers");
       }
       const data = await response.json();
+      console.log("adat = ",data)
       // Filter teachers who are HODs with null department
-      const availableHods = data.hodTeachers.filter(
-        (teacher) => !teacher.department
-      );
-      setTeachers(availableHods);
+      // const availableHods = data.hodTeachers.filter(
+      //   (teacher) => !teacher.department
+      // );
+      setTeachers(data.hodTeachers);
     } catch (err) {
       console.error("Error fetching teachers:", err);
       setError(err.message);
