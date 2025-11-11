@@ -5,12 +5,20 @@ const academicSchema = new mongoose.Schema({
     type: String,
     required: true, // e.g. "Computer Science", "Mechanical", etc.
     enum: [
-    "Computer Science Engineering",
-    "Information Technology",
-    "Electronics and Communication Engineering",
-    "Mechanical Engineering",
-    "Civil Engineering",
-    "Electrical Engineering",
+      "Aerospace Engineering",
+      "Biomedical Engineering",
+      "Chemical Engineering",
+      "Civil Engineering",
+      "Communication Systems Engineering",
+      "Computational Data Engineering",
+      "Computer Science Engineering",
+      "Electrical Engineering",
+      "Electronics and Communication Engineering",
+      "Industrial and Production Engineering",
+      "Information Technology",
+      "Mechanical Engineering",
+      "Quantum Computing and Engineering",
+      "Software Engineering"
   ], // only these values allowed
   },
   years: [

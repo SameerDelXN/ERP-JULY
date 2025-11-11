@@ -47,3 +47,26 @@ export async function PUT(req, { params }) {
     return NextResponse.json({ message: 'Error updating student', error }, { status: 500 });
   }
 }
+
+
+export async function DELETE(req, { params }) {
+  try {
+    await connectToDatabase();
+    const { id } = params;
+
+    const filter = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { studentId: id };
+
+    const deletedStudent = await studentSchema.findOneAndDelete(filter);
+
+    if (!deletedStudent) {
+      return NextResponse.json({ message: 'Student not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Student deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('[DELETE_STUDENT_ERROR]', error);
+    return NextResponse.json({ message: 'Error deleting student', error }, { status: 500 });
+  }
+}
