@@ -22,11 +22,20 @@ export async function POST(request) {
 
     // Find the academic record and the specific division
     const academicRecord = await academic.findOne({
-      "years.year": year,
-      "years.semester": semester,
-      "years.divisions.name": division,
-      "years.divisions.subjects.teacher": teacherId,
-    });
+  years: {
+    $elemMatch: {
+      year,
+      semester,
+      divisions: {
+        $elemMatch: {
+          name: division,
+          "subjects.teacher": teacherId,
+        },
+      },
+    },
+  },
+});
+
 
     console.log(academicRecord);
 

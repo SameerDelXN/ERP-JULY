@@ -42,6 +42,9 @@ export default function CourseManagementPage() {
 
     console.log(id);
 
+    console.log(courses);
+    
+
     try {
       setLoadingStates((prev) => ({ ...prev, [id]: true }));
       setError(null);
@@ -76,6 +79,7 @@ export default function CourseManagementPage() {
         },
         body: JSON.stringify({ isActive: newStatus }),
       });
+      
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
