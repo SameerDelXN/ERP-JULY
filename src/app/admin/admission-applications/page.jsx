@@ -2272,6 +2272,7 @@ import {
   ArcElement,
 } from "chart.js";
 import { useReactToPrint } from "react-to-print";
+
 // Register ChartJS components
 ChartJS.register(
   CategoryScale,
@@ -2678,6 +2679,34 @@ const AdmissionApplications = () => {
   const printRef = useRef();
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef(null);
+  
+  // New states for stat modal
+  const [showStatModal, setShowStatModal] = useState(false);
+  const [statModalData, setStatModalData] = useState({
+    title: '',
+    data: [],
+    color: '',
+    status: ''
+  });
+
+  // Function to handle stat card clicks
+  const handleStatCardClick = (status, title, color) => {
+    let filteredData;
+    
+    if (status === 'all') {
+      filteredData = admission;
+    } else {
+      filteredData = admission.filter(app => app.status === status);
+    }
+    
+    setStatModalData({
+      title,
+      data: filteredData,
+      color,
+      status
+    });
+    setShowStatModal(true);
+  };
 
   const getProgramDistributionData = () => {
     const programCounts = {};
@@ -3839,9 +3868,13 @@ const AdmissionApplications = () => {
             )}
           </div>
         </div>
+        
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+          <div 
+            onClick={() => handleStatCardClick('all', 'Total Applications', 'blue')}
+            className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
@@ -3869,7 +3902,11 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+
+          <div 
+            onClick={() => handleStatCardClick('inProcess', 'In Process Applications', 'yellow')}
+            className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
@@ -3884,7 +3921,11 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+
+          <div 
+            onClick={() => handleStatCardClick('approved', 'Approved Applications', 'green')}
+            className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
@@ -3897,7 +3938,11 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
+
+          <div 
+            onClick={() => handleStatCardClick('rejected', 'Rejected Applications', 'red')}
+            className="bg-gradient-to-br from-red-100 to-red-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
@@ -3910,6 +3955,7 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
+
           <div className="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
@@ -3928,6 +3974,7 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
+
           <div className="bg-gradient-to-br from-amber-100 to-amber-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
@@ -3946,6 +3993,7 @@ const AdmissionApplications = () => {
               </div>
             </div>
           </div>
+
           <div className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
@@ -3965,6 +4013,7 @@ const AdmissionApplications = () => {
             </div>
           </div>
         </div>
+
         {/* Visualization Section */}
         {showCharts && (
           <div className="space-y-6 mb-8">
@@ -4113,7 +4162,8 @@ const AdmissionApplications = () => {
                     data={getMonthlyTrendData()}
                     options={{
                       responsive: true,
-                      maintainAspectRatio: false,                      scales: {
+                      maintainAspectRatio: false,
+                      scales: {
                         y: {
                           beginAtZero: true,
                           grid: {
@@ -4158,6 +4208,7 @@ const AdmissionApplications = () => {
             </div>
           </div>
         )}
+        
         {/* Filters and Search */}
         <div className="bg-white rounded-xl shadow-sm mb-6">
           <div className="p-6">
@@ -4340,6 +4391,8 @@ const AdmissionApplications = () => {
           )}
         </div>
       </div>
+      
+      {/* Admission Details Modal */}
       {showDetailsModal && (
         <AdmissionDetailsModal
           admissionId={selectedAdmissionId}
@@ -4349,6 +4402,160 @@ const AdmissionApplications = () => {
             setSelectedAdmissionId(null);
           }}
         />
+      )}
+
+      {/* Stat Modal */}
+      {showStatModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-6xl shadow-2xl relative border border-gray-100 max-h-[90vh] overflow-hidden">
+            <div className={`flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-br from-${statModalData.color}-50 to-${statModalData.color}-100`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 bg-gradient-to-br from-${statModalData.color}-500 to-${statModalData.color}-600 rounded-xl flex items-center justify-center`}>
+                  {statModalData.status === 'all' && <FileText className="w-5 h-5 text-white" />}
+                  {statModalData.status === 'inProcess' && <Clock className="w-5 h-5 text-white" />}
+                  {statModalData.status === 'approved' && <CheckCircle className="w-5 h-5 text-white" />}
+                  {statModalData.status === 'rejected' && <XCircle className="w-5 h-5 text-white" />}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {statModalData.title}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {statModalData.data.length} application{statModalData.data.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStatModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-white rounded-full"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {statModalData.data.length === 0 ? (
+                <div className="text-center py-16 text-gray-500">
+                  <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">No applications found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student Info
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Program
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Branch
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Year
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Created At
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {statModalData.data.map((application) => (
+                        <tr key={application._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Link
+                              href={`/admin/admission-applications/${application._id}`}
+                              className="flex items-center hover:text-blue-600 transition-colors"
+                            >
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                  <User className="w-5 h-5 text-gray-600" />
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                                  {application.fullName || "N/A"}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {application.email || "N/A"}
+                                </div>
+                              </div>
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {application.programType || "N/A"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {application.branch || "N/A"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {application.year || "N/A"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {(() => {
+                              const status = application.status || "inProcess";
+                              const config = statusConfig[status] || statusConfig.inProcess;
+                              return (
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
+                                >
+                                  <config.icon className="w-3 h-3 mr-1" />
+                                  {config.label}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {application.createdAt
+                                ? new Date(application.createdAt).toLocaleDateString()
+                                : "N/A"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors"
+                                onClick={() => {
+                                  setShowStatModal(false);
+                                  openDetailsModal(application._id);
+                                }}
+                                title="View Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <Link
+                                href={`/admin/admission-applications/${application._id}`}
+                                className="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-colors"
+                                title="Go to Application"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

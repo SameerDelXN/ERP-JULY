@@ -2,25 +2,10 @@ import mongoose from "mongoose";
 
 const academicSchema = new mongoose.Schema({
   department: {
-    type: String,
-    required: true, // e.g. "Computer Science", "Mechanical", etc.
-    enum: [
-      "Aerospace Engineering",
-      "Biomedical Engineering",
-      "Chemical Engineering",
-      "Civil Engineering",
-      "Communication Systems Engineering",
-      "Computational Data Engineering",
-      "Computer Science Engineering",
-      "Electrical Engineering",
-      "Electronics and Communication Engineering",
-      "Industrial and Production Engineering",
-      "Information Technology",
-      "Mechanical Engineering",
-      "Quantum Computing and Engineering",
-      "Software Engineering"
-  ], // only these values allowed
-  },
+  type: String,
+  required: true,  // e.g. "Computer Science", "Mechanical", etc.
+  trim: true
+},
   years: [
     {
       year: {
@@ -81,7 +66,8 @@ const academicSchema = new mongoose.Schema({
               date: { type: Date, required: true },
               duration: {
                 type: Number, // in minutes
-                required: true,
+                required: false,
+                default: 0,
               },
               resultPublished: {
                 type: Boolean,

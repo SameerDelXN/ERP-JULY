@@ -86,7 +86,7 @@ async function connectDB() {
 //       // Update department - corrected syntax
 //       const updatedDepartment = await academicSchema.findByIdAndUpdate(
 //         id,
-//         { 
+//         {
 //           department: departmentName,
 //           description: description,
 //           programType: programType
@@ -130,7 +130,6 @@ async function connectDB() {
 //         { status: 200 }
 //       );
 
-      
 //     } catch (err) {
 //       await session.abortTransaction();
 //       session.endSession();
@@ -153,6 +152,7 @@ export async function PUT(request, { params }) {
   try {
     await connectDB();
     const { id } = params;
+    console.log(id);
 
     if (!id) {
       return NextResponse.json(
@@ -164,8 +164,17 @@ export async function PUT(request, { params }) {
     const { departmentName, hodId, programType, description, isActive } =
       await request.json();
 
+    console.log(departmentName, hodId, programType, description, isActive);
+
     // ✅ If it's just isActive toggle
-    if (Object.keys({ departmentName, hodId, programType, description }).every(v => v === undefined) && isActive !== undefined) {
+
+    if (
+      departmentName === undefined &&
+      hodId === undefined &&
+      programType === undefined &&
+      description === undefined &&
+      isActive !== undefined
+    ) {
       const updatedDepartment = await academicSchema.findByIdAndUpdate(
         id,
         { isActive },
@@ -281,17 +290,15 @@ export async function PUT(request, { params }) {
   }
 }
 
-
-
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
-    
+
     // Get ID from both params and query for flexibility
     const { id } = params;
     const { searchParams } = new URL(request.url);
     const queryId = searchParams.get("id");
-    
+
     // Use params.id first, fall back to query.id
     const departmentId = id || queryId;
 
@@ -332,9 +339,9 @@ export async function DELETE(request, { params }) {
       await session.commitTransaction();
 
       return Response.json(
-        { 
+        {
           message: "Department deleted successfully",
-          success: true 
+          success: true,
         },
         { status: 200 }
       );
@@ -347,9 +354,9 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error("Error deleting department:", error);
     return Response.json(
-      { 
+      {
         error: error.message || "Internal server error",
-        success: false 
+        success: false,
       },
       { status: 500 }
     );

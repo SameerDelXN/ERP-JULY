@@ -28,7 +28,7 @@ export const adminSidebarItems = [
   { id: "courses", label: "CRM Management", icon: BookImage },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
    { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
-  // { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
+  { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
   // { id: "staff-directory", label: "Staff Directory", icon: Users },
   // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
   // { id: "reports&analytics", label: "Reports & Analytics (basic)", icon: TrendingUp },
