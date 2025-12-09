@@ -9,6 +9,9 @@ export default function FeeStructurePage() {
     departmentName: "",
     year: "",
     caste: "",
+    category: "",
+    yearWiseFeeStructure: "",
+    scholarshipParticular: "",
     fees: [],
     totalFees: 0,
   });
@@ -32,6 +35,31 @@ export default function FeeStructurePage() {
     { id: "sc", name: "SC" },
     { id: "st", name: "ST" },
     { id: "ews", name: "EWS" },
+  ]);
+
+  const [categoryList] = useState([
+    { id: "regular", name: "Regular" },
+    { id: "management", name: "Management Quota" },
+    { id: "nri", name: "NRI Quota" },
+    { id: "sports", name: "Sports Quota" },
+    { id: "defense", name: "Defense Quota" },
+  ]);
+
+  const [yearWiseFeeStructureList] = useState([
+    { id: "annual", name: "Annual" },
+    { id: "semester", name: "Semester" },
+    { id: "quarterly", name: "Quarterly" },
+    { id: "monthly", name: "Monthly" },
+  ]);
+
+  const [scholarshipList] = useState([
+    { id: "none", name: "No Scholarship" },
+    { id: "merit", name: "Merit-based Scholarship" },
+    { id: "need", name: "Need-based Scholarship" },
+    { id: "government", name: "Government Scholarship" },
+    { id: "institutional", name: "Institutional Scholarship" },
+    { id: "sports", name: "Sports Scholarship" },
+    { id: "minority", name: "Minority Scholarship" },
   ]);
 
   // Fetch existing fee structures
@@ -189,6 +217,9 @@ const addFeeItem = () => {
           departmentName: "",
           year: "",
           caste: "",
+          category: "",
+          yearWiseFeeStructure: "",
+          scholarshipParticular: "",
           fees: [],
           totalFees: 0,
         });
@@ -332,6 +363,63 @@ const addFeeItem = () => {
                 {casteList.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category
+              </label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="">Select Category</option>
+                {categoryList.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Year Wise Fee Structure
+              </label>
+              <select
+                name="yearWiseFeeStructure"
+                value={formData.yearWiseFeeStructure}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="">Select Fee Structure Type</option>
+                {yearWiseFeeStructureList.map((y) => (
+                  <option key={y.id} value={y.id}>
+                    {y.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Scholarship Particular
+              </label>
+              <select
+                name="scholarshipParticular"
+                value={formData.scholarshipParticular}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="">Select Scholarship Type</option>
+                {scholarshipList.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
                   </option>
                 ))}
               </select>
