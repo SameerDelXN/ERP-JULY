@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import StudentAttendance from '@/models/studentAttendance';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const {

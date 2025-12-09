@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 
 import Staff from '@/models/staff';
 import { Salary } from '@/models/payroll';
@@ -8,7 +8,7 @@ import Leave from '@/models/leave';
 import StaffInfo from '@/models/staffinfo';
 
 export async function POST() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const staffList = await Staff.find();

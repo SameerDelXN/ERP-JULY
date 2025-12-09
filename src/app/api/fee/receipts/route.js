@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import { FeeReceipt } from '@/models/feeReceipt';
 import  Student  from '@/models/student';
 import  {FeeStructure}  from '@/models/feeStructure';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
 
   const { studentId, paymentMode, remarks } = await req.json();
 

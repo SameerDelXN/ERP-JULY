@@ -1,13 +1,13 @@
 // /app/api/students/[id]/fee/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import  Student  from '@/models/student';
 import { FeeStructure } from '@/models/feeStructure';
 
 export async function GET(_, context ) {
   const studentId = context.params.id;
   console.log('➡️ Student ID from URL:', studentId);
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const student = await Student.findById(studentId);
@@ -52,7 +52,7 @@ export async function GET(_, context ) {
 
 // PUT update student
 export async function PUT(req, { params }) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const body = await req.json();
     const student = await Student.findByIdAndUpdate(params.id, body, { new: true });
@@ -65,7 +65,7 @@ export async function PUT(req, { params }) {
 
 // DELETE student
 export async function DELETE(req, { params }) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const student = await Student.findByIdAndDelete(params.id);
     if (!student) return NextResponse.json({ error: 'Not found' }, { status: 404 });

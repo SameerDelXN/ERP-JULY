@@ -1,5 +1,5 @@
 import { renderToStream } from '@react-pdf/renderer';
-import dbConnect from '@/lib/mongoose';
+import {connectToDatabase} from "../../../../../lib/mongodb"
 import StudentAttendance from '@/models/studentAttendance';
 import Student from '@/models/student';
 import StudentAttendancePDF from '@/components/studentAttendancePDF';
@@ -9,7 +9,7 @@ export async function GET(req, context ) {
   const studentId = params.studentId;
 
 
-  await dbConnect();
+  await connectToDatabase();
   
 
   const student = await Student.findOne({ studentId });

@@ -3,14 +3,11 @@ import mongoose from "mongoose";
 import academicSchema from "@/app/models/academicSchema";
 import teacherSchema from "@/app/models/teacherSchema";
 
-async function connectDB() {
-  if (mongoose.connections[0].readyState) return;
-  await mongoose.connect(process.env.MONGODB_URI);
-}
+import { connectToDatabase } from "@/lib/mongoose";
 
 // export async function PUT(request, { params }) {
 //   try {
-//     await connectDB();
+//     await connectToDatabase();
 //     const { id } = params;
 
 //     if (!id) {
@@ -150,7 +147,7 @@ async function connectDB() {
 
 export async function PUT(request, { params }) {
   try {
-    await connectDB();
+    await connectToDatabase();
     const { id } = params;
     console.log(id);
 
@@ -292,7 +289,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    await connectDB();
+    await connectToDatabase();
 
     // Get ID from both params and query for flexibility
     const { id } = params;

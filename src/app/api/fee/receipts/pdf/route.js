@@ -1,10 +1,10 @@
 import { generateFeeReceiptPDF } from '@/utils/generateFeeReceiptPdf';
 import { FeeReceipt } from '@/models/feeReceipt';
 import { Student } from '@/models/student';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 
 export async function GET(req) {
-  await connectDB();
+  await connectToDatabase();
 
   const { searchParams } = new URL(req.url);
   const receiptId = searchParams.get('receiptId');

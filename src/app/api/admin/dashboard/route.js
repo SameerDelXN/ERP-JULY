@@ -1,15 +1,15 @@
 // src/app/api/admin/dashboard/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 
 import Student from '@/models/student';
 //import Faculty from '@/models/faculty';
 import Course from '@/models/course';
 import studentAttendance from '@/models/studentAttendance';
-import FeeReceipt from '@/models/feeReceipt';
+import { FeeReceipt } from '@/models/feeReceipt';
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     // === STATS OVERVIEW ===

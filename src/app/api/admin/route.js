@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose'; // adjust based on your project
+import { connectToDatabase } from '@/lib/mongoose';// adjust based on your project
 import Admin from '@/models/admin'; // adjust path if needed
 
 export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
     const admins = await Admin.find();
     return NextResponse.json(admins);
   } catch (error) {
@@ -15,7 +15,7 @@ export async function GET() {
 // POST new admin
 export async function POST(req) {
   try {
-    await connectDB();
+    await connectToDatabase();
     const body = await req.json();
 
     const newAdmin = new Admin(body);

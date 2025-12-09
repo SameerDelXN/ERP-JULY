@@ -1,14 +1,15 @@
 // src/app/api/admin/user-dashboard/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 
 import Student from '@/models/student';
 import Faculty from '@/models/faculty';
 import HR from '@/models/hr';
 import Admin from '@/models/admin';
+import { connect } from 'mongoose';
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     // Count Users by Role

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import Scholarship from '@/models/scholarship';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   const body = await req.json();
 
   try {
@@ -15,7 +15,7 @@ export async function POST(req) {
 }
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const scholarships = await Scholarship.find().populate('studentId');

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-//import connectDB from '@/lib/mongoose';
+//import { connectToDatabase } from '@/lib/mongoose';
 import { connectToDatabase } from '@/app/lib/mongodb';
 //import Attendance from '@/models/attendance';
 import attendanceSchema from '@/models/attendanceSchema';

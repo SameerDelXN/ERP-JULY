@@ -1,6 +1,6 @@
 // /app/api/hr/route.js
 import { NextResponse } from 'next/server';
-//import connectDB from '@/lib/mongoose';
+//import { connectToDatabase } from '@/lib/mongoose';
 //import HR from '@/models/hr'; 
 import { connectToDatabase } from '@/app/lib/mongodb';
 import Staff from '@/models/staff';

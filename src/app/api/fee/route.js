@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import FeeHead from '@/models/feeHead';
+import { connect } from 'mongoose';
 
 // GET: List all fee heads
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const feeHeads = await FeeHead.find();
@@ -16,7 +17,7 @@ export async function GET() {
 
 // POST: Create new fee head
 export async function POST(request) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const { name, description } = await request.json();

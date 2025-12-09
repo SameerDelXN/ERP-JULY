@@ -65,48 +65,52 @@ export async function POST(req) {
     await connectToDatabase();
 
     const body = await req.json();
-    const { firstName, middleName, lastName, phone, email, programType, course, source, notes } = body
-    console.log("prooooooooooo = ", body)
-    const enquiry = new enquirySchema({
+    const {
+      firstName,
+      middleName,
+      lastName,
+      phone,
+      email,
+      programType,
+      course,
+      source,
+      notes,
+      counsellorId   // optional (but must come from body)
+    } = body;
+
+    // Basic validation
+    if (!firstName || !lastName || !phone) {
+      return NextResponse.json(
+        { message: "First name, last name, and phone are required." },
+        { status: 400 }
+      );
+    }
+
+    // Create enquiry correctly
+    const newEnquiry = new enquirySchema({
       first: firstName,
       middle: middleName,
       last: lastName,
       phone,
       email,
-      programType: programType,
+      programType,
       courseInterested: course,
       source,
       notes,
-      counsellorId, // optional
-    } = body);
-
-    // Basic validation (you can enhance this)
-    if (!firstName || !lastName || !phone) {
-      return NextResponse.json(
-        { message: 'First name, last name, and phone are required.' },
-        { status: 400 }
-      );
-    }
-
-    console.log(enquiry);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Enquiry submitted successfully'
-    }, {
-      status: 201
+      counsellorId: counsellorId || null
     });
 
     await newEnquiry.save();
 
     return NextResponse.json(
-      { message: 'Enquiry created successfully', enquiry: newEnquiry },
+      { success: true, message: "Enquiry submitted successfully", enquiry: newEnquiry },
       { status: 201 }
     );
+
   } catch (error) {
-    console.error('Error creating enquiry:', error);
+    console.error("Error creating enquiry:", error);
     return NextResponse.json(
-      { message: 'Server error', error: error.message },
+      { message: "Server error", error: error.message },
       { status: 500 }
     );
   }

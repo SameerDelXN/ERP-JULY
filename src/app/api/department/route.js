@@ -6,14 +6,14 @@
 // import academicSchema from "../../models/academicSchema";
 // import teacherSchema from "../../models/teacherSchema";
 
-// async function connectDB() {
+// async function connectToDatabase() {
 //   if (mongoose.connections[0].readyState) return;
 //   await mongoose.connect(process.env.MONGODB_URI);
 // }
 
 // export async function POST(request) {
 //   try {
-//     await connectDB();
+//     await connectToDatabase();
 
 //     const { departmentName, hodId } = await request.json();
 
@@ -134,7 +134,7 @@
 
 // export async function GET() {
 //   try {
-//     await connectDB();
+//     await connectToDatabase();
 
 //     // Fetch all departments
 //     const departments = await academicSchema.find({});
@@ -189,15 +189,11 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import academicSchema from "../../models/academicSchema";
 import teacherSchema from "../../models/teacherSchema";
-
-async function connectDB() {
-  if (mongoose.connections[0].readyState) return;
-  await mongoose.connect(process.env.MONGODB_URI);
-}
+import { connectToDatabase } from "@/lib/mongoose";
 
 export async function POST(request) {
   try {
-    await connectDB();
+    await connectToDatabase();
 
     const { departmentName, programType, hodId, description } =
       await request.json();
@@ -314,7 +310,7 @@ export async function POST(request) {
 
 export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
 
     // First, fix any HODs with null departments
     const hodsWithNullDepartment = await teacherSchema.find({

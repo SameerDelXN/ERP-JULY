@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import User from '@/models/user';
 
 export async function POST(request) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const { email, password } = await request.json();

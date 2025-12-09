@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-//import connectDB from '@/lib/mongoose';
+//import { connectToDatabase } from '@/lib/mongoose';
 import { connectToDatabase } from '@/app/lib/mongodb';
 import Leave from '@/models/leave';
 import Staff from '@/models/staff';
@@ -50,7 +50,7 @@ export async function POST(req) {
 // Get all leave requests (GET)
 /*  export async function GET() {
   try {
-    await connectDB();
+    await connectToDatabase();
     const leaves = await Leave.find();
     return Response.json({ success: true, data: leaves });
   } catch (error) {

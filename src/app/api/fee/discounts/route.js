@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import Discount from '@/models/discount';
+import { connect } from 'mongoose';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   const body = await req.json();
 
   try {
@@ -15,7 +16,7 @@ export async function POST(req) {
 }
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const discounts = await Discount.find().populate('studentId');

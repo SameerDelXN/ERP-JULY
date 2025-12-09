@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import SystemSetting from '@/models/systemSetting';
 
 // GET: Fetch system settings
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     let settings = await SystemSetting.findOne();
@@ -25,7 +25,7 @@ export async function GET() {
 
 // PUT: Update system settings
 export async function PUT(request) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const updates = await request.json();

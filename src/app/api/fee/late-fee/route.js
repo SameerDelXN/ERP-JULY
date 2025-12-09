@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import LateFeeRule from '@/models/lateFeeRule';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   const body = await req.json();
 
   try {
@@ -15,7 +15,7 @@ export async function POST(req) {
 }
 
 export async function GET() {
-  await connectDB();
+  await connectToDatabase();
   try {
     const rules = await LateFeeRule.find().sort({ daysLate: 1 });
     return NextResponse.json({ success: true, data: rules });

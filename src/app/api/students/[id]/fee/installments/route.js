@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import Student from '@/models/student';
 import {FeeStructure} from '@/models/feeStructure';
 import InstallmentPlan from '@/models/installmentPlan';
@@ -8,7 +8,7 @@ import InstallmentPlan from '@/models/installmentPlan';
 export async function POST(req, context) {
   console.log("🚀 POST /api/students/[id]/fee/installments - Start");
 
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const { id: studentId } = context.params; // ✅ No need to await context.params
@@ -92,7 +92,7 @@ export async function POST(req, context) {
 
 /*
 export async function GET(_, { params }) {
-  await connectDB();
+  await connectToDatabase();
   const studentId = params.id;
   console.log("📥 GET installments for studentId:", studentId);
 
@@ -131,7 +131,7 @@ export async function GET(_, { params }) {
 
 
 export async function GET(request, { params }) {
-  await connectDB();
+  await connectToDatabase();
   const inputId = params.id || params.studentId; // Handle both parameter names
   console.log("📥 GET installments for student identifier:", inputId);
 

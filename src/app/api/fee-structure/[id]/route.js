@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
-import FeeStructure from '@/models/feeStructure';
+import { connectToDatabase } from '@/lib/mongoose';
+import { FeeStructure } from '@/models/feeStructure';
 
 export async function PATCH(request, { params }) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const { className, structure } = await request.json();
 
@@ -22,7 +22,7 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const deleted = await FeeStructure.findByIdAndDelete(params.id);
     if (!deleted) {

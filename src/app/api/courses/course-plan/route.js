@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
-import CoursePlan from "@/app/models/coursePlanSchema";
+import CoursePlan from "@/app/models/coursePlanSchema"
 
 // export async function GET(request, { params }) {
 //   await connectToDatabase();

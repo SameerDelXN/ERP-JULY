@@ -1,12 +1,12 @@
 // /api/fee-structure/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import { FeeStructure } from '@/models/feeStructure';
 
 
 // GET - fetch all or by filters
 export async function GET(req) {
-  await connectDB();
+  await connectToDatabase();
 
   const { searchParams } = new URL(req.url);
   const category = searchParams.get('category');
@@ -32,7 +32,7 @@ export async function GET(req) {
 
 // POST a new fee structure
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   try {
     const body = await req.json();
     const { course = 'B.E.', category, class: cls, department, fee } = body;
@@ -76,7 +76,7 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
-  await connectDB();
+  await connectToDatabase();
 
   const { searchParams } = new URL(req.url);
   const deleteAll = searchParams.get('all');

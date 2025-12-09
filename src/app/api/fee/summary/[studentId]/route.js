@@ -1,17 +1,17 @@
 // /api/fee/summary/[studentId]/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import  Student  from '@/models/student';
 import { FeeStructure } from '@/models/feeStructure'; // your model may be named differently
 import mongoose from 'mongoose';
 
 //export async function GET(req, context) {
 //  const { studentId } = context.params;
-// await connectDB();
+// await connectToDatabase();
 
 export async function GET(req, context) {
   const identifier = context.params.studentId; // could be ObjectId or staffId string
-  await connectDB();
+  await connectToDatabase();
 
   try {
     // Step 1: Get student info

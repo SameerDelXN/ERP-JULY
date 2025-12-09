@@ -1,10 +1,10 @@
 // /app/api/auth/register/route.js
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import User from '@/models/user';
 
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
   const { name, email, password, role } = await req.json();
 
   if (!name || !email || !password || !role) {

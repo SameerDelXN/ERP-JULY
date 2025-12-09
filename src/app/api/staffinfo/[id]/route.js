@@ -1,10 +1,10 @@
 /*
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import StaffInfo from '@/models/staffinfo';
 
 export async function GET(request) {
-  await connectDB();
+  await connectToDatabase();
   
   try {
     const { searchParams } = new URL(request.url);
@@ -37,11 +37,11 @@ export async function POST(request) {
 
 
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
+import { connectToDatabase } from '@/lib/mongoose';
 import StaffInfo from '@/models/staffinfo';
 
 export async function GET(req, { params }) {
-  await connectDB();
+  await connectToDatabase();
 
   const { id: staffId } = params;
 
