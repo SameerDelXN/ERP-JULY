@@ -1,51 +1,55 @@
+// app/api/auth/reset-password/route.js
+
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import User from '@/app/models/userSchema';
 import Teacher from '@/app/models/teacherSchema';
-import { connectToDatabase } from '@/app/lib/mongodb';
-import { ObjectId } from 'mongodb';
-import bcrypt from 'bcryptjs';
-
 
 export async function PUT(request) {
   try {
-    const { token, newPassword ,userId} = await request.json();
+    const body = await request.json();
+    console.log('REQUEST BODY:', body);
 
-    console.log("token:", token);
-    console.log("Password",newPassword);
-    
-    
-    if (!token || !newPassword ) {
+    const { token, newPassword, userId, type } = body;
+
+    if (!token || !newPassword || !userId || !type) {
       return NextResponse.json(
-        { message: 'Invalid request - token and password (min 8 chars) required' },
+        { message: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { message: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword.length < 8) {
+      return NextResponse.json(
+        { message: 'Password must be at least 8 characters' },
         { status: 400 }
       );
     }
 
     await connectToDatabase();
 
-    // Hash the token to compare with stored token
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const Model = type === 'user' ? User : Teacher;
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    // Find user with valid token and not expired
-    const query = {
-      resetToken: hashedToken,
-      resetTokenExpiry: { $gt: Date.now() }
-    };
-    const userObjectId = new ObjectId(userId);
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
 
-    let user = await User.findOne({
-        _id : userObjectId
+    const user = await Model.findOne({
+      _id: userId,
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
     });
-    let userType = 'user';
-    
-    if (!user) {
-      user = await Teacher.findOne({
-        _id : userObjectId
-      });
-      userType = 'teacher';
-    }
 
     if (!user) {
       return NextResponse.json(
@@ -54,27 +58,20 @@ export async function PUT(request) {
       );
     }
 
-    // Update password and clear reset token
-    const updateData = {
-      password : hashedPassword, // Note: You should hash this password before saving in production
-      resetToken: undefined,
-      resetTokenExpiry: undefined,
-      updatedAt: new Date() // Adding an update timestamp
-    };
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
 
-    if (userType === 'user') {
-      await User.findByIdAndUpdate(user._id, updateData);
-    } else {
-      await Teacher.findByIdAndUpdate(user._id, updateData);
-    }
+    await user.save();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      message: 'Password updated successfully' 
+      message: 'Password updated successfully',
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('❌ RESET PASSWORD ERROR:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

@@ -478,14 +478,16 @@ export async function POST(request) {
     // Update user in appropriate collection
     if (userType === 'user') {
       await User.findByIdAndUpdate(user._id, {
-        resetToken: hashedToken,
-        resetTokenExpiry: new Date(resetTokenExpiry)
-      });
+  resetPasswordToken: hashedToken,
+  resetPasswordExpires: new Date(resetTokenExpiry)
+});
+
     } else {
-      await Teacher.findByIdAndUpdate(user._id, {
-        resetToken: hashedToken,
-        resetTokenExpiry: new Date(resetTokenExpiry)
-      });
+     await Teacher.findByIdAndUpdate(user._id, {
+  resetPasswordToken: hashedToken,
+  resetPasswordExpires: new Date(resetTokenExpiry)
+});
+
     }
 
     // Send email
