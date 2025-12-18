@@ -148,7 +148,7 @@ import { connectToDatabase } from "@/lib/mongoose";
 export async function PUT(request, { params }) {
   try {
     await connectToDatabase();
-    const { id } = params;
+    const { id } = await params;
     console.log(id);
 
     if (!id) {

@@ -1,6 +1,8 @@
 // database schema for teachers
 
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+
 
 const teacherSchema = new mongoose.Schema({
   fullName: {
@@ -17,10 +19,11 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  password: {
-    type: String,
-    //required: true,
-  },
+ password: {
+  type: String,
+  required: true,
+  minlength: 8
+},
 
   department: {
     type: String,
