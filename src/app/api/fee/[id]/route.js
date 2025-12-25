@@ -6,8 +6,8 @@ export async function PATCH(request, { params }) {
   await connectToDatabase();
   try {
     const { name, description, isActive } = await request.json();
-
-    const updated = await FeeHead.findByIdAndUpdate(params.id, {
+    const {id} = await params;
+    const updated = await FeeHead.findByIdAndUpdate(id, {
       name, description, isActive
     }, { new: true });
 
@@ -24,7 +24,8 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   await connectToDatabase();
   try {
-    const deleted = await FeeHead.findByIdAndDelete(params.id);
+    const {id} = await params;
+    const deleted = await FeeHead.findByIdAndDelete(id);
     if (!deleted) {
       return NextResponse.json({ success: false, error: 'Fee Head not found' }, { status: 404 });
     }

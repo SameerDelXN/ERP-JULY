@@ -158,7 +158,8 @@ import { NextResponse } from 'next/server';
 export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
-    const admissionId = params.id; // Get id directly from params
+    const {id} = await params;
+    const admissionId =id; // Get id directly from params
     const updateData = await req.json();
 
     if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {

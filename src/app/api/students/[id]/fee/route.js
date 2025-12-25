@@ -5,7 +5,8 @@ import  Student  from '@/models/student';
 import { FeeStructure } from '@/models/feeStructure';
 
 export async function GET(_, context ) {
-  const studentId = context.params.id;
+  const {id} = await params;
+  const studentId =id;
   console.log('➡️ Student ID from URL:', studentId);
   await connectToDatabase();
 
@@ -54,8 +55,9 @@ export async function GET(_, context ) {
 export async function PUT(req, { params }) {
   await connectToDatabase();
   try {
+    const {id}= await params;
     const body = await req.json();
-    const student = await Student.findByIdAndUpdate(params.id, body, { new: true });
+    const student = await Student.findByIdAndUpdate(id, body, { new: true });
     if (!student) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(student);
   } catch (error) {
@@ -67,7 +69,8 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   await connectToDatabase();
   try {
-    const student = await Student.findByIdAndDelete(params.id);
+    const {id} = await params;
+    const student = await Student.findByIdAndDelete(id);
     if (!student) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ message: 'Deleted successfully' });
   } catch (error) {

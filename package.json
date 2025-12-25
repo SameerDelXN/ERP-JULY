@@ -30,7 +30,7 @@
     "lucide-react": "^0.522.0",
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.0",
-    "next": "^16.0.8",
+    "next": "^15.4.10",
     "nodemailer": "^7.0.5",
     "path": "^0.12.7",
     "pdfkit": "^0.17.2",

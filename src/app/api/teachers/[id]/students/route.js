@@ -8,7 +8,8 @@ export async function GET(req, { params }) {
   await connectToDatabase()
 
   try {
-    const teacherId = params.id
+    const {id} = await params;
+    const teacherId = id
     const { searchParams } = new URL(req.url)
     const divisionFilter = searchParams.get("division")
     const yearFilter = searchParams.get("year")

@@ -6,8 +6,8 @@ export async function PATCH(request, { params }) {
   await connectToDatabase();
   try {
     const { className, structure } = await request.json();
-
-    const updated = await FeeStructure.findByIdAndUpdate(params.id, {
+    const {id} = await params;
+    const updated = await FeeStructure.findByIdAndUpdate(id, {
       className, structure
     }, { new: true });
 
@@ -24,7 +24,8 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   await connectToDatabase();
   try {
-    const deleted = await FeeStructure.findByIdAndDelete(params.id);
+    const {id} = await params;
+    const deleted = await FeeStructure.findByIdAndDelete(id);
     if (!deleted) {
       return NextResponse.json({ success: false, error: 'Structure not found' }, { status: 404 });
     }

@@ -10,7 +10,8 @@ import { NextResponse } from 'next/server';
 export async function GET(req, { params }) {
   try {
     await connectToDatabase();
-    const hodId = params.id;
+    const {id} = await params;
+    const hodId = id;
 
     // ✅ Find the HOD by ID
     const hod = await teacherSchema.findById(hodId);

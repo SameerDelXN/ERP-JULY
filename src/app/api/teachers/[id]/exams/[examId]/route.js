@@ -89,9 +89,9 @@ export async function POST(request) {
 export async function PUT(request, { params }) {
   try {
     await connectToDatabase();
-
-    const teacherId = params.id;
-    const examId = params.examId;
+    const {id} = await params;
+    const teacherId = id;
+    const {examId} = await params;
     const { resultPublished } = await request.json();
 
     console.log("PUT request - Teacher ID:", teacherId, "Exam ID:", examId, "resultPublished:", resultPublished);

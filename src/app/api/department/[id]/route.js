@@ -292,7 +292,7 @@ export async function DELETE(request, { params }) {
     await connectToDatabase();
 
     // Get ID from both params and query for flexibility
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const queryId = searchParams.get("id");
 

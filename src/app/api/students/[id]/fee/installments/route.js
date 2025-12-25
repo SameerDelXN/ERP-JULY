@@ -11,7 +11,7 @@ export async function POST(req, context) {
   await connectToDatabase();
 
   try {
-    const { id: studentId } = context.params; // ✅ No need to await context.params
+    const {id : studentId} = await params;
     console.log("📌 studentId:", studentId);
 
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
@@ -132,7 +132,8 @@ export async function GET(_, { params }) {
 
 export async function GET(request, { params }) {
   await connectToDatabase();
-  const inputId = params.id || params.studentId; // Handle both parameter names
+  const {id} = await params;
+  const inputId = id // Handle both parameter names
   console.log("📥 GET installments for student identifier:", inputId);
 
   try {
