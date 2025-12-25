@@ -76,4 +76,4 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     return NextResponse.json({ error: 'Delete failed', details: error.message }, { status: 400 });
   }
-}
+}//sample
