@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 const TechnicalInstituteHero = () => {
   return (
-    <section className="relative bg-gradient-to-br from-blue-900 to-blue-700 text-white overflow-hidden">
+    <section className="relative bg-gradient-to-br from-blue-900 to-blue-700 text-white overflow-hidden" name="home">
       {/* Background elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-32 h-32 bg-blue-400 rounded-full mix-blend-screen filter blur-3xl"></div>

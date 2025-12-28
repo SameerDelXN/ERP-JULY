@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import mongoose from 'mongoose';
 import { connectToDatabase } from '@/app/lib/mongodb';
-import User from '@/app/models/userSchema';
+import User from '@/models/user';
 import Teacher from '@/app/models/teacherSchema';
 
 
@@ -12,7 +12,7 @@ export async function POST(request) {
 
   try {
     const { email, password } = await request.json();
-
+    console.log(email,password)
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },

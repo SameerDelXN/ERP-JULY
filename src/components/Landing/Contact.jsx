@@ -3,7 +3,7 @@ import { MapPin, Phone, Mail, Clock, MessageSquare } from 'lucide-react';
 
 export default function ContactSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-white" name="contacts">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -26,8 +26,8 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Phone Support</h3>
-                    <p className="text-gray-600 mb-1">+91 98765 43210</p>
-                    <p className="text-gray-600">+91 98765 43211</p>
+                    <p className="text-gray-600 mb-1">+91 8605112331</p>
+                    <p className="text-gray-600">+91 8408080231</p>
                   </div>
                 </div>
               </div>
@@ -40,8 +40,8 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Email</h3>
-                    <p className="text-gray-600 mb-1">support@techerp.com</p>
-                    <p className="text-gray-600">sales@techerp.com</p>
+                    <p className="text-gray-600 mb-1">admin@techedutech.com</p>
+                    {/* <p className="text-gray-600">sales@techerp.com</p> */}
                   </div>
                 </div>
               </div>
@@ -68,9 +68,9 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Headquarters</h3>
-                    <p className="text-gray-600">Tech Tower, 5th Floor</p>
-                    <p className="text-gray-600">Bangalore - 560001</p>
-                    <p className="text-gray-600">Karnataka, India</p>
+                    <p className="text-gray-600">Office Number 101</p>
+                    <p className="text-gray-600">Nirman Ajinkatara</p>
+                    <p className="text-gray-600">adjecent of sinhagad science college vadgaon,Pune 411041</p>
                   </div>
                 </div>
               </div>
@@ -109,18 +109,22 @@ export default function ContactSection() {
           </div>
 
           {/* Map - Right Side */}
-          <div className="lg:w-1/2">
-            <div className="h-full rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
-              {/* Replace with actual map component */}
-              <div className="h-full flex items-center justify-center text-gray-400">
-                <div className="text-center p-8">
-                  <MapPin className="w-12 h-12 mx-auto mb-4" />
-                  <p>Interactive Map Would Appear Here</p>
-                  <p className="text-sm mt-2">(Google Maps or similar integration)</p>
-                </div>
-              </div>
-            </div>
-          </div>
+     {/* Map - Right Side */}
+<div className="lg:w-1/2">
+  <div className="h-full rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+    <iframe
+      src="https://www.google.com/maps?q=Office%20Number%20101%20Nirman%20Ajinkatara%20Vadgaon%20Pune%20411041&output=embed"
+      width="100%"
+      height="100%"
+      style={{ border: 0 }}
+      allowFullScreen
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+      className="min-h-[450px]"
+    ></iframe>
+  </div>
+</div>
+
         </div>
       </div>
     </section>

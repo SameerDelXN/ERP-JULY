@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+
+/* Desktop underline */
+.nav-underline {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: #2563eb;
+  border-radius: 9999px;
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.active-link {
+  color: #2563eb;
+}
+
+.active-link .nav-underline {
+  width: 80%;
+}
+
+/* Mobile active */
+.active-link-mobile {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
