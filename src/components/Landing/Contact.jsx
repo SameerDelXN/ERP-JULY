@@ -1,4 +1,5 @@
 'use client';
+
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 
 export default function ContactSection() {
@@ -112,8 +113,10 @@ export default function ContactSection() {
             width="100%" height="320" className="w-full"
             allowFullScreen loading="lazy"
           ></iframe>
+
         </div>
       </div>
     </section>
   );
 }
+
