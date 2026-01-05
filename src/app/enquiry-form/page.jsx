@@ -430,8 +430,14 @@ export default function EnquiryForm() {
           <img
             src="/TechEdu-remove-bg.png"
             alt="TechEdu Logo"
-            className="mx-auto mb-4 h-48 w-auto"
+            className="
+    mx-auto mb-4 
+    h-20 sm:h-24 md:h-28 
+    w-auto 
+    object-contain
+  "
           />
+
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Institute Enquiry Form
           </h1>
@@ -475,9 +481,8 @@ export default function EnquiryForm() {
                       onChange={handleChange}
                       maxLength={20}
                       minLength={2}
-                      className={`w-full px-4 py-2.5 rounded-lg border ${
-                        errors.firstName ? "border-red-500" : "border-gray-300"
-                      } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-lg border ${errors.firstName ? "border-red-500" : "border-gray-300"
+                        } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
                       placeholder="Enter first name"
                     />
                     {errors.firstName && (
@@ -529,9 +534,8 @@ export default function EnquiryForm() {
                       onChange={handleChange}
                       maxLength={20}
                       minLength={2}
-                      className={`w-full px-4 py-2.5 rounded-lg border ${
-                        errors.lastName ? "border-red-500" : "border-gray-300"
-                      } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
+                      className={`w-full px-4 py-2.5 rounded-lg border ${errors.lastName ? "border-red-500" : "border-gray-300"
+                        } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
                       placeholder="Enter last name"
                     />
                     {errors.lastName && (
@@ -563,9 +567,8 @@ export default function EnquiryForm() {
                       onChange={handleChange}
                       maxLength={10}
                       minLength={10}
-                      className={`w-full pl-10 px-4 py-2.5 rounded-lg border ${
-                        errors.phone ? "border-red-500" : "border-gray-300"
-                      } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
+                      className={`w-full pl-10 px-4 py-2.5 rounded-lg border ${errors.phone ? "border-red-500" : "border-gray-300"
+                        } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
                       placeholder="Enter 10-digit phone number"
                     />
                     {errors.phone && (
@@ -621,9 +624,8 @@ export default function EnquiryForm() {
                       value={formData.email}
                       onChange={handleChange}
                       maxLength={45}
-                      className={`w-full pl-10 px-4 py-2.5 rounded-lg border ${
-                        errors.email ? "border-red-500" : "border-gray-300"
-                      } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
+                      className={`w-full pl-10 px-4 py-2.5 rounded-lg border ${errors.email ? "border-red-500" : "border-gray-300"
+                        } focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition`}
                       placeholder="Enter email address"
                     />
                     {errors.email && (
@@ -762,9 +764,8 @@ export default function EnquiryForm() {
                         onChange={handleChange}
                         required
                         disabled={!selectedProgramType}
-                        className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none ${
-                          !selectedProgramType ? "bg-gray-100" : ""
-                        }`}
+                        className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none ${!selectedProgramType ? "bg-gray-100" : ""
+                          }`}
                       >
                         <option value="">
                           {selectedProgramType
@@ -847,11 +848,10 @@ export default function EnquiryForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || !mobileVerified || !emailVerified}
-                className={`px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg flex items-center ${
-                  isSubmitting || !mobileVerified || !emailVerified
+                className={`px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg flex items-center ${isSubmitting || !mobileVerified || !emailVerified
                     ? "opacity-70 cursor-not-allowed"
                     : ""
-                }`}
+                  }`}
               >
                 {isSubmitting ? "Submitting..." : "Submit Enquiry"}
                 {!isSubmitting && (
@@ -876,86 +876,84 @@ export default function EnquiryForm() {
               showEmailSection ||
               !mobileVerified ||
               !emailVerified) && (
-              <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <h3 className="font-medium text-yellow-800 mb-2">
-                  Verification Required
-                </h3>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  <li
-                    className={`flex items-center ${
-                      mobileVerified ? "text-green-600" : ""
-                    }`}
-                  >
-                    {mobileVerified ? (
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    )}
-                    Mobile Number {mobileVerified ? "Verified" : "Not Verified"}
-                  </li>
-                  <li
-                    className={`flex items-center ${
-                      emailVerified ? "text-green-600" : ""
-                    }`}
-                  >
-                    {emailVerified ? (
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    )}
-                    Email Address {emailVerified ? "Verified" : "Not Verified"}
-                  </li>
-                </ul>
-              </div>
-            )}
+                <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <h3 className="font-medium text-yellow-800 mb-2">
+                    Verification Required
+                  </h3>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li
+                      className={`flex items-center ${mobileVerified ? "text-green-600" : ""
+                        }`}
+                    >
+                      {mobileVerified ? (
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      )}
+                      Mobile Number {mobileVerified ? "Verified" : "Not Verified"}
+                    </li>
+                    <li
+                      className={`flex items-center ${emailVerified ? "text-green-600" : ""
+                        }`}
+                    >
+                      {emailVerified ? (
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      )}
+                      Email Address {emailVerified ? "Verified" : "Not Verified"}
+                    </li>
+                  </ul>
+                </div>
+              )}
           </form>
         </div>
       </div>
