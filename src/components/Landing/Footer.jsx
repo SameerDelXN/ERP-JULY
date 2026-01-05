@@ -21,9 +21,7 @@ export default function Footer() {
                 />
               </Link1>
 
-              {/* <span className="text-xl font-semibold text-white whitespace-nowrap leading-none">
-                TechEdu Solutions
-              </span> */}
+             
             </div>
 
             <p className="text-sm mb-4">
