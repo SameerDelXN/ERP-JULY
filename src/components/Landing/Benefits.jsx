@@ -52,16 +52,18 @@ const benefits = [
     title: "Quality Assurance",
     description: "Built-in checks for academic excellence",
   },
+
 ];
 
 export default function BenefitsSection() {
   return (
+
     <section className="py-20 bg-white" name="benefits">
       <div className="container mx-auto px-6 md:px-16">
 
         {/* Top Pill Text */}
         <div className="flex justify-center mb-6">
-          <span className="px-6 py-2 bg-gray-100 rounded-full text-gray-700 font-medium text-sm">
+          <span className="px-6 py-2 bg-blue-50/70 hover:bg-blue-100/70 rounded-full text-sm font-medium text-gray-700 shadow-sm border border-transparent hover:border-blue-200">
             Why Choose TechEdu ERP
           </span>
         </div>
@@ -94,10 +96,10 @@ export default function BenefitsSection() {
               <p className="text-gray-600 text-sm leading-relaxed">
                 {item.description}
               </p>
+
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

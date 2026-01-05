@@ -1,5 +1,6 @@
 'use client';
 
+
 import { 
   Globe, 
   Fingerprint, 
@@ -31,10 +32,12 @@ const features = [
   { icon: <BriefcaseBusiness className="w-6 h-6 text-blue-600" />, title: "Placement Cell", description: "Company relations & student placements" },
   { icon: <FileCheck className="w-6 h-6 text-blue-600" />, title: "Accreditation Reports", description: "Ready-to-submit AICTE/NAAC documents" },
   { icon: <FileCheck className="w-6 h-6 text-blue-600" />, title: "Custom Modules", description: "Tailored solutions for unique needs" },
+
 ];
 
 export default function FeaturesSection() {
   return (
+
     <section className="py-20 bg-white" id="features">
       <div className="container mx-auto px-6 md:px-16">
 
@@ -43,7 +46,7 @@ export default function FeaturesSection() {
 
           {/* Pill label */}
           <div className="flex justify-center mb-6">
-            <span className="px-6 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-700 shadow-sm">
+            <span className="px-6 py-2 bg-blue-50/70 hover:bg-blue-100/70 rounded-full text-sm font-medium text-gray-700 shadow-sm border border-transparent hover:border-blue-200">
               Powerful Features
             </span>
           </div>

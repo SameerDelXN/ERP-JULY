@@ -28,7 +28,7 @@ export default function ModulesSection(){
 
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
-            <span className="px-6 py-2 bg-white border shadow-sm rounded-full text-sm font-medium text-gray-700">
+            <span className="px-6 py-2 bg-blue-50/70 hover:bg-blue-100/70 rounded-full text-sm font-medium text-gray-700 shadow-sm border border-transparent hover:border-blue-200">
               12+ Integrated Modules
             </span>
           </div>
@@ -54,11 +54,14 @@ export default function ModulesSection(){
         </div>
 
         <div className="mt-12 text-center">
+
           <button className="px-7 py-3.5 text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md hover:shadow-lg transition">
+
             View All Module Features
           </button>
         </div>
       </div>
     </section>
+
   )
 }

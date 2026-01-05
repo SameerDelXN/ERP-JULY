@@ -9,16 +9,21 @@ export default function Footer() {
     <footer className="bg-gray-900 text-gray-300 pt-16 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          
+
           {/* About Section */}
           <div className="lg:col-span-2">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-teal-400 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">TE</span>
-              </div>
-              <span className="ml-3 text-xl font-semibold text-white">
-                TechEdu ERP System
-              </span>
+            <div className="flex items-center gap-3 mb-4">
+              <Link1 href="/" className="flex items-center cursor-pointer">
+                <img
+                  src="/TechEdu-remove-bg.png"
+                  alt="TechEdu Logo"
+                  className="h-14 w-auto hover:opacity-80 transition-opacity"
+                />
+              </Link1>
+
+              {/* <span className="text-xl font-semibold text-white whitespace-nowrap leading-none">
+                TechEdu Solutions
+              </span> */}
             </div>
 
             <p className="text-sm mb-4">
@@ -29,20 +34,50 @@ export default function Footer() {
 
             {/* Social Icons */}
             <div className="flex space-x-4">
-              {[Facebook, Twitter, Linkedin, Instagram, Youtube].map(
-                (Icon, index) => (
-                  <a
-                    key={index}
-                    href="/"
-                    className="text-gray-400 hover:text-white transition-colors cursor-pointer"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </a>
-                )
-              )}
+              <a
+                href="https://www.facebook.com/profile.php?id=61581004800394"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Twitter className="w-5 h-5" />
+              </a>
+
+              <a
+                href="https://www.linkedin.com/company/techedusolution"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+
+              <a
+                href="https://www.instagram.com/techedu.solution?igsh=YWNJN2R3YjJtMmJh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Youtube className="w-5 h-5" />
+              </a>
             </div>
           </div>
 
+          {/* Quick Links */}
           <div>
             <h3 className="text-white font-semibold text-lg mb-4">
               Quick Links
@@ -58,8 +93,8 @@ export default function Footer() {
                 <li key={index}>
                   <Link
                     to={link.to}
-                    smooth={true}
-                    spy={true}
+                    smooth
+                    spy
                     offset={-80}
                     duration={500}
                     className="text-sm hover:text-white transition-colors cursor-pointer"
@@ -80,7 +115,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal (NO NAVIGATION – all / ) */}
+          {/* Legal */}
           <div>
             <h3 className="text-white font-semibold text-lg mb-4">
               Legal
