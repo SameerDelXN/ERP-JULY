@@ -39,21 +39,11 @@ const Login = () => {
   const validatePassword = (password) =>
     /^(?=.*[a-z])(?=.*\d).{8,}$/.test(password);
 
-  useEffect(() => {
-    if (selectedRole === "student") {
-      setFormValid(email.trim() !== "" && password.trim() !== "");
-    } else {
-      setFormValid(
-        validateEmail(email) &&
-          validatePassword(password) &&
-          email &&
-          password
-      );
-    }
-  }, [email, password, selectedRole]);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log("Login button clicked, form submitting...");
     setLoading(true);
     setError("");
 
@@ -158,11 +148,10 @@ const Login = () => {
                   key={role}
                   type="button"
                   onClick={() => setSelectedRole(role)}
-                  className={`p-3 rounded-lg border-2 text-xs ${
-                    selectedRole === role
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-200 text-gray-600"
-                  }`}
+                  className={`p-3 rounded-lg border-2 text-xs ${selectedRole === role
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-200 text-gray-600"
+                    }`}
                 >
                   <Icon className="w-4 h-4 mx-auto mb-1" />
                   {label}
@@ -173,8 +162,8 @@ const Login = () => {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                type="email"
-                placeholder="Enter your email"
+                type="text"
+                placeholder="Enter your email or username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -203,8 +192,7 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={!formValid}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg flex items-center justify-center"
+              className="w-full py-2.5 rounded-lg flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700"
             >
               Sign In <ArrowRight className="ml-2 w-5 h-5" />
             </button>

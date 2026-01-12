@@ -67,6 +67,7 @@ const userSchema = new mongoose.Schema(
     staffId: {
       type: String,
       unique: true,
+      sparse: true, // Allows multiple documents to have null/undefined staffId
     },
     designation: String,
     department: String,

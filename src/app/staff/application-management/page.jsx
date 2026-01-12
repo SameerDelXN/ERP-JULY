@@ -932,15 +932,17 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
   const [filteredCastes, setFilteredCastes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentFeeStructure, setCurrentFeeStructure] = useState(null);
 
   // Watch fields to trigger fee structure matching and caste filtering
   const selectedProgramType = watch("programType");
   const selectedBranch = watch("branch");
   const selectedYear = watch("year");
   const selectedCaste = watch("casteAsPerLC");
+  const selectedFeesCategory = watch("feesCategory");
 
   // Destructure trigger from useForm
-  const { trigger } = useForm(); // Add this line to get the trigger function
+  const { trigger } = useForm(); 
 
   // Fetch courses, fee structures, and castes
   const fetchData = async () => {
@@ -1004,35 +1006,39 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
     ) {
       const matchingFeeStructures = feeStructures.filter(
         (fee) =>
-          fee.programType === selectedProgramType &&
-          fee.departmentName === selectedBranch &&
+          fee.programType?.toLowerCase() === selectedProgramType.toLowerCase() &&
+          fee.departmentName?.toLowerCase() === selectedBranch.toLowerCase() &&
           fee.year === selectedYear &&
-          fee.caste === selectedCaste.toLowerCase()
+          fee.caste?.toLowerCase() === selectedCaste.toLowerCase()
       );
+      
       if (matchingFeeStructures.length === 0) {
-        setValue("feesCategory", "");
+        if(watch("feesCategory") !== "") setValue("feesCategory", "");
         return;
       }
+      
       const scholarshipOptions = [
         ...new Set(
           matchingFeeStructures
             .map((fee) => fee.scholarshipParticular)
-            .filter((sp) => sp && sp !== "none")
         ),
       ];
-      if (scholarshipOptions.length === 1) {
-        setValue("feesCategory", scholarshipOptions[0]);
-      } else {
-        const currentFeesCategory = watch("feesCategory");
-        if (
+
+      // If only one option available, auto-select it? Maybe better to let user select.
+      // But if current selection is invalid, clear it.
+      const currentFeesCategory = watch("feesCategory");
+       if (
           currentFeesCategory &&
           !scholarshipOptions.includes(currentFeesCategory)
         ) {
           setValue("feesCategory", "");
+        } else if (scholarshipOptions.length === 1 && !currentFeesCategory) {
+           // Optional: Auto select if there's only 1 option and nothing is selected
+           // setValue("feesCategory", scholarshipOptions[0]);
         }
-      }
+      
     } else {
-      setValue("feesCategory", "");
+       if(watch("feesCategory") !== "") setValue("feesCategory", "");
     }
   }, [
     selectedProgramType,
@@ -1043,6 +1049,31 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
     setValue,
     watch,
   ]);
+
+  // Update current fee structure object for display when category changes
+  useEffect(() => {
+    if (
+        selectedProgramType &&
+        selectedBranch &&
+        selectedYear &&
+        selectedCaste &&
+        selectedFeesCategory &&
+        feeStructures.length > 0
+    ) {
+        const found = feeStructures.find(
+            (fee) =>
+            fee.programType?.toLowerCase() === selectedProgramType.toLowerCase() &&
+            fee.departmentName?.toLowerCase() === selectedBranch.toLowerCase() &&
+            fee.year === selectedYear &&
+            fee.caste?.toLowerCase() === selectedCaste.toLowerCase() &&
+            fee.scholarshipParticular === selectedFeesCategory
+        );
+        setCurrentFeeStructure(found || null);
+    } else {
+        setCurrentFeeStructure(null);
+    }
+  }, [selectedProgramType, selectedBranch, selectedYear, selectedCaste, selectedFeesCategory, feeStructures]);
+
 
   // Program type options
   const programTypeOptions = [
@@ -1080,26 +1111,49 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
   ];
 
   // Fees category options
-  const feesCategoryOptions = [
-    { value: "", label: "Select Fees Category" },
-    ...[
-      ...new Set(
-        feeStructures
-          .filter(
-            (fee) =>
-              fee.programType === selectedProgramType &&
-              fee.departmentName === selectedBranch &&
-              fee.year === selectedYear &&
-              fee.caste === selectedCaste?.toLowerCase()
-          )
-          .map((fee) => fee.scholarshipParticular)
-          .filter((sp) => sp && sp !== "none")
-      ),
-    ].map((sp) => ({
-      value: sp,
-      label: sp.charAt(0).toUpperCase() + sp.slice(1),
-    })),
-  ];
+  // Helper to get options safely with relaxed matching
+  const getFeeCategoryOptions = () => {
+      console.log("Debug Filtering:", {
+        selectedProgramType,
+        selectedBranch,
+        selectedYear,
+        selectedCaste,
+        feeStructuresCount: feeStructures.length
+      });
+
+      const matches = feeStructures.filter(
+            (fee) => {
+              const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+              const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+              const matchYear = fee.year === selectedYear; 
+              const matchCaste = fee.caste?.trim().toLowerCase() === selectedCaste?.trim().toLowerCase();
+              
+              if (!matchProgram || matchBranch || matchYear || matchCaste) {
+                 // console.log("Mismatch debug:", { fee });
+              }
+              return matchProgram && matchBranch && matchYear && matchCaste;
+            }
+          );
+      
+      console.log("Matches details:", matches);
+
+      const uniqueCategories = [
+          ...new Set(
+            matches
+              .map((fee) => fee.scholarshipParticular)
+          ),
+        ];
+        
+      return [
+        { value: "", label: "Select Fees Category" },
+        ...uniqueCategories.map((sp) => ({
+          value: sp,
+          label: (!sp || sp === "none") ? "Active Fee Structure" : sp.charAt(0).toUpperCase() + sp.slice(1),
+        })),
+      ];
+  };
+
+  const feesCategoryOptions = getFeeCategoryOptions();
 
   // Caste options for select
   const casteOptions = [
@@ -1113,6 +1167,14 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
   if (error) {
     return <div>Error: {error}</div>;
   }
+
+  // Calculate total fee for display
+  const getTotalFee = (structure) => {
+      if(!structure) return 0;
+      const studentTotal = structure.feesFromStudent?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+      const welfareTotal = structure.feesFromSocialWelfare?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+      return studentTotal + welfareTotal;
+  };
 
   return (
     <div className="space-y-4">
@@ -1180,8 +1242,8 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
           type="select"
           options={[
             { value: "", label: "Select Seat Type" },
-            { value: "GOV", label: "Government" },
-            { value: "MIN", label: "Minority" },
+            { value: "Government", label: "Government" },
+            { value: "Minority", label: "Minority" },
             { value: "Management", label: "Management" },
             { value: "TFWS", label: "TFWS" },
           ]}
@@ -1238,6 +1300,19 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
         />
         <FormField
           control={control}
+          name="casteAsPerLC"
+          label="Caste as per LC"
+          type="select"
+          options={casteOptions}
+          error={errors.casteAsPerLC}
+          required
+          onChange={(e) => {
+            setValue("casteAsPerLC", e.target.value);
+            // trigger("feesCategory"); 
+          }}
+        />
+         <FormField
+          control={control}
           name="feesCategory"
           label="Fees Category"
           type="select"
@@ -1265,20 +1340,78 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
             message: "Only alphabets are allowed",
           }}
         />
-        <FormField
-          control={control}
-          name="casteAsPerLC"
-          label="Caste as per LC"
-          type="select"
-          options={casteOptions}
-          error={errors.casteAsPerLC}
-          required
-          onChange={(e) => {
-            setValue("casteAsPerLC", e.target.value);
-            trigger("feesCategory"); // Now trigger is defined
-          }}
-        />
       </div>
+      
+      {/* Fee Structure Display Table */}
+      {currentFeeStructure && (
+        <div className="mt-6 border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gray-50 border-b px-6 py-4">
+                <h4 className="font-semibold text-gray-800">Fee Structure Details</h4>
+                <p className="text-xs text-gray-500 mt-1">
+                    Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year}
+                </p>
+            </div>
+            
+            <div className="p-4">
+                 {/* Student Fees */}
+                 {currentFeeStructure.feesFromStudent?.length > 0 && (
+                     <div className="mb-4">
+                         <h5 className="text-sm font-semibold text-gray-600 mb-2">Fees from Student</h5>
+                         <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-2 text-left text-gray-600">Component</th>
+                                        <th className="px-4 py-2 text-right text-gray-600">Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {currentFeeStructure.feesFromStudent.map((item, idx) => (
+                                        <tr key={`student-${idx}`}>
+                                            <td className="px-4 py-2">{item.componentName}</td>
+                                            <td className="px-4 py-2 text-right">{item.amount}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                         </div>
+                     </div>
+                 )}
+
+                 {/* Social Welfare Fees */}
+                 {currentFeeStructure.feesFromSocialWelfare?.length > 0 && (
+                     <div className="mb-4">
+                         <h5 className="text-sm font-semibold text-gray-600 mb-2">Fees from Social Welfare</h5>
+                         <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-2 text-left text-gray-600">Component</th>
+                                        <th className="px-4 py-2 text-right text-gray-600">Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {currentFeeStructure.feesFromSocialWelfare.map((item, idx) => (
+                                        <tr key={`welfare-${idx}`}>
+                                            <td className="px-4 py-2">{item.componentName}</td>
+                                            <td className="px-4 py-2 text-right">{item.amount}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                         </div>
+                     </div>
+                 )}
+                 
+                 <div className="flex justify-end pt-4 border-t mt-2">
+                     <p className="text-lg font-bold text-gray-900">
+                         Total Fee: ₹{getTotalFee(currentFeeStructure)}
+                     </p>
+                 </div>
+            </div>
+        </div>
+      )}
+
     </div>
   );
 };

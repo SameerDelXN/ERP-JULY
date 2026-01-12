@@ -116,9 +116,8 @@ function ExamModal({
             <select
               value={examData.type}
               onChange={(e) => handleInputChange("type", e.target.value)}
-              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.type ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.type ? "border-red-500" : "border-gray-300"
+                }`}
               disabled={loading}
             >
               <option value="">Select exam type</option>
@@ -144,9 +143,8 @@ function ExamModal({
               type="text"
               value={examData.subject}
               onChange={(e) => handleInputChange("subject", e.target.value)}
-              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.subject ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.subject ? "border-red-500" : "border-gray-300"
+                }`}
               placeholder="Enter subject name"
               disabled={loading}
               readOnly={selectedSubject?.name}
@@ -168,9 +166,8 @@ function ExamModal({
               type="number"
               value={examData.totalMarks}
               onChange={(e) => handleInputChange("totalMarks", e.target.value)}
-              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.totalMarks ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.totalMarks ? "border-red-500" : "border-gray-300"
+                }`}
               placeholder="Enter total marks"
               min="1"
               disabled={loading}
@@ -192,9 +189,8 @@ function ExamModal({
               type="date"
               value={examData.date}
               onChange={(e) => handleInputChange("date", e.target.value)}
-              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.date ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.date ? "border-red-500" : "border-gray-300"
+                }`}
               disabled={loading}
             />
             {errors.date && (
@@ -214,9 +210,8 @@ function ExamModal({
               type="number"
               value={examData.duration}
               onChange={(e) => handleInputChange("duration", e.target.value)}
-              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.duration ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.duration ? "border-red-500" : "border-gray-300"
+                }`}
               placeholder="Enter duration in minutes"
               min="1"
               disabled={loading}
@@ -564,19 +559,20 @@ export default function ExamManagement() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          `Failed to add question: ${response.status} ${
-            errorData.message || "Unknown error"
+          `Failed to add question: ${response.status} ${errorData.message || "Unknown error"
           }`
         );
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
+      const data = responseData.question;
+
       return {
         id: data._id || data.id,
         examId: selectedExam.id,
         question: data.question,
         options: data.options || [],
-        answer: data.correctOption || 0,
+        answer: data.options.findIndex((opt) => opt.isCorrect === true) !== -1 ? data.options.findIndex((opt) => opt.isCorrect === true) : 0,
         marks: data.marks,
       };
     } catch (error) {
@@ -744,11 +740,10 @@ export default function ExamManagement() {
             {filteredSubjects.map((subject) => (
               <div
                 key={subject.id}
-                className={`rounded-lg transition-all overflow-hidden ${
-                  selectedSubject?.id === subject.id
+                className={`rounded-lg transition-all overflow-hidden ${selectedSubject?.id === subject.id
                     ? "ring-2 ring-blue-500 shadow-md"
                     : "bg-white border border-gray-200 hover:shadow-md"
-                }`}
+                  }`}
               >
                 <div
                   className="p-4 cursor-pointer flex justify-between items-center"
@@ -839,11 +834,10 @@ export default function ExamManagement() {
               return (
                 <div
                   key={exam.id}
-                  className={`rounded-lg transition-all overflow-hidden ${
-                    selectedExam?.id === exam.id
+                  className={`rounded-lg transition-all overflow-hidden ${selectedExam?.id === exam.id
                       ? "ring-2 ring-blue-500 shadow-md"
                       : "bg-white border border-gray-200 hover:shadow-md"
-                  }`}
+                    }`}
                   onClick={() => setSelectedExam(exam)}
                 >
                   <div className="p-4 cursor-pointer">
@@ -852,19 +846,18 @@ export default function ExamManagement() {
                         <h3 className="font-semibold text-gray-800 flex items-center">
                           {exam.type || exam.name || `Exam ${exam.id}`}
                           <span
-                            className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                              exam.status === "upcoming"
+                            className={`ml-2 text-xs px-2 py-1 rounded-full ${exam.status === "upcoming"
                                 ? "bg-yellow-100 text-yellow-800"
                                 : exam.status === "today"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
                           >
                             {exam.status === "upcoming"
                               ? "Upcoming"
                               : exam.status === "today"
-                              ? "Today"
-                              : "Completed"}
+                                ? "Today"
+                                : "Completed"}
                           </span>
                         </h3>
                         <p className="text-sm text-gray-600 mt-1">
@@ -932,11 +925,10 @@ export default function ExamManagement() {
           <button
             onClick={() => setIsAddingQuestion(true)}
             disabled={!selectedExam}
-            className={`px-4 py-2 rounded-lg flex items-center font-medium ${
-              selectedExam
+            className={`px-4 py-2 rounded-lg flex items-center font-medium ${selectedExam
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
+              }`}
           >
             <Plus size={18} className="mr-1" /> Add Question
           </button>
@@ -1049,11 +1041,10 @@ export default function ExamManagement() {
                   return (
                     <div
                       key={optionId}
-                      className={`p-3 rounded-lg text-sm flex items-center ${
-                        question.answer === optIndex
+                      className={`p-3 rounded-lg text-sm flex items-center ${question.answer === optIndex
                           ? "bg-green-100 text-green-800 border border-green-200"
                           : "bg-white border border-gray-200"
-                      }`}
+                        }`}
                     >
                       <span className="font-medium mr-2">
                         {String.fromCharCode(65 + optIndex)}.

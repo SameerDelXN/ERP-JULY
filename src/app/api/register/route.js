@@ -50,7 +50,7 @@ export async function POST(req) {
 
       if (existing) {
         return NextResponse.json({
-          error: 'Teacher already exists'
+          error: 'Teacher already exists with this email or teacherId'
         }, {
           status: 409
         });
@@ -67,12 +67,12 @@ export async function POST(req) {
         role,
         password: hashedPassword,
       });
-      
+
       await logUserAction({
-      userId: 'admin',
-      action: 'created_user',
-      entity: 'user',
-    });
+        userId: 'admin',
+        action: 'created_user',
+        entity: 'user',
+      });
       return NextResponse.json({
         message: 'Teacher registered successfully'
       }, {
@@ -117,11 +117,11 @@ export async function POST(req) {
         role,
         password: hashedPassword,
       });
-       await logUserAction({
-      userId: 'admin',
-      action: 'created_user',
-      entity: 'user',
-    });
+      await logUserAction({
+        userId: 'admin',
+        action: 'created_user',
+        entity: 'user',
+      });
       return NextResponse.json({ message: 'HOD registered successfully' }, { status: 201 });
     }
 
@@ -160,7 +160,7 @@ export async function POST(req) {
       password: hashedPassword,
       role,
     });
-     await logUserAction({
+    await logUserAction({
       userId: 'admin',
       action: 'created_user',
       entity: 'user',

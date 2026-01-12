@@ -9,11 +9,17 @@ export async function POST(request) {
     const formData = await request.formData();
 
     const file = formData.get("files");
-    const title = formData.get("title");
+    const rawTitle = formData.get("title");
     const description = formData.get("description");
     const subject = formData.get("subject");
     const year = formData.get("year");
     const teacherId = formData.get("teacherId");
+
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    const title = rawTitle || file.name;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });

@@ -39,7 +39,7 @@ export default function ExamPage() {
       try {
         setLoading(true);
 
-         // First check if exam was already taken
+        // First check if exam was already taken
         const checkRes = await fetch(`/api/students/myexams?examId=${id}&studentId=${studentId}`);
         const checkData = await checkRes.json();
 
@@ -100,11 +100,11 @@ export default function ExamPage() {
     const timerId = setInterval(() => {
       setTimeLeft((prevTime) => {
         const newTime = prevTime - 1;
-        
+
         if (newTime === 300 && !warningShown) {
           setWarningShown(true);
         }
-        
+
         return newTime;
       });
     }, 1000);
@@ -122,7 +122,7 @@ export default function ExamPage() {
 
   const handleAutoSubmit = async () => {
     if (submitting || submissionResult) return;
-    
+
     setSubmitting(true);
     try {
       const res = await fetch(`/api/students/myexams/${id}`, {
@@ -240,11 +240,10 @@ export default function ExamPage() {
       <div className="bg-white rounded-2xl p-6 max-w-md w-full">
         <div className="text-center">
           <div
-            className={`w-16 h-16 rounded-full ${
-              submissionResult.alreadySubmitted
+            className={`w-16 h-16 rounded-full ${submissionResult.alreadySubmitted
                 ? "bg-yellow-100"
                 : "bg-green-100"
-            } flex items-center justify-center mx-auto mb-4`}
+              } flex items-center justify-center mx-auto mb-4`}
           >
             {submissionResult.alreadySubmitted ? (
               <AlertCircle className="w-8 h-8 text-yellow-600" />
@@ -257,33 +256,46 @@ export default function ExamPage() {
             {submissionResult.alreadySubmitted
               ? "Exam Already Submitted"
               : submissionResult.message.includes("Time's up")
-              ? "Time's Up!"
-              : "Exam Submitted"}
+                ? "Time's Up!"
+                : "Exam Submitted"}
           </h3>
 
           <p className="text-gray-600 mb-4">{submissionResult.message}</p>
 
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {submissionResult.score}
+            {examInfo?.resultPublished ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {submissionResult.score}
+                    </div>
+                    <div className="text-sm text-gray-500">Your Score</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-700">
+                      {submissionResult.totalMarks}
+                    </div>
+                    <div className="text-sm text-gray-500">Total Marks</div>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Your Score</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-700">
-                  {submissionResult.totalMarks}
-                </div>
-                <div className="text-sm text-gray-500">Total Marks</div>
-              </div>
-            </div>
 
-            {submissionResult.percentage !== undefined && (
-              <div className="mt-4 text-center">
-                <div className="text-lg font-semibold text-gray-800">
-                  Percentage: {submissionResult.percentage}%
+                {submissionResult.percentage !== undefined && (
+                  <div className="mt-4 text-center">
+                    <div className="text-lg font-semibold text-gray-800">
+                      Percentage: {submissionResult.percentage}%
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <div className="text-lg font-semibold text-gray-700 mb-2">
+                  Exam Submitted Successfully
                 </div>
+                <p className="text-gray-500">
+                  Your results will be available once they are published by the teacher.
+                </p>
               </div>
             )}
           </div>
@@ -310,15 +322,15 @@ export default function ExamPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <CheckCircle className="w-8 h-8 text-blue-600" />
           </div>
-          
+
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
             Exam Already Completed
           </h1>
-          
+
           <p className="text-gray-600 mb-6">
             You have already taken this exam. Here are your results:
           </p>
-          
+
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
@@ -355,7 +367,7 @@ export default function ExamPage() {
       </div>
     );
   }
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
@@ -437,11 +449,10 @@ export default function ExamPage() {
             </Link>
 
             <div
-              className={`inline-flex items-center px-4 py-2 rounded-full ${
-                timeLeft !== null && timeLeft < 300
+              className={`inline-flex items-center px-4 py-2 rounded-full ${timeLeft !== null && timeLeft < 300
                   ? "bg-red-100 text-red-700"
                   : "bg-blue-100 text-blue-700"
-              } font-semibold`}
+                } font-semibold`}
             >
               <Clock className="w-5 h-5 mr-2" />
               <span className="font-mono">{formatTime(timeLeft)}</span>

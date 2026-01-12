@@ -121,7 +121,7 @@
 //     );
 //   } catch (error) {
 //     console.error("Admission POST error:", error);
-    
+
 //     // Handle duplicate key errors (like unique PRN)
 //     if (error.code === 11000) {
 //       return Response.json(
@@ -152,7 +152,7 @@
 
 //     // Fetch all admissions with basic details
 //     const admissions = await admissionSchema.find({})
-      
+
 //     return Response.json({
 //       success: true,
 //       count: admissions.length,
@@ -224,22 +224,30 @@ export async function POST(req) {
     } = body;
 
     // Validate required fields
-    const requiredFields = {
+    // Validate required fields
+    let requiredFields = {
       email,
       fullName,
-      dateOfBirth,
-      gender,
-      nationality,
       studentWhatsappNumber,
-      admissionYear,
-      programType,
-      branch,
-      year,
-      round,
-      seatType,
-      admissionCategoryDTE,
-      feesCategory,
     };
+
+    // If strictly fully admitted, we need everything. 
+    // If inProcess (lead conversion), we only need basic info.
+    if (status !== "inProcess") {
+      Object.assign(requiredFields, {
+        dateOfBirth,
+        gender,
+        nationality,
+        admissionYear,
+        programType,
+        branch,
+        year,
+        round,
+        seatType,
+        admissionCategoryDTE,
+        feesCategory,
+      });
+    }
 
     for (const [field, value] of Object.entries(requiredFields)) {
       if (value === undefined || value === null || value === "") {

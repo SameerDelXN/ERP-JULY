@@ -27,7 +27,7 @@ export const adminSidebarItems = [
   { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   { id: "courses", label: "CRM Management", icon: BookImage },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
-   { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
+  { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
   // { id: "staff-directory", label: "Staff Directory", icon: Users },
   // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
@@ -46,22 +46,22 @@ export const studentSidebarItems = [
   { id: "profile", label: "Profile", icon: UserCheck },
   { id: "attendance", label: "Attendance", icon: FileText },
   { id: "myexams", label: "My Exams", icon: BookOpenCheck },
-  { id: "assignments", label: "Assignments", icon: BookOpen },
+  // { id: "assignments", label: "Assignments", icon: BookOpen },
   { id: "timetable", label: "My Timetable", icon: CalendarClock },
-  { id: "studymaterial", label: "Study Material", icon: CalendarClock },
-  { id: "certificates", label: "Certificates", icon: Award },
+  // { id: "studymaterial", label: "Study Material", icon: CalendarClock },
+  // { id: "certificates", label: "Certificates", icon: Award },
 
 ];
 
 export const teacherSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
-  {id: "my-classes", label: "My Classes", icon: BookOpen},
+  { id: "my-classes", label: "My Classes", icon: BookOpen },
   // {id: "attendance", label: "Mark Attendance", icon: UserCheck},
-  {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
-  {id: "student-list", label: "Student List", icon: Users},
+  { id: "course-plan", label: "Create Course Plan", icon: UserCheck },
+  { id: "student-list", label: "Student List", icon: Users },
   // {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
   // {id: "marks", label: "Exam Marks", icon: FileCheck},
-  {id: "exam", label: "All Exam", icon: File},
+  { id: "exam", label: "All Exam", icon: File },
 ]
 
 

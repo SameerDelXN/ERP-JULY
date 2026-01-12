@@ -388,7 +388,7 @@
 //     if (response.ok && data.timetable) {
 //       // Generate time slots based on periodTimes and breaks
 //       const timeSlots = generateTimeSlots();
-      
+
 //       // Initialize timetable with empty periods and breaks
 //       const formattedData = days.map(() =>
 //         timeSlots.map((slot) => ({
@@ -2407,7 +2407,7 @@ const TimetablePage = () => {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `/api/hod/${user.id}/timetable/get?year=${year}&semester=${semester}&division=${division}`
+          `/api/hod/${user.id}/timetable?year=${year}&semester=${semester}&division=${division}`
         );
         const data = await response.json();
 
@@ -2482,7 +2482,7 @@ const TimetablePage = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/hod/${user.id}/timetable/get?year=${year}&semester=${semester}&division=${division}`
+        `/api/hod/${user.id}/timetable?year=${year}&semester=${semester}&division=${division}`
       );
       const data = await response.json();
 
@@ -3104,9 +3104,8 @@ const TimetablePage = () => {
                   <div className="flex space-x-3">
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
-                      className={`px-4 py-2 rounded-lg transition-colors ${
-                        isEditMode ? 'bg-green-600 text-white hover:bg-green-700' : 'text-indigo-600 border border-indigo-600 hover:bg-indigo-50'
-                      }`}
+                      className={`px-4 py-2 rounded-lg transition-colors ${isEditMode ? 'bg-green-600 text-white hover:bg-green-700' : 'text-indigo-600 border border-indigo-600 hover:bg-indigo-50'
+                        }`}
                     >
                       {isEditMode ? 'Save Changes' : 'Edit Timetable'}
                     </button>

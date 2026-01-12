@@ -58,13 +58,14 @@
 
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Academic from "@/app/models/academicSchema";
+import Teacher from "@/app/models/teacherSchema";
 import { NextResponse } from "next/server";
 
 export async function GET(req, { params }) {
   try {
     await connectToDatabase();
 
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(req.url);
     const year = searchParams.get("year");
     const semester = searchParams.get("semester");
@@ -77,15 +78,24 @@ export async function GET(req, { params }) {
       );
     }
 
-    // Find the academic document
+    // First find the HOD to get their department
+    const hod = await Teacher.findById(id);
+    if (!hod) {
+      return NextResponse.json(
+        { error: "HOD not found" },
+        { status: 404 }
+      );
+    }
+
+    // Find the academic document by department
     const academic = await Academic.findOne({
-      _id: id,
+      department: hod.department,
       isActive: true,
     }).lean();
 
     if (!academic) {
       return NextResponse.json(
-        { error: "Academic record not found" },
+        { error: "Academic record not found for this department" },
         { status: 404 }
       );
     }
@@ -117,9 +127,9 @@ export async function GET(req, { params }) {
       subject: period.subject,
       teacher: period.teacher
         ? {
-            _id: period.teacher._id,
-            fullName: period.teacher.fullName || "Unknown",
-          }
+          _id: period.teacher._id,
+          fullName: period.teacher.fullName || "Unknown",
+        }
         : null,
       time: {
         start: period.time.start,
