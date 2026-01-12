@@ -52,7 +52,7 @@ export const studentSidebarItems = [
   // { id: "certificates", label: "Certificates", icon: Award },
 
 ];
-
+//sample
 export const teacherSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "my-classes", label: "My Classes", icon: BookOpen },
