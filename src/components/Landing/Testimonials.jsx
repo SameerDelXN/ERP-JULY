@@ -1,9 +1,9 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Star, StarHalf } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const testimonials = [
+const defaultTestimonials = [
   {
     name: "Dr. Rajesh Verma",
     position: "Director, ABC Engineering College",
@@ -39,20 +39,50 @@ const testimonials = [
 ];
 
 export default function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
   const visibleCards = 2;
 
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      const response = await fetch("/api/testimonials");
+      const data = await response.json();
+      setTestimonials(data.testimonials || defaultTestimonials);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+      setTestimonials(defaultTestimonials);
+      setLoading(false);
+    }
+  };
+
+  // If loading or empty array, prevent errors
+  const activeTestimonials = testimonials.length > 0 ? testimonials : defaultTestimonials;
+
   const next = () =>
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    setCurrentIndex((prev) => (prev + 1) % activeTestimonials.length);
   const prev = () =>
     setCurrentIndex(
-      (prev) => (prev - 1 + testimonials.length) % testimonials.length
+      (prev) => (prev - 1 + activeTestimonials.length) % activeTestimonials.length
     );
 
   const displayTestimonials = () => {
     const arr = [];
-    for (let i = 0; i < visibleCards; i++) {
-      arr.push(testimonials[(currentIndex + i) % testimonials.length]);
+    if (activeTestimonials.length === 0) return arr;
+
+    // Safety check if we have fewer cards than visibleCards
+    const count = Math.min(visibleCards, activeTestimonials.length);
+
+    for (let i = 0; i < count; i++) {
+      // If we want it to cycle seamlessly even if few items, logic works if array length >= visible cards
+      // If not, just show what we have. But the original code assumed infinite wrap logic.
+      // Assuming infinite wrap logic:
+      arr.push(activeTestimonials[(currentIndex + i) % activeTestimonials.length]);
     }
     return arr;
   };
@@ -66,8 +96,7 @@ export default function TestimonialsSection() {
             Trusted by Educators Nationwide
           </h2>
           <p className="text-lg text-gray-600">
-            Hear from institutions that have transformed their operations with
-            TechEdu ERP
+            {loading ? "Loading testimonials..." : "Hear from institutions that have transformed their operations with TechEdu ERP"}
           </p>
         </div>
 
@@ -96,7 +125,9 @@ export default function TestimonialsSection() {
 
         {/* Mobile */}
         <div className="md:hidden relative mt-6">
-          <TestimonialCard testimonial={testimonials[currentIndex]} />
+          {activeTestimonials.length > 0 && (
+            <TestimonialCard testimonial={activeTestimonials[currentIndex]} />
+          )}
           <div className="flex justify-center mt-6 space-x-4">
             <button
               onClick={prev}
@@ -121,12 +152,13 @@ export default function TestimonialsSection() {
    Card Component
 ---------------------------------------- */
 function TestimonialCard({ testimonial }) {
+  if (!testimonial) return null;
   return (
     <div className="group bg-white p-8 rounded-xl shadow-md border border-gray-100 h-full flex flex-col transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* ⭐ STARS WITH BLACK BORDER */}
       <div className="flex mb-4 gap-1">
         {[...Array(5)].map((_, i) => {
-          const rating = testimonial.rating;
+          const rating = testimonial.rating || 0;
 
           if (i + 1 <= Math.floor(rating)) {
             return (
@@ -170,9 +202,10 @@ function TestimonialCard({ testimonial }) {
 
       <div className="mt-auto flex items-center gap-4">
         <img
-          src={testimonial.avatar}
+          src={testimonial.avatar || "/avatars/default.jpg"}
           alt={testimonial.name}
           className="w-12 h-12 rounded-full object-cover border"
+          onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(testimonial.name) + "&background=random"; }}
         />
         <div>
           <p className="font-semibold text-gray-900">
@@ -186,3 +219,4 @@ function TestimonialCard({ testimonial }) {
     </div>
   );
 }
+

@@ -13,6 +13,7 @@ import {
   BarChart3,
   Users,
   Database,
+  Shield,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/context/SessionContext";
@@ -147,13 +148,14 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="grid grid-cols-3 gap-2">
               {[
-                { role: "admin", label: "Admin", icon: Settings },
-                { role: "hod", label: "HOD", icon: UserCheck },
-                { role: "staff", label: "Staff", icon: UserCheck },
-                { role: "teacher", label: "Teacher", icon: Users },
-                { role: "student", label: "Student", icon: Users },
-                { role: "hr", label: "HR", icon: User },
-              ].map(({ role, label, icon: Icon }) => (
+                  { role: "admin", label: "Admin", icon: Settings },
+                  { role: "superadmin", label: "Super Admin", icon: Shield },
+                  { role: "hod", label: "HOD", icon: UserCheck },
+                  { role: "staff", label: "Staff", icon: UserCheck },
+                  { role: "teacher", label: "Teacher", icon: Users },
+                  { role: "student", label: "Student", icon: Users },
+                  { role: "hr", label: "HR", icon: User },
+                ].map(({ role, label, icon: Icon }) => (
                 <button
                   key={role}
                   type="button"

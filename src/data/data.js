@@ -16,7 +16,9 @@ import {
   CalendarClock,
   BookMarked,
   FileCheck,
-  File
+  File,
+  MessageSquare,
+  Phone,
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -27,11 +29,21 @@ export const adminSidebarItems = [
   { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
   { id: "courses", label: "CRM Management", icon: BookImage },
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
-   { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
+  { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
   // { id: "staff-directory", label: "Staff Directory", icon: Users },
   // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
   // { id: "reports&analytics", label: "Reports & Analytics (basic)", icon: TrendingUp },
+];
+
+// Sidebar specifically for superadmin (only Overview)
+export const superadminSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  { id: "benefits", label: "Benefits", icon: Award },
+  { id: "modules", label: "Modules", icon: BookOpen },
+  { id: "features", label: "Features", icon: Settings },
+  { id: "testimonials", label: "Testimonials", icon: MessageSquare },
+  { id: "contact-info", label: "Contact Info", icon: Phone },
 ];
 export const staffSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -55,13 +67,13 @@ export const studentSidebarItems = [
 
 export const teacherSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
-  {id: "my-classes", label: "My Classes", icon: BookOpen},
+  { id: "my-classes", label: "My Classes", icon: BookOpen },
   // {id: "attendance", label: "Mark Attendance", icon: UserCheck},
-  {id: "course-plan", label: "Create Course Plan", icon: UserCheck},
-  {id: "student-list", label: "Student List", icon: Users},
+  { id: "course-plan", label: "Create Course Plan", icon: UserCheck },
+  { id: "student-list", label: "Student List", icon: Users },
   // {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
   // {id: "marks", label: "Exam Marks", icon: FileCheck},
-  {id: "exam", label: "All Exam", icon: File},
+  { id: "exam", label: "All Exam", icon: File },
 ]
 
 

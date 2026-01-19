@@ -215,7 +215,7 @@ export async function POST(req) {
     }
 
     // Validate role
-    const validRoles = ["admin", "student", "staff", "parents", "hod", "teacher", "hr"];
+    const validRoles = ["admin", "superadmin", "student", "staff", "parents", "hod", "teacher", "hr"];
     if (!validRoles.includes(role)) {
       return new Response(JSON.stringify({ message: "Invalid role" }), { status: 400 });
     }
