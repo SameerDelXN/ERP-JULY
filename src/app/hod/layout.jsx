@@ -1,7 +1,7 @@
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import React, { useState, useEffect } from "react";
-import { Bell, BookOpen, ChevronDown, LayoutDashboard, LogOut, User, Settings, HelpCircle, Clock, Users} from "lucide-react";
+import { Bell, BookOpen, ChevronDown, LayoutDashboard, LogOut, User, Settings, HelpCircle, Clock, Users } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
@@ -9,35 +9,7 @@ import Unauthorized from "@/components/Unauthorized";
 import { useSession } from "@/context/SessionContext";
 import Loading from "@/components/Loading";
 
-// HOD specific sidebar items
-const hodSidebarItems = [
-  {
-    id: "overview",
-    label: "Overview",
-    icon: LayoutDashboard, // You'll need to import or define this icon
-  },
-  {
-    id: "academic-management",
-    label: "Academic Management",
-    icon: BookOpen, // You'll need to import or define this icon
-    subItems: [
-      { id: "courses", label: "Courses" },
-      { id: "timetable", label: "Timetable" },
-      { id: "faculty", label: "Faculty" },
-      { id: "students", label: "Students" },
-    ],
-  },
-  {
-    id: "student-management",
-    label: "Student Management",
-    icon: Users, // You'll need to import or define this icon
-  },
-  {
-    id: "timetable",
-    label: "TimeTable",
-    icon: Clock, // You'll need to import or define this icon
-  },
-];
+import { hodSidebarItems } from "@/data/data";
 
 const HodLayout = ({ children }) => {
   const { user, loading } = useSession();
@@ -70,6 +42,27 @@ const HodLayout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+  const filteredItems = React.useMemo(() => {
+    if (!user) return [];
+    if (!user.permissions || user.permissions.length === 0) {
+      return hodSidebarItems;
+    }
+    return hodSidebarItems.filter(
+      (item) => user.permissions.includes(item.id)
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (!loading && filteredItems.length > 0) {
+      const isAllowed = filteredItems.some((item) => item.id === activeTab);
+      if (!isAllowed) {
+        const firstAllowed = filteredItems[0].id;
+        setActiveTab(firstAllowed);
+        router.push(firstAllowed === "overview" ? "/hod" : `/hod/${firstAllowed}`);
+      }
+    }
+  }, [filteredItems, activeTab, loading, router]);
+
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
@@ -85,7 +78,7 @@ const HodLayout = ({ children }) => {
   };
   //--------------------------------------------
 
-  const activeTabItem = hodSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = filteredItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "overview") {
@@ -109,7 +102,7 @@ const HodLayout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={hodSidebarItems}
+        items={filteredItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}

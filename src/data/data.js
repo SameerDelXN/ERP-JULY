@@ -19,6 +19,11 @@ import {
   File,
   MessageSquare,
   Phone,
+  LayoutDashboard,
+  CalendarCheck,
+  CalendarOff,
+  IndianRupeeIcon,
+  Clock
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -31,6 +36,7 @@ export const adminSidebarItems = [
   // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
   { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
+  { id: "user-permissions", label: "User Permissions", icon: UserCheck },
   // { id: "staff-directory", label: "Staff Directory", icon: Users },
   // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
   // { id: "reports&analytics", label: "Reports & Analytics (basic)", icon: TrendingUp },
@@ -75,6 +81,44 @@ export const teacherSidebarItems = [
   // {id: "marks", label: "Exam Marks", icon: FileCheck},
   { id: "exam", label: "All Exam", icon: File },
 ]
+
+export const hodSidebarItems = [
+  {
+    id: "overview",
+    label: "Overview",
+    icon: LayoutDashboard,
+  },
+  {
+    id: "academic-management",
+    label: "Academic Management",
+    icon: BookOpen,
+    subItems: [
+      { id: "courses", label: "Courses" },
+      { id: "timetable", label: "Timetable" },
+      { id: "faculty", label: "Faculty" },
+      { id: "students", label: "Students" },
+    ],
+  },
+  {
+    id: "student-management",
+    label: "Student Management",
+    icon: Users,
+  },
+  {
+    id: "timetable",
+    label: "TimeTable",
+    icon: Clock,
+  },
+];
+
+export const hrSidebarItems = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "staff", label: "Staff Management", icon: Users },
+  { id: "payslip", label: "Payroll", icon: IndianRupeeIcon },
+  { id: "attendance", label: "Attendance", icon: CalendarCheck },
+  { id: "leave", label: "Leave Applications", icon: CalendarOff },
+  { id: "salary", label: "Salary Structure", icon: CreditCard },
+];
 
 
 export const roles = [

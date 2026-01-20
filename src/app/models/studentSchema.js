@@ -68,13 +68,13 @@ const studentSchema = new mongoose.Schema(
       pincode: String,
       country: String,
     },
-    programType: { 
-      type: String, 
-      enum: ['Diploma', 'UG', 'PG'], 
-      required: true 
+    programType: {
+      type: String,
+      enum: ['Diploma', 'UG', 'PG'],
+      required: true
     },
     branch: { type: String, required: true },
-    currentYear: { type: String,  },
+    currentYear: { type: String, },
     division: { type: String },
     status: {
       type: String,
@@ -86,8 +86,12 @@ const studentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-     sessionToken:{
-      type:String
+    sessionToken: {
+      type: String
+    },
+    permissions: {
+      type: [String],
+      default: [],
     }
   },
   { timestamps: true }

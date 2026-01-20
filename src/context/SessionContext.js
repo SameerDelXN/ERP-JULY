@@ -129,6 +129,22 @@ export const SessionProvider = ({ children }) => {
 
   useEffect(() => {
     fetchSession();
+
+    // Re-fetch session on window focus to get immediate updates when user switches back
+    const onFocus = () => {
+      fetchSession();
+    };
+    window.addEventListener("focus", onFocus);
+
+    // Poll every 5 seconds to keep permissions in sync
+    const interval = setInterval(() => {
+      fetchSession();
+    }, 5000);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   const login = async (email, password, role) => {

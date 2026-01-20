@@ -95,7 +95,7 @@
 //         isOpen={sidebarOpen}
 //         onClose={() => setSidebarOpen(false)}
 //       />
-      
+
 //       {/* Main content */}
 //       <div className="flex flex-col flex-1 overflow-hidden">
 //         {/* Header */}
@@ -228,6 +228,28 @@ const Layout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+  const filteredItems = React.useMemo(() => {
+    if (!user) return [];
+    if (!user.permissions || user.permissions.length === 0) {
+      return teacherSidebarItems;
+    }
+    return teacherSidebarItems.filter(
+      (item) => user.permissions.includes(item.id)
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (!loading && filteredItems.length > 0) {
+      const isAllowed = filteredItems.some((item) => item.id === activeTab);
+      if (!isAllowed) {
+        const firstAllowed = filteredItems[0].id;
+        setActiveTab(firstAllowed);
+        router.push(firstAllowed === "overview" ? "/teacher" : `/teacher/${firstAllowed}`);
+      }
+    }
+  }, [filteredItems, activeTab, loading, router]);
+
+
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
@@ -237,7 +259,7 @@ const Layout = ({ children }) => {
     }
   };
 
-  const activeTabItem = staffSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = filteredItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "overview") {
@@ -266,13 +288,13 @@ const Layout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={teacherSidebarItems}
+        items={filteredItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      
+
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
@@ -287,7 +309,7 @@ const Layout = ({ children }) => {
             </button>
 
             {/* User Profile Section */}
-            <div 
+            <div
               ref={profileRef}
               className="relative flex items-center space-x-3 px-3 py-2 rounded-2xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200/50"
               onClick={() => setProfileOpen(!profileOpen)}
@@ -327,9 +349,9 @@ const Layout = ({ children }) => {
                         </div>
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{user?.fullName|| "Teacher User"}</p>
+                        <p className="font-semibold text-gray-900">{user?.fullName || "Teacher User"}</p>
                         <p className="text-sm text-gray-500">{user?.email || "teacher@company.com"}</p>
-     
+
                       </div>
                     </div>
                   </div>
@@ -348,7 +370,7 @@ const Layout = ({ children }) => {
                         <p className="text-xs text-gray-500">Manage your account</p>
                       </div>
                     </button> */}
-{/* 
+                    {/* 
                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 transition-all duration-200 group"
                       // onClick={() => router.push('/staff/settings')}
@@ -382,7 +404,7 @@ const Layout = ({ children }) => {
               )}
             </div>
           </Header>
-        </div>  
+        </div>
 
         {/* Scrollable main area */}
         <main className="flex-1 overflow-y-auto pt-20 px-6">{children}</main>

@@ -51,6 +51,33 @@ const Layout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+  const filteredItems = React.useMemo(() => {
+    if (!user) return [];
+    // If permissions array is empty or undefined, show all items (default legacy behavior)
+    if (!user.permissions || user.permissions.length === 0) {
+      return adminSidebarItems;
+    }
+    // Otherwise filter based on permissions.
+    const allowed = adminSidebarItems.filter(
+      (item) => user.permissions.includes(item.id)
+    );
+    return allowed;
+  }, [user]);
+
+  // Effect to validate activeTab against permissions
+  useEffect(() => {
+    // Wait until items are filtered and user is loaded
+    if (!loading && filteredItems.length > 0) {
+      const isAllowed = filteredItems.some((item) => item.id === activeTab);
+      if (!isAllowed) {
+        // If current activeTab is not allowed, switch to the first allowed tab
+        const firstAllowed = filteredItems[0].id;
+        setActiveTab(firstAllowed);
+        router.push(firstAllowed === "overview" ? "/admin" : `/admin/${firstAllowed}`);
+      }
+    }
+  }, [filteredItems, activeTab, loading, router]);
+
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
@@ -60,7 +87,7 @@ const Layout = ({ children }) => {
     }
   };
 
-  const activeTabItem = adminSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = filteredItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "overview") {
@@ -89,13 +116,13 @@ const Layout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={adminSidebarItems}
+        items={filteredItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      
+
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
@@ -110,7 +137,7 @@ const Layout = ({ children }) => {
             </button>
 
             {/* User Profile Section */}
-            <div 
+            <div
               ref={profileRef}
               className="relative flex items-center space-x-3 px-3 py-2 rounded-2xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200/50"
               onClick={() => setProfileOpen(!profileOpen)}
@@ -152,14 +179,14 @@ const Layout = ({ children }) => {
                       <div className="flex-1">
                         <p className="font-semibold text-gray-900">{user?.username || "admin User"}</p>
                         <p className="text-sm text-gray-500">{user?.email || "admin@company.com"}</p>
-     
+
                       </div>
                     </div>
                   </div>
 
                   {/* Menu Items */}
                   <div className="py-2">
-                     <button
+                    <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200 group"
                       onClick={() => router.push('/admin/profile')}
                     >
@@ -170,7 +197,7 @@ const Layout = ({ children }) => {
                         <p className="font-medium">Profile Settings</p>
                         <p className="text-xs text-gray-500">Manage your account</p>
                       </div>
-                    </button> 
+                    </button>
                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 transition-all duration-200 group"
                       onClick={() => router.push('/admin/settings')}
@@ -204,7 +231,7 @@ const Layout = ({ children }) => {
               )}
             </div>
           </Header>
-        </div>  
+        </div>
 
         {/* Scrollable main area */}
         <main className="flex-1 overflow-y-auto pt-20 px-6">{children}</main>

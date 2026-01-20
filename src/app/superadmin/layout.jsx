@@ -50,6 +50,28 @@ const Layout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+  const filteredItems = React.useMemo(() => {
+    if (!user) return [];
+    if (!user.permissions || user.permissions.length === 0) {
+      return superadminSidebarItems;
+    }
+    return superadminSidebarItems.filter(
+      (item) => user.permissions.includes(item.id)
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (!loading && filteredItems.length > 0) {
+      const isAllowed = filteredItems.some((item) => item.id === activeTab);
+      if (!isAllowed) {
+        const firstAllowed = filteredItems[0].id;
+        setActiveTab(firstAllowed);
+        router.push(firstAllowed === "overview" ? "/superadmin" : `/superadmin/${firstAllowed}`);
+      }
+    }
+  }, [filteredItems, activeTab, loading, router]);
+
+
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
@@ -87,7 +109,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar
-        items={superadminSidebarItems}
+        items={filteredItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
@@ -103,7 +125,7 @@ const Layout = ({ children }) => {
               </span>
             </button>
 
-            <div 
+            <div
               ref={profileRef}
               className="relative flex items-center space-x-3 px-3 py-2 rounded-2xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200/50"
               onClick={() => setProfileOpen(!profileOpen)}
@@ -145,7 +167,7 @@ const Layout = ({ children }) => {
                   </div>
 
                   <div className="py-2">
-                     <button
+                    <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200 group"
                       onClick={() => router.push('/superadmin/profile')}
                     >
@@ -156,7 +178,7 @@ const Layout = ({ children }) => {
                         <p className="font-medium">Profile Settings</p>
                         <p className="text-xs text-gray-500">Manage your account</p>
                       </div>
-                    </button> 
+                    </button>
                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 transition-all duration-200 group"
                       onClick={() => router.push('/superadmin/settings')}
@@ -189,7 +211,7 @@ const Layout = ({ children }) => {
               )}
             </div>
           </Header>
-        </div>  
+        </div>
 
         <main className="flex-1 overflow-y-auto pt-20 px-6">{children}</main>
       </div>

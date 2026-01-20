@@ -4,6 +4,7 @@ import userSchema from '../../../models/userSchema';
 import teacherSchema from '../../../models/teacherSchema';
 import studentSchema from '../../../models/studentSchema';
 import { connectToDatabase } from '../../../lib/mongodb';
+import { NextResponse } from 'next/server';
 //sample
 // export async function GET() {
 //   try {
@@ -96,6 +97,7 @@ export async function GET() {
           role: hod.role,
           department: hod.department,
           teacherId: hod.teacherId,
+          permissions: hod.permissions || [],
           // isHod: true,
         },
       });
@@ -103,9 +105,9 @@ export async function GET() {
 
     // ✅ Student logic
     if (role === 'student') {
-      console.log("sessisosofe = ",sessionToken)
+      console.log("sessisosofe = ", sessionToken)
       const student = await studentSchema.findOne({ sessionToken });
-      console.log("student - ",student)
+      console.log("student - ", student)
       if (!student) {
         return Response.json({ user: null }, { status: 404 });
       }
@@ -116,26 +118,28 @@ export async function GET() {
         fullName: student.fullName,
         studentId: student.studentId,
         email: student.email,
-        address : student.address,
+        address: student.address,
         role: 'student',
+        permissions: student.permissions || [],
       });
     }
 
     // ✅ Other roles (admin, staff, parents)
     const user = await userSchema.findOne({ sessionToken }).select('-password');
 
-    console.log("userrrrrrrrr",user);
-    
+    console.log("userrrrrrrrr", user);
+
     if (!user) {
       return Response.json({ user: null }, { status: 200 });
     }
 
-    return Response.json({
+    return NextResponse.json({
       user: {
         id: user._id.toString(),
         username: user.fullName,
         email: user.email,
         role: user.role,
+        permissions: user.permissions || [],
       },
     });
 

@@ -2,7 +2,7 @@
 
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { studentSidebarItems } from "@/data/data";
 import { Bell, ChevronDown } from "lucide-react";
 import Avatar from "@/components/Avatar";
@@ -12,7 +12,7 @@ import { useSession } from "@/context/SessionContext";
 
 const layout = ({ children }) => {
   const router = useRouter();
-  const { user , logout } = useSession();
+  const { user, logout } = useSession();
   const [activeTab, setActiveTab] = useState(
     studentSidebarItems[0]?.id || "overview"
   );
@@ -28,6 +28,28 @@ const layout = ({ children }) => {
 
   if (!user) return null;
 
+  const filteredItems = React.useMemo(() => {
+    if (!user) return [];
+    if (!user.permissions || user.permissions.length === 0) {
+      return studentSidebarItems;
+    }
+    return studentSidebarItems.filter(
+      (item) => user.permissions.includes(item.id)
+    );
+  }, [user]);
+
+  useEffect(() => {
+    // Wait until user/permissions loaded
+    if (user && filteredItems.length > 0) {
+      const isAllowed = filteredItems.some((item) => item.id === activeTab);
+      if (!isAllowed) {
+        const firstAllowed = filteredItems[0].id;
+        setActiveTab(firstAllowed);
+        router.push(firstAllowed === "profile" ? "/student" : `/student/${firstAllowed}`);
+      }
+    }
+  }, [filteredItems, activeTab, user, router]);
+
   const handleTabChange = (newTab) => {
     // console.log("Changing tab to:", newTab); // Debug log
     setActiveTab(newTab);
@@ -38,7 +60,7 @@ const layout = ({ children }) => {
     }
   };
 
-  const activeTabItem = studentSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = filteredItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "profile") {
@@ -56,7 +78,7 @@ const layout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={studentSidebarItems}
+        items={filteredItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
@@ -68,7 +90,7 @@ const layout = ({ children }) => {
         {/* Header */}
         <div className="fixed top-0 left-0 right-0 z-40 bg-white shadow border-b lg:ml-64 h-16">
           <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)}>
-            
+
 
             {/* Profile section with dropdown */}
             {/* Profile section with dropdown */}
@@ -91,7 +113,7 @@ const layout = ({ children }) => {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                   {/* User Info Section */}
-                  
+
                   {/* Menu Items */}
                   <div className="py-1">
                     <button

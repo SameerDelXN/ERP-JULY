@@ -22,15 +22,7 @@ import Unauthorized from "@/components/Unauthorized";
 import { useSession } from "@/context/SessionContext";
 import Loading from "@/components/Loading";
 
-// HR specific sidebar items
-const hrSidebarItems = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "staff", label: "Staff Management", icon: Users },
-  { id: "payslip", label: "Payroll", icon: IndianRupeeIcon },
-  { id: "attendance", label: "Attendance", icon: CalendarCheck },
-  { id: "leave", label: "Leave Applications", icon: CalendarOff },
-  { id: "salary", label: "Salary Structure", icon: CreditCard },
-];
+import { hrSidebarItems } from "@/data/data";
 
 const HrLayout = ({ children }) => {
   const { user, loading } = useSession();
@@ -59,6 +51,27 @@ const HrLayout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+  const filteredItems = React.useMemo(() => {
+    if (!user) return [];
+    if (!user.permissions || user.permissions.length === 0) {
+      return hrSidebarItems;
+    }
+    return hrSidebarItems.filter(
+      (item) => user.permissions.includes(item.id)
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (!loading && filteredItems.length > 0) {
+      const isAllowed = filteredItems.some((item) => item.id === activeTab);
+      if (!isAllowed) {
+        const firstAllowed = filteredItems[0].id;
+        setActiveTab(firstAllowed);
+        router.push(firstAllowed === "overview" ? "/hr" : `/hr/${firstAllowed}`);
+      }
+    }
+  }, [filteredItems, activeTab, loading, router]);
+
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
@@ -68,7 +81,7 @@ const HrLayout = ({ children }) => {
     }
   };
 
-  const activeTabItem = hrSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = filteredItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     if (activeTab === "overview") {
@@ -94,7 +107,7 @@ const HrLayout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={hrSidebarItems}
+        items={filteredItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
@@ -128,9 +141,8 @@ const HrLayout = ({ children }) => {
                   <p className="text-xs text-gray-500">Human Resources</p>
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-all duration-200 ${
-                    dropdownOpen ? "transform rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-all duration-200 ${dropdownOpen ? "transform rotate-180" : ""
+                    }`}
                 />
               </div>
 

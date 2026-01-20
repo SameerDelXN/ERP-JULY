@@ -19,15 +19,15 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
- password: {
-  type: String,
-  required: true,
-  minlength: 8
-},
+  password: {
+    type: String,
+    required: true,
+    minlength: 8
+  },
 
   department: {
     type: String,
-    required: function() {
+    required: function () {
       // Department is required only if role is not HOD
       return this.role !== 'hod';
     },
@@ -47,9 +47,13 @@ const teacherSchema = new mongoose.Schema({
     enum: ['teacher', 'hod'], // Added HOD to enum
     default: 'teacher'
   },
-   sessionToken:{
-      type:String
-    }
+  sessionToken: {
+    type: String
+  },
+  permissions: {
+    type: [String],
+    default: [],
+  }
 });
 delete mongoose.models.teacher
 const teacher = mongoose.models.teacher || mongoose.model('teacher', teacherSchema);

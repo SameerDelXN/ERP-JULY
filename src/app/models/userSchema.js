@@ -63,6 +63,11 @@ const userSchema = new mongoose.Schema(
 
     sessionToken: String,
 
+    permissions: {
+      type: [String],
+      default: [],
+    },
+
     // --- STAFF FIELDS ---
     staffId: {
       type: String,
