@@ -219,71 +219,19 @@ export async function POST(req) {
       fatherGuardianWhatsappNumber,
       motherMobileNumber,
       address,
+      details,
       documents,
       status,
+      assignedStaff // Add this
     } = body;
 
-    // Validate required fields
-    // Validate required fields
-    let requiredFields = {
-      email,
-      fullName,
-      studentWhatsappNumber,
-    };
-
-    // If strictly fully admitted, we need everything. 
-    // If inProcess (lead conversion), we only need basic info.
-    if (status !== "inProcess") {
-      Object.assign(requiredFields, {
-        dateOfBirth,
-        gender,
-        nationality,
-        admissionYear,
-        programType,
-        branch,
-        year,
-        round,
-        seatType,
-        admissionCategoryDTE,
-        feesCategory,
-      });
-    }
-
-    for (const [field, value] of Object.entries(requiredFields)) {
-      if (value === undefined || value === null || value === "") {
-        return NextResponse.json(
-          { success: false, message: `Missing required field: ${field}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate feesCategory against fee structure
-    if (programType && branch && year && casteAsPerLC && feesCategory) {
-      const feeStructure = await FeeStructure.findOne({
-        programType,
-        departmentName: branch,
-        year,
-        caste: casteAsPerLC.toLowerCase() || "general",
-        scholarshipParticular: feesCategory,
-      });
-
-      if (!feeStructure) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "Invalid fees category for the selected program type, branch, year, and caste",
-          },
-          { status: 400 }
-        );
-      }
-    }
+    // ... (validators)
 
     // Create the admission record
     const newAdmission = new Admission({
       enquiryId,
       counsellorId,
+      assignedStaff, // Add this
       dteApplicationNumber,
       admissionYear,
       email: email.toLowerCase(),
@@ -435,35 +383,17 @@ export async function PUT(req) {
       documents,
       status,
       isPrnGenerated,
+      assignedStaff
     } = body;
 
-    // Validate feesCategory if provided
-    if (feesCategory && programType && branch && year && casteAsPerLC) {
-      const feeStructure = await FeeStructure.findOne({
-        programType,
-        departmentName: branch,
-        year,
-        caste: casteAsPerLC.toLowerCase(),
-        scholarshipParticular: feesCategory,
-      });
-
-      if (!feeStructure) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "Invalid fees category for the selected program type, branch, year, and caste",
-          },
-          { status: 400 }
-        );
-      }
-    }
+    // ...
 
     const updatedAdmission = await Admission.findByIdAndUpdate(
       id,
       {
         enquiryId,
         counsellorId,
+        assignedStaff,
         dteApplicationNumber,
         admissionYear,
         email: email?.toLowerCase(),

@@ -133,6 +133,10 @@ const admissionSchema = new mongoose.Schema(
       ref: "User",
       // Optional for Excel import
     },
+    assignedStaff: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
 
     // System generated fields
     dteApplicationNumber: { type: String },
@@ -206,16 +210,16 @@ const admissionSchema = new mongoose.Schema(
     // Contact details
     studentWhatsappNumber: { type: Number },
     fatherGuardianWhatsappNumber: { type: Number },
-    motherMobileNumber: { type: Number,  },
+    motherMobileNumber: { type: Number, },
 
     //Address Details
     address: [
       {
-        addressLine: {type:String },
-        city: {type:String},
-        state:{type: String},
-        pincode:{type: Number},
-        country:{type: String},
+        addressLine: { type: String },
+        city: { type: String },
+        state: { type: String },
+        pincode: { type: Number },
+        country: { type: String },
       },
     ],
     // Documents (optional)
@@ -225,14 +229,14 @@ const admissionSchema = new mongoose.Schema(
         fileName: { type: String },
         fileUrl: { type: String },
         mimeType: { type: String },
-        uploadedAt:{type:Date,default: Date.now}
+        uploadedAt: { type: Date, default: Date.now }
       },
     ],
 
     // Status
     status: {
       type: String,
-      enum: ["inProcess", "approved", "rejected"], 
+      enum: ["inProcess", "approved", "rejected"],
       required: true,
       default: "inProcess",
     },
