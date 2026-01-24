@@ -215,7 +215,7 @@ export async function POST(req) {
     }
 
     // Validate role
-    const validRoles = ["admin", "student", "staff", "parents", "hod", "teacher", "hr"];
+    const validRoles = ["admin", "superadmin", "student", "staff", "parents", "hod", "teacher", "hr"];
     if (!validRoles.includes(role)) {
       return new Response(JSON.stringify({ message: "Invalid role" }), { status: 400 });
     }
@@ -290,10 +290,15 @@ export async function POST(req) {
       }), { status: 200 });
     }
 
-    // Admin, Staff, Parents, HR login
+    // Admin, Staff, Parents, HR, Superadmin login
     const userFromDB = await userSchema.findOne({ email });
     if (!userFromDB) {
       return new Response(JSON.stringify({ message: "Invalid email or role" }), { status: 401 });
+    }
+    console.log(userFromDB)
+    // Verify that the user's role matches the selected role
+    if (userFromDB.role !== role) {
+      return new Response(JSON.stringify({ message: "Invalid role or password" }), { status: 401 });
     }
 
     const passwordMatch = await bcrypt.compare(password, userFromDB.password);
@@ -324,4 +329,3 @@ export async function POST(req) {
     return new Response(JSON.stringify({ message: "Server error" }), { status: 500 });
   }
 }
-

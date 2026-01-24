@@ -150,6 +150,8 @@ export const SessionProvider = ({ children }) => {
           redirectPath = '/hod';
         } else if (data.user.role.toLowerCase() === 'student') {
           redirectPath = '/student';
+        } else if (data.user.role.toLowerCase() === 'superadmin') {
+          redirectPath = '/superadmin/benefits';
         } else {
           redirectPath = `/${data.user.role}`;
         }

@@ -16,7 +16,9 @@ import {
   CalendarClock,
   BookMarked,
   FileCheck,
-  File
+  File,
+  MessageSquare,
+  Phone,
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
@@ -32,6 +34,15 @@ export const adminSidebarItems = [
   // { id: "staff-directory", label: "Staff Directory", icon: Users },
   // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
   // { id: "reports&analytics", label: "Reports & Analytics (basic)", icon: TrendingUp },
+];
+
+// Sidebar specifically for superadmin (starting with Benefits)
+export const superadminSidebarItems = [
+  { id: "benefits", label: "Benefits", icon: Award },
+  { id: "modules", label: "Modules", icon: BookOpen },
+  { id: "features", label: "Features", icon: Settings },
+  { id: "testimonials", label: "Testimonials", icon: MessageSquare },
+  { id: "contact-info", label: "Contact Info", icon: Phone },
 ];
 export const staffSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },

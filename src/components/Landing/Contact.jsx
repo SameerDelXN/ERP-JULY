@@ -1,8 +1,38 @@
 'use client';
 
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function ContactSection() {
+  const [contactInfo, setContactInfo] = useState({
+    email: "admin@techedutech.com",
+    phone1: "+91 8605112331",
+    phone2: "+91 8408080231",
+    addressLine1: "Office Number 101, Nirman Ajinkatara",
+    addressLine2: "Adjacent to Sinhagad Science College",
+    addressLine3: "Vadgaon, Pune - 411041",
+    businessHours: "Monday - Friday: 10AM - 7PM",
+    googleMapUrl: "https://www.google.com/maps?q=Office%20Number%20101%20Nirman%20Ajinkatara%20Vadgaon%20Pune%20411041&output=embed"
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const response = await fetch("/api/contact_info");
+        const data = await response.json();
+        if (data.contactInfo) {
+          setContactInfo(data.contactInfo);
+        }
+      } catch (error) {
+        console.error("Error fetching contact info:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInfo();
+  }, []);
+
   return (
     <section className="py-20 bg-white" name="contacts">
       <div className="container mx-auto px-6 lg:px-20">
@@ -104,7 +134,7 @@ export default function ContactSection() {
               <Mail className="text-blue-600 w-6 h-6 shrink-0" />
               <div>
                 <h3 className="font-semibold text-gray-900">Email Us</h3>
-                <p className="text-gray-600 text-[15px]">admin@techedutech.com</p>
+                <p className="text-gray-600 text-[15px]">{contactInfo.email}</p>
               </div>
             </div>
 
@@ -112,8 +142,8 @@ export default function ContactSection() {
               <Phone className="text-blue-600 w-6 h-6 shrink-0" />
               <div>
                 <h3 className="font-semibold text-gray-900">Phone</h3>
-                <p className="text-gray-600 text-[15px]">+91 8605112331</p>
-                <p className="text-gray-600 text-[15px]">+91 8408080231</p>
+                <p className="text-gray-600 text-[15px]">{contactInfo.phone1}</p>
+                {contactInfo.phone2 && <p className="text-gray-600 text-[15px]">{contactInfo.phone2}</p>}
               </div>
             </div>
 
@@ -122,9 +152,9 @@ export default function ContactSection() {
               <div>
                 <h3 className="font-semibold text-gray-900">Visit Us</h3>
                 <p className="text-gray-600 text-[15px] leading-relaxed">
-                  Office Number 101, Nirman Ajinkatara<br />
-                  Adjacent to Sinhagad Science College<br />
-                  Vadgaon, Pune - 411041
+                  {contactInfo.addressLine1}<br />
+                  {contactInfo.addressLine2 && <>{contactInfo.addressLine2}<br /></>}
+                  {contactInfo.addressLine3}
                 </p>
               </div>
             </div>
@@ -134,7 +164,7 @@ export default function ContactSection() {
               <div>
                 <h3 className="font-semibold text-gray-900">Business Hours</h3>
                 <p className="text-gray-600 text-[15px]">
-                  Monday - Friday: 10AM - 7PM
+                  {contactInfo.businessHours}
                 </p>
               </div>
             </div>
@@ -145,7 +175,7 @@ export default function ContactSection() {
         {/* MAP */}
         <div className="mt-12 rounded-3xl overflow-hidden shadow-sm">
           <iframe
-            src="https://www.google.com/maps?q=Office%20Number%20101%20Nirman%20Ajinkatara%20Vadgaon%20Pune%20411041&output=embed"
+            src={contactInfo.googleMapUrl}
             width="100%"
             height="320"
             className="w-full border-0"
