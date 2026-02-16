@@ -9,6 +9,7 @@ import {
   Search,
   Loader2,
 } from "lucide-react";
+import ExportButton from "@/components/ExportButton";
 import toast, { Toaster } from "react-hot-toast";
 export default function CourseManagementPage() {
   const [courses, setCourses] = useState([]);
@@ -43,7 +44,7 @@ export default function CourseManagementPage() {
     console.log(id);
 
     console.log(courses);
-    
+
 
     try {
       setLoadingStates((prev) => ({ ...prev, [id]: true }));
@@ -53,10 +54,10 @@ export default function CourseManagementPage() {
       const courseToUpdate = courses.departments?.find(
         (course) => course._id === id
       );
-      
+
       if (!courseToUpdate) {
         console.log(courseToUpdate);
-        
+
         throw new Error("Course not found in local state");
       }
 
@@ -79,7 +80,7 @@ export default function CourseManagementPage() {
         },
         body: JSON.stringify({ isActive: newStatus }),
       });
-      
+
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -119,7 +120,7 @@ export default function CourseManagementPage() {
     return matchesSearch;
   });
 
-    console.log(filteredCourses);
+  console.log(filteredCourses);
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
@@ -148,18 +149,29 @@ export default function CourseManagementPage() {
   }
 
 
-  
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <Toaster />
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-indigo-900">
-            Course Management
-          </h1>
-          <p className="text-indigo-700 mt-2">
-            Manage your courses and their active status
-          </p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-indigo-900">
+              Course Management
+            </h1>
+            <p className="text-indigo-700 mt-2">
+              Manage your courses and their active status
+            </p>
+          </div>
+          <ExportButton
+            data={filteredCourses.map(c => ({
+              "Course": c.department,
+              "Program": c.programType,
+              "HOD": c.hod?.fullName || "N/A",
+              "Status": c.isActive ? "Active" : "Inactive"
+            }))}
+            filename="Courses_List"
+          />
         </div>
 
         {/* Filters and Search */}
@@ -182,33 +194,30 @@ export default function CourseManagementPage() {
             <div className="flex space-x-2">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-4 py-2 rounded-lg border ${
-                  filter === "all"
-                    ? "bg-indigo-100 border-indigo-300 text-indigo-700"
-                    : "border-gray-300 text-gray-700"
-                }`}
+                className={`px-4 py-2 rounded-lg border ${filter === "all"
+                  ? "bg-indigo-100 border-indigo-300 text-indigo-700"
+                  : "border-gray-300 text-gray-700"
+                  }`}
                 aria-pressed={filter === "all"}
               >
                 All
               </button>
               <button
                 onClick={() => setFilter("active")}
-                className={`px-4 py-2 rounded-lg border ${
-                  filter === "active"
-                    ? "bg-indigo-100 border-indigo-300 text-indigo-700"
-                    : "border-gray-300 text-gray-700"
-                }`}
+                className={`px-4 py-2 rounded-lg border ${filter === "active"
+                  ? "bg-indigo-100 border-indigo-300 text-indigo-700"
+                  : "border-gray-300 text-gray-700"
+                  }`}
                 aria-pressed={filter === "active"}
               >
                 Active
               </button>
               <button
                 onClick={() => setFilter("inactive")}
-                className={`px-4 py-2 rounded-lg border ${
-                  filter === "inactive"
-                    ? "bg-indigo-100 border-indigo-300 text-indigo-700"
-                    : "border-gray-300 text-gray-700"
-                }`}
+                className={`px-4 py-2 rounded-lg border ${filter === "inactive"
+                  ? "bg-indigo-100 border-indigo-300 text-indigo-700"
+                  : "border-gray-300 text-gray-700"
+                  }`}
                 aria-pressed={filter === "inactive"}
               >
                 Inactive
@@ -305,16 +314,14 @@ export default function CourseManagementPage() {
                             <div
                               className={`
                                     w-11 h-6 rounded-full peer
-                                    ${
-                                      course.isActive
-                                        ? "bg-indigo-600"
-                                        : "bg-gray-200"
-                                    }
-                                    ${
-                                      loadingStates[course.id]
-                                        ? "opacity-50"
-                                        : ""
-                                    }
+                                    ${course.isActive
+                                  ? "bg-indigo-600"
+                                  : "bg-gray-200"
+                                }
+                                    ${loadingStates[course.id]
+                                  ? "opacity-50"
+                                  : ""
+                                }
                                     peer-checked:after:translate-x-full
                                     peer-checked:after:border-white
                                     after:content-['']

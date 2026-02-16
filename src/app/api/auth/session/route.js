@@ -1,6 +1,7 @@
 
 import { cookies } from 'next/headers';
 import userSchema from '../../../models/userSchema';
+import Role from '../../../../models/Role';
 import teacherSchema from '../../../models/teacherSchema';
 import studentSchema from '../../../models/studentSchema';
 import { connectToDatabase } from '../../../lib/mongodb';
@@ -103,9 +104,9 @@ export async function GET() {
 
     // ✅ Student logic
     if (role === 'student') {
-      console.log("sessisosofe = ",sessionToken)
+      console.log("sessisosofe = ", sessionToken)
       const student = await studentSchema.findOne({ sessionToken });
-      console.log("student - ",student)
+      console.log("student - ", student)
       if (!student) {
         return Response.json({ user: null }, { status: 404 });
       }
@@ -116,16 +117,23 @@ export async function GET() {
         fullName: student.fullName,
         studentId: student.studentId,
         email: student.email,
-        address : student.address,
+        address: student.address,
         role: 'student',
       });
     }
 
     // ✅ Other roles (admin, staff, parents)
-    const user = await userSchema.findOne({ sessionToken }).select('-password');
+    const user = await userSchema.findOne({ sessionToken }).select('-password').populate('roleId');
 
-    console.log("userrrrrrrrr",user);
-    
+    console.log("DEBUG SESSION: User found:", user?.email);
+    console.log("DEBUG SESSION: RoleID field:", user?.roleId);
+
+    if (user?.roleId instanceof Object) {
+      console.log("DEBUG SESSION: Populated Role Permissions:", user.roleId.permissions);
+    } else {
+      console.log("DEBUG SESSION: RoleID is not populated object:", user?.roleId);
+    }
+
     if (!user) {
       return Response.json({ user: null }, { status: 200 });
     }
@@ -135,7 +143,9 @@ export async function GET() {
         id: user._id.toString(),
         username: user.fullName,
         email: user.email,
-        role: user.role,
+        // Normalize role to ensure "Super Admin" becomes "superadmin" for frontend consistency
+        role: user.role.toLowerCase().replace(/\s+/g, ''),
+        roleId: user.roleId,
       },
     });
 

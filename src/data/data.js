@@ -22,19 +22,31 @@ import {
 } from "lucide-react";
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
-  { id: "manage-users", label: "Manage Users/Roles", icon: Users },
+  { id: "manage-users", label: "Manage Users", icon: Users },
+  { id: "roles", label: "Roles & Permissions", icon: Award },
   { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
+  // { id: "application-leads", label: "Application and Leads", icon: UserCheck }, // Removed as per request
   { id: "admission-applications", label: "Admission Applications", icon: BookImage },
   { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
   { id: "academic-configuration", label: "Academic Configuration", icon: BookOpen },
-  { id: "courses", label: "CRM Management", icon: BookImage },
-  // { id: "class-sections&facultymapping", label: "Class Sections & Faculty Mapping", icon: UserCheck },
+  { id: "courses", label: "CRM Management", icon: BookImage }, // ID 'courses' matches folder name to fix 404
   { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
-  // { id: "staff-directory", label: "Staff Directory", icon: Users },
-  // { id: "payroll-management", label: "Payroll Management", icon: DollarSign },
-  // { id: "reports&analytics", label: "Reports & Analytics (basic)", icon: TrendingUp },
 ];
+
+export const ROUTE_PERMISSIONS = {
+  "/admin/overview": "sidebar.overview",
+  "/admin/manage-users": "sidebar.manage-users",
+  "/admin/roles": "sidebar.roles",
+  "/admin/enquiry": "sidebar.enquiry&leads",
+  // "/admin/application-leads": "sidebar.application-leads",
+  "/admin/admission": "sidebar.admission-applications",
+  "/admin/students": "sidebar.student-profiles",
+  "/admin/academic": "sidebar.academic-configuration",
+  "/admin/courses": "sidebar.courses", // Updated route to match folder
+  "/admin/attendance": "sidebar.attendance-overview",
+  "/admin/fees": "sidebar.feeStructure&payments",
+};
 
 // Sidebar specifically for superadmin (starting with Benefits)
 export const superadminSidebarItems = [

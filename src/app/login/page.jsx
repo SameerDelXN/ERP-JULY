@@ -14,6 +14,11 @@ import {
   Users,
   Database,
   Shield,
+  Briefcase,
+  ClipboardList,
+  BookOpen,
+  GraduationCap,
+  UsersRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/context/SessionContext";
@@ -34,13 +39,88 @@ const Login = () => {
   const [passwordError, setPasswordError] = useState("");
   const [formValid, setFormValid] = useState(false);
 
+  // Dynamic Roles State
+  const [availableRoles, setAvailableRoles] = useState([
+    { role: "admin", label: "Admin", icon: Settings },
+    { role: "superadmin", label: "Super Admin", icon: Shield },
+    { role: "hod", label: "HOD", icon: Briefcase },
+    { role: "staff", label: "Staff", icon: ClipboardList },
+    { role: "teacher", label: "Teacher", icon: BookOpen },
+    { role: "student", label: "Student", icon: GraduationCap },
+    { role: "hr", label: "HR", icon: UsersRound },
+  ]);
+
+  // Icon mapping for dynamic roles
+  const ROLE_ICONS_MAP = {
+    admin: Settings,
+    superadmin: Shield,
+    hod: Briefcase,
+    staff: ClipboardList,
+    teacher: BookOpen,
+    student: GraduationCap,
+    hr: UsersRound,
+  };
+
+  const PRIORITY_ORDER = ["admin", "superadmin", "hod", "staff", "teacher", "student", "hr"];
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await fetch('/api/admin/roles');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.data)) {
+          // API returns Newest First (createdAt: -1).
+          // user wants Newest at Bottom.
+          // So we reverse the API data to get Oldest First for the "others" naturally,
+          // assuming standard roles were created first.
+
+          const sortedData = [...data.data].reverse();
+
+          // Map fetched roles to UI format
+          const formattedRoles = sortedData.map(r => {
+            const normalizedName = r.name.toLowerCase();
+            // Use mapped icon or fallback to Shield for custom roles
+            const Icon = ROLE_ICONS_MAP[normalizedName] || Shield;
+
+            return {
+              role: normalizedName,
+              label: r.name,
+              icon: Icon
+            };
+          });
+
+          // Sort: Priority roles first, then others
+          formattedRoles.sort((a, b) => {
+            const indexA = PRIORITY_ORDER.indexOf(a.role);
+            const indexB = PRIORITY_ORDER.indexOf(b.role);
+
+            const rankA = indexA === -1 ? Infinity : indexA;
+            const rankB = indexB === -1 ? Infinity : indexB;
+
+            return rankA - rankB;
+          });
+
+          // Optional: Merge with default roles if you want to ensure defaults always exist 
+          // even if DB is empty, or just use DB roles if you trust DB is seeded.
+          // For now, let's prioritize DB roles but keep defaults if DB is empty to avoid lockout.
+          if (formattedRoles.length > 0) {
+            setAvailableRoles(formattedRoles);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic roles:", err);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validatePassword = (password) =>
     /^(?=.*[a-z])(?=.*\d).{8,}$/.test(password);
-
-
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -50,10 +130,13 @@ const Login = () => {
 
     try {
       const result = await login(email, password, selectedRole);
-      if (!result.success) setError(result.message || "Login failed");
+      if (!result.success) {
+        setError(result.message || "Login failed");
+        setLoading(false); // Only stop loading if it failed
+      }
+      // If success, keep loading true while redirecting
     } catch {
       setError("Something went wrong");
-    } finally {
       setLoading(false);
     }
   };
@@ -137,18 +220,11 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="grid grid-cols-3 gap-2">
-              {[
-                  { role: "admin", label: "Admin", icon: Settings },
-                  { role: "superadmin", label: "Super Admin", icon: Shield },
-                  { role: "hod", label: "HOD", icon: UserCheck },
-                  { role: "staff", label: "Staff", icon: UserCheck },
-                  { role: "teacher", label: "Teacher", icon: Users },
-                  { role: "student", label: "Student", icon: Users },
-                  { role: "hr", label: "HR", icon: User },
-                ].map(({ role, label, icon: Icon }) => (
+              {availableRoles.map(({ role, label, icon: Icon }) => (
                 <button
                   key={role}
                   type="button"
+                  suppressHydrationWarning
                   onClick={() => setSelectedRole(role)}
                   className={`p-3 rounded-lg border-2 text-xs ${selectedRole === role
                     ? "border-blue-500 bg-blue-50 text-blue-700"
@@ -165,6 +241,7 @@ const Login = () => {
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
+                suppressHydrationWarning
                 placeholder="Enter your email or username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -177,6 +254,7 @@ const Login = () => {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type={showPassword ? "text" : "password"}
+                suppressHydrationWarning
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -185,6 +263,7 @@ const Login = () => {
               />
               <button
                 type="button"
+                suppressHydrationWarning
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
               >
@@ -194,6 +273,7 @@ const Login = () => {
 
             <button
               type="submit"
+              suppressHydrationWarning
               className="w-full py-2.5 rounded-lg flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700"
             >
               Sign In <ArrowRight className="ml-2 w-5 h-5" />

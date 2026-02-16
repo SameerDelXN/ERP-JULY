@@ -50,12 +50,21 @@ const Layout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+  // --- Sidebar Configuration ---
+  const sidebarItems = React.useMemo(() => {
+    // Inject Blogs into superadmin sidebar
+    const items = [...superadminSidebarItems];
+    const { BookOpen } = require("lucide-react");
+    items.push({ id: "blogs", label: "Blogs", icon: BookOpen });
+    return items;
+  }, []);
+
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     router.push(`/superadmin/${newTab}`);
   };
 
-  const activeTabItem = superadminSidebarItems.find((item) => item.id === activeTab);
+  const activeTabItem = sidebarItems.find((item) => item.id === activeTab);
 
   const getTitle = () => {
     return (
@@ -80,7 +89,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar
-        items={superadminSidebarItems}
+        items={sidebarItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}

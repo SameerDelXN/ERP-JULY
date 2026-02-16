@@ -16,9 +16,11 @@ import {
   X,
   Eye,
 } from "lucide-react";
+import ExportButton from "@/components/ExportButton";
 import { roles } from "@/data/data";
 import LoadingComponent from "@/components/Loading";
 import toast, { Toaster } from "react-hot-toast";
+
 
 const UserManagementPage = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -35,6 +37,81 @@ const UserManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedRoles, setExpandedRoles] = useState({});
+  const [dynamicRoles, setDynamicRoles] = useState([]);
+  const [isEditingStaff, setIsEditingStaff] = useState(false);
+  const [staffDetails, setStaffDetails] = useState(null);
+
+  const staffDepartments = [
+    'HR', 'Teacher', 'HOD', 'Account', 'Library', 'IT',
+    'Finance', 'Marketing', 'Operations', 'Administration',
+    'Security', 'Maintenance'
+  ];
+
+  // Merge static roles with dynamic roles for display/styling
+  const combinedRoles = React.useMemo(() => {
+    const staticMap = new Map(roles.map(r => [r.name.toLowerCase(), r]));
+    const roleMap = new Map();
+
+    // 1. Add static roles first (as base, mostly for colors)
+    // We only keep static roles that are NOT in dynamic content if we want to fallback? 
+    // But to "connect" correctly, we really want to mirror the DB.
+    // However, to be safe and keep UI colors, we will use static map for lookups.
+
+    // If we have dynamic roles, we prioritize them.
+    if (dynamicRoles.length > 0) {
+      dynamicRoles.forEach(r => {
+        const staticRole = staticMap.get(r.name.toLowerCase());
+        roleMap.set(r.name.toLowerCase(), {
+          id: r._id,
+          name: r.name,
+          color: staticRole ? staticRole.color : 'bg-gray-500', // Use static color if available
+          description: r.description || staticRole?.description
+        });
+      });
+    } else {
+      // Fallback: if no dynamic roles loaded yet, maybe show static ones?
+      // Or just return empty to avoid confusion. Let's return static for now to avoid empty screen flash if API is slow but we have valid static data (though risky for IDs).
+      // Actually, standard practice for "connecting" is ensuring source of truth is DB.
+      // Let's stick to: Use Dynamic Roles.
+      dynamicRoles.forEach(r => {
+        const staticRole = staticMap.get(r.name.toLowerCase());
+        roleMap.set(r.name.toLowerCase(), {
+          id: r._id,
+          name: r.name,
+          color: staticRole ? staticRole.color : 'bg-gray-500',
+          description: r.description
+        });
+      });
+    }
+
+    // If we want to ensure we don't hold onto stale static roles, we only return what's in roleMap.
+    // But we need to make sure we populate it.
+
+    // Revised Logic:
+    // We want all roles from DB.
+    // We want to decorate them with colors from static file.
+    return dynamicRoles.map(r => {
+      const staticRole = staticMap.get(r.name.toLowerCase());
+      return {
+        id: r._id,
+        name: r.name,
+        color: staticRole ? staticRole.color : 'bg-gray-500',
+        description: r.description
+      };
+    });
+  }, [dynamicRoles]);
+
+  const fetchRoles = async () => {
+    try {
+      const res = await fetch("/api/admin/roles");
+      const data = await res.json();
+      if (data.success) {
+        setDynamicRoles(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+    }
+  };
 
   const toggleRoleExpansion = (role) => {
     setExpandedRoles((prev) => ({
@@ -47,16 +124,21 @@ const UserManagementPage = () => {
   const groupUsersByRole = (usersToGroup) => {
     const grouped = {};
 
-    // Initialize groups for all roles
-    roles.forEach((role) => {
+    // Initialize groups for all combined roles
+    combinedRoles.forEach((role) => {
       grouped[role.name.toLowerCase()] = [];
     });
-    grouped["other"] = []; // For any unclassified roles
+    grouped["other"] = [];
 
     // Sort users into groups
     usersToGroup.forEach((user) => {
-      const roleKey = user.role.toLowerCase();
-      if (grouped[roleKey]) {
+      if (!user) return;
+      const roleKey = user.role?.toLowerCase();
+
+      // Check if this role key exists in our combined roles
+      const targetGroup = combinedRoles.find(r => r.name.toLowerCase() === roleKey);
+
+      if (targetGroup) {
         grouped[roleKey].push(user);
       } else {
         grouped["other"].push(user);
@@ -67,13 +149,24 @@ const UserManagementPage = () => {
   };
 
   useEffect(() => {
-    fetchAllUsers();
+    // Parallel fetch
+    const init = async () => {
+      setLoading(true);
+      await Promise.all([fetchRoles(), fetchAllUsers()]);
+      setLoading(false);
+    };
+    init();
   }, []);
+
+  // Refresh roles when modals open to ensure dropdowns are up to date
+  useEffect(() => {
+    if (showAddUserModal || showEditUserModal) {
+      fetchRoles();
+    }
+  }, [showAddUserModal, showEditUserModal]);
 
   const fetchAllUsers = async () => {
     try {
-      setLoading(true);
-
       // Fetch regular users
       const usersRes = await fetch("/api/userData");
       if (!usersRes.ok) throw new Error("Failed to fetch users");
@@ -97,8 +190,6 @@ const UserManagementPage = () => {
     } catch (err) {
       setError(err.message);
       console.error("Failed to fetch users:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -118,12 +209,77 @@ const UserManagementPage = () => {
     }
   };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = async (user) => {
     setCurrentUser({
       ...user,
-      role: user.role.toLowerCase(),
+      role: user.role?.toLowerCase(),
     });
+
+    if (user.role?.toLowerCase() === 'staff') {
+      setIsEditingStaff(true);
+      setLoading(true);
+      try {
+        const res = await fetch('/api/hr/staff');
+        const data = await res.json();
+        if (data.success) {
+          // Find staff by email
+          const staffMember = data.data.find(s => s.email === user.email);
+          if (staffMember) {
+            setStaffDetails(staffMember);
+          } else {
+            // If no staff record found, maybe initialize with user data
+            setStaffDetails({
+              name: user.fullName,
+              email: user.email,
+              staffId: "", // needs input
+              department: "",
+              designation: "",
+              salary: "",
+              contactNumber: user.phone
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching staff details:", err);
+        toast.error("Could not fetch staff details");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setIsEditingStaff(false);
+      setStaffDetails(null);
+    }
     setShowEditUserModal(true);
+  };
+
+  const handleStaffUpdate = async (updatedData) => {
+    try {
+      const url = staffDetails._id
+        ? `/api/hr/staff?id=${staffDetails._id}`
+        : `/api/hr/staff`;
+      const method = staffDetails._id ? 'PUT' : 'POST';
+
+      // Ensure we send password only if it's set (StaffForm handles this empty check mostly, but double check)
+      const payload = { ...updatedData };
+      if (!payload.password) delete payload.password;
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await res.json();
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update staff');
+      }
+
+      toast.success("Staff updated successfully");
+      setShowEditUserModal(false);
+      fetchAllUsers(); // Refresh main list
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   const handleDeleteUser = async (userId, userRole) => {
@@ -158,7 +314,7 @@ const UserManagementPage = () => {
   const filteredUsers = users.filter((user) => {
     const name = user?.fullName || "";
     const email = user?.email || "";
-    const role = user?.role.toLowerCase() || "";
+    const role = user?.role?.toLowerCase() || "";
 
     const matchesSearch =
       name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -208,6 +364,7 @@ const UserManagementPage = () => {
       email: "",
       phone: "",
       role: "",
+      roleId: "",
       password: "",
       confirmPassword: "",
       department: "",
@@ -238,6 +395,18 @@ const UserManagementPage = () => {
 
     const handleChange = (e) => {
       const { name, value } = e.target;
+
+      if (name === 'role') {
+        // handle role selection
+        const selectedRole = dynamicRoles.find(r => r.name.toLowerCase() === value);
+        setFormData(prev => ({
+          ...prev,
+          role: value,
+          roleId: selectedRole ? selectedRole._id : ""
+        }));
+        setErrors((prev) => ({ ...prev, role: "" }));
+        return;
+      }
 
       // Clear any existing error for this field
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -363,6 +532,7 @@ const UserManagementPage = () => {
           password: formData.password,
           confirmPassword: formData.confirmPassword,
           role: formData.role.toLowerCase(),
+          roleId: formData.roleId,
         };
 
         // Add teacher/HOD-specific fields
@@ -375,7 +545,7 @@ const UserManagementPage = () => {
             requestData.department = formData.department;
           }
         }
-        console.log(requestData);
+        console.log("Submitting Add User Payload:", requestData); // DEBUG
 
         const res = await fetch("/api/register", {
           method: "POST",
@@ -404,7 +574,7 @@ const UserManagementPage = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <Toaster/>
+        <Toaster />
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">Add New User</h2>
@@ -428,9 +598,8 @@ const UserManagementPage = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   maxLength={25}
-                  className={`w-full px-3 py-2 border ${
-                    errors.fullName ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.fullName ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter full name"
                 />
                 {errors.fullName && (
@@ -445,13 +614,12 @@ const UserManagementPage = () => {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.role ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.role ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 >
                   <option value="">Select Role</option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.name.toLowerCase()}>
+                  {dynamicRoles.map((role) => (
+                    <option key={role._id} value={role.name.toLowerCase()}>
                       {role.name}
                     </option>
                   ))}
@@ -464,75 +632,58 @@ const UserManagementPage = () => {
 
             {(formData.role.toLowerCase() === "teacher" ||
               formData.role.toLowerCase() === "hod") && (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {formData.role.toLowerCase() === "teacher" && (
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {formData.role.toLowerCase() === "teacher" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Department *
+                      </label>
+                      {!loadingCourses ? (
+                        <select
+                          id="department"
+                          name="department"
+                          value={formData.department}
+                          onChange={handleChange}
+                          required
+                          className={
+                            "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
+                          }
+                        >
+                          <option value="">{"Select a Department"}</option>
+                          {courseOptions.map((course, index) => (
+                            <option key={`course-${index}`} value={course.name}>
+                              {course.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
+                          Loading courses...
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department *
+                      Teacher ID *
                     </label>
-                    {/* <input
+                    <input
                       type="text"
-                      name="department"
-                      value={formData.department}
+                      name="teacherId"
+                      value={formData.teacherId}
                       onChange={handleChange}
-                      maxLength={20}
-                      className={`w-full px-3 py-2 border ${
-                        errors.department ? "border-red-500" : "border-gray-200"
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                      placeholder="Enter department"
+                      className={`w-full px-3 py-2 border ${errors.teacherId ? "border-red-500" : "border-gray-200"
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                      placeholder="Enter teacher ID like T-123"
                     />
-                    {errors.department && (
+                    {errors.teacherId && (
                       <p className="mt-1 text-sm text-red-600">
-                        {errors.department}
+                        {errors.teacherId}
                       </p>
-                    )} */}
-                    {!loadingCourses ? (
-                      <select
-                        id="department"
-                        name="department"
-                        value={formData.department}
-                        onChange={handleChange}
-                        required
-                        className={
-                          "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
-                        }
-                      >
-                        <option value="">{"Select a Department"}</option>
-                        {courseOptions.map((course, index) => (
-                          <option key={`course-${index}`} value={course.name}>
-                            {course.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
-                        Loading courses...
-                      </div>
                     )}
                   </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teacher ID *
-                  </label>
-                  <input
-                    type="text"
-                    name="teacherId"
-                    value={formData.teacherId}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border ${
-                      errors.teacherId ? "border-red-500" : "border-gray-200"
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                    placeholder="Enter teacher ID like T-123"
-                  />
-                  {errors.teacherId && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.teacherId}
-                    </p>
-                  )}
                 </div>
-              </div>
-            )}
+              )}
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
@@ -544,9 +695,8 @@ const UserManagementPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.email ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter email address"
                 />
                 {errors.email && (
@@ -562,9 +712,8 @@ const UserManagementPage = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.phone ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.phone ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter phone number"
                   maxLength={10}
                 />
@@ -584,9 +733,8 @@ const UserManagementPage = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.password ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter password"
                 />
                 {errors.password && (
@@ -602,11 +750,10 @@ const UserManagementPage = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.confirmPassword
-                      ? "border-red-500"
-                      : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.confirmPassword
+                    ? "border-red-500"
+                    : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Confirm password"
                 />
                 {errors.confirmPassword && (
@@ -628,9 +775,8 @@ const UserManagementPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${
-                  isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-                }`}
+                className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
               >
                 {isSubmitting ? (
                   <span>Processing...</span>
@@ -653,6 +799,7 @@ const UserManagementPage = () => {
       email: currentUser?.email || "",
       phone: currentUser?.phone || "",
       role: currentUser?.role || "",
+      roleId: currentUser?.roleId || "",
       department: currentUser?.department || "",
       teacherId: currentUser?.teacherId || "",
     });
@@ -667,8 +814,6 @@ const UserManagementPage = () => {
         if (!response.ok) throw new Error("Failed to fetch departments");
         const departments = await response.json();
 
-        console.log(departments);
-
         setCourseOptions(departments.courses);
       } catch (error) {
         console.error("Error fetching departments:", error);
@@ -681,8 +826,35 @@ const UserManagementPage = () => {
       fetchDepartments();
     }, []);
 
+    // Auto-populate roleId if missing but role name matches a dynamic role (Fix for legacy users)
+    useEffect(() => {
+      if (formData.role && !formData.roleId && dynamicRoles.length > 0) {
+        const matchingRole = dynamicRoles.find(r => r.name.toLowerCase() === formData.role.toLowerCase());
+        if (matchingRole) {
+          console.log("Auto-populating missing roleId for:", formData.role, "->", matchingRole._id);
+          setFormData(prev => ({ ...prev, roleId: matchingRole._id }));
+        }
+      }
+    }, [formData.role, dynamicRoles, formData.roleId]);
+
     const handleChange = (e) => {
       const { name, value } = e.target;
+
+      if (name === 'role') {
+        // handle role selection
+        console.log("Looking for role:", value);
+        console.log("Available Dynamic Roles:", dynamicRoles);
+        const selectedRole = dynamicRoles.find(r => r.name.toLowerCase() === value);
+        console.log("Found Role Object:", selectedRole);
+
+        setFormData(prev => ({
+          ...prev,
+          role: value,
+          roleId: selectedRole ? selectedRole._id : ""
+        }));
+        setErrors((prev) => ({ ...prev, role: "" }));
+        return;
+      }
 
       // Clear any existing error for this field
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -783,6 +955,7 @@ const UserManagementPage = () => {
           email: formData.email,
           phone: formData.phone,
           role: formData.role.toLowerCase(),
+          roleId: formData.roleId,
         };
 
         // Add teacher-specific fields if role is teacher
@@ -798,7 +971,8 @@ const UserManagementPage = () => {
 
         // Determine the endpoint based on current user role
         const endpoint =
-          currentUser.role === "teacher" || currentUser.role === "hod"
+          currentUser.role.toLowerCase() === "teacher" ||
+            currentUser.role.toLowerCase() === "hod"
             ? `/api/teachers/${currentUser._id}`
             : `/api/userData/${currentUser._id}`;
 
@@ -813,13 +987,12 @@ const UserManagementPage = () => {
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.message || "Failed to update user");
+          throw new Error(data.message || "Update failed");
         }
 
-        // Refresh user list
-        await fetchAllUsers();
-        toast.success("User updated successfully!");
+        toast.success("User updated successfully");
         setShowEditUserModal(false);
+        fetchAllUsers();
       } catch (err) {
         toast.error(err.message);
         console.error("Update error:", err);
@@ -827,10 +1000,10 @@ const UserManagementPage = () => {
         setIsSubmitting(false);
       }
     };
-    console.log(formData);
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <Toaster/>
+        <Toaster />
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-gray-900">Edit User</h2>
@@ -853,9 +1026,9 @@ const UserManagementPage = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.fullName ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  maxLength={25}
+                  className={`w-full px-3 py-2 border ${errors.fullName ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter full name"
                 />
                 {errors.fullName && (
@@ -870,14 +1043,12 @@ const UserManagementPage = () => {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  disabled
-                  className={`w-full px-3 py-2 border ${
-                    errors.role ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.role ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 >
                   <option value="">Select Role</option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.name.toLowerCase()}>
+                  {dynamicRoles.map((role) => (
+                    <option key={role._id} value={role.name.toLowerCase()}>
                       {role.name}
                     </option>
                   ))}
@@ -890,59 +1061,58 @@ const UserManagementPage = () => {
 
             {(formData.role.toLowerCase() === "teacher" ||
               formData.role.toLowerCase() === "hod") && (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {formData.role.toLowerCase() === "teacher" && (
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {formData.role.toLowerCase() === "teacher" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Department *
+                      </label>
+                      {!loadingCourses ? (
+                        <select
+                          id="department"
+                          name="department"
+                          value={formData.department}
+                          onChange={handleChange}
+                          required
+                          className={
+                            "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
+                          }
+                        >
+                          <option value="">{"Select a Department"}</option>
+                          {courseOptions.map((course, index) => (
+                            <option key={`course-${index}`} value={course.name}>
+                              {course.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
+                          Loading courses...
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department *
+                      Teacher ID *
                     </label>
-                    {!loadingCourses ? (
-                      <select
-                        id="department"
-                        name="department"
-                        value={formData.department}
-                        onChange={handleChange}
-                        required
-                        className={
-                          "w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none bg-gray-100"
-                        }
-                      >
-                        <option value="">{"Select a Department"}</option>
-                        {courseOptions.map((course, index) => (
-                          <option key={`course-${index}`} value={course.name}>
-                            {course.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 animate-pulse">
-                        Loading courses...
-                      </div>
+                    <input
+                      type="text"
+                      name="teacherId"
+                      value={formData.teacherId}
+                      onChange={handleChange}
+                      className={`w-full px-3 py-2 border ${errors.teacherId ? "border-red-500" : "border-gray-200"
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                      placeholder="Enter teacher ID like T-123"
+                    />
+                    {errors.teacherId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.teacherId}
+                      </p>
                     )}
                   </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teacher ID *
-                  </label>
-                  <input
-                    type="text"
-                    name="teacherId"
-                    value={formData.teacherId}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border ${
-                      errors.teacherId ? "border-red-500" : "border-gray-200"
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
-                    placeholder="Enter teacher ID"
-                  />
-                  {errors.teacherId && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.teacherId}
-                    </p>
-                  )}
                 </div>
-              </div>
-            )}
+              )}
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
@@ -954,9 +1124,8 @@ const UserManagementPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.email ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter email address"
                 />
                 {errors.email && (
@@ -972,12 +1141,10 @@ const UserManagementPage = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  maxLength={10}
-                  minLength={10}
-                  className={`w-full px-3 py-2 border ${
-                    errors.phone ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.phone ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter phone number"
+                  maxLength={10}
                 />
                 {errors.phone && (
                   <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -996,16 +1163,15 @@ const UserManagementPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${
-                  isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-                }`}
+                className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
               >
                 {isSubmitting ? (
-                  <span>Updating...</span>
+                  <span>Processing...</span>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span>Update User</span>
+                    <span>Save Changes</span>
                   </>
                 )}
               </button>
@@ -1015,117 +1181,79 @@ const UserManagementPage = () => {
       </div>
     );
   };
+
   const PerformanceModal = () => {
     if (!userPerformance) return null;
 
-    const conversionRate =
-      userPerformance.totalEnquiries > 0
-        ? (
-            (userPerformance.convertedEnquiries /
-              userPerformance.totalEnquiries) *
-            100
-          ).toFixed(2)
-        : 0;
-
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <Toaster/>
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-medium text-gray-900">
-              {currentUser?.fullName}'s Performance
-            </h2>
+            <h2 className="text-xl font-bold">Performance Overview</h2>
             <button
               onClick={() => setShowPerformanceModal(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-500 hover:text-gray-700"
             >
-              <X className="w-5 h-5" />
+              <X size={24} />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">
-                Total Enquiries
-              </h3>
-              <p className="text-2xl font-bold text-blue-600">
-                {userPerformance.totalEnquiries}
-              </p>
+          <div className="space-y-6">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500">Attendance Rate</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {userPerformance.attendanceRate}%
+                </p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500">Tasks Completed</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {userPerformance.tasksCompleted}
+                </p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500">Average Rating</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {userPerformance.avgRating}/5
+                </p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-500">Active Days</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {userPerformance.activeDays}
+                </p>
+              </div>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-              <h3 className="text-sm font-medium text-green-800 mb-2">
-                Converted Enquiries
-              </h3>
-              <p className="text-2xl font-bold text-green-600">
-                {userPerformance.convertedEnquiries}
-              </p>
-            </div>
-
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-              <h3 className="text-sm font-medium text-purple-800 mb-2">
-                Admission Applications
-              </h3>
-              <p className="text-2xl font-bold text-purple-600">
-                {userPerformance.admissionApplications}
-              </p>
-            </div>
-
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-              <h3 className="text-sm font-medium text-yellow-800 mb-2">
-                Conversion Rate
-              </h3>
-              <p className="text-2xl font-bold text-yellow-600">
-                {conversionRate}%
-              </p>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">
-              Recent Enquiries
-            </h3>
-            {userPerformance.recentEnquiries.length > 0 ? (
-              <div className="space-y-2">
-                {userPerformance.recentEnquiries.map((enquiry) => (
+            {/* Recent Activity */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Recent Activity</h3>
+              <div className="space-y-3">
+                {userPerformance.recentActivity?.map((activity, index) => (
                   <div
-                    key={enquiry._id}
-                    className="p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
+                    key={index}
+                    className="flex justify-between items-center p-3 bg-gray-50 rounded"
                   >
-                    <div className="flex justify-between">
-                      <span className="font-medium">
-                        {enquiry.first} {enquiry.last}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          enquiry.status === "Converted"
-                            ? "bg-green-100 text-green-800"
-                            : enquiry.status === "Lost"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-blue-100 text-blue-800"
+                    <div>
+                      <p className="font-medium">{activity.action}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(activity.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded text-sm ${activity.status === "completed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
                         }`}
-                      >
-                        {enquiry.status}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      {enquiry.courseInterested}
-                    </div>
+                    >
+                      {activity.status}
+                    </span>
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-gray-500">No recent enquiries</p>
-            )}
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setShowPerformanceModal(false)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              Close
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1133,236 +1261,206 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Toaster/>
-      <div className="p-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-          <div className="flex border-b border-gray-100">
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 ${
-                activeTab === "users"
-                  ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Users</span>
-              <span className="ml-1 bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs">
-                {users.length}
-              </span>
-            </button>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <Toaster />
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+          <p className="text-gray-500 text-sm">
+            Manage your organization members and their roles
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <ExportButton
+            data={users.map(u => ({
+              Name: u.fullName,
+              Email: u.email,
+              Role: u.role,
+              Phone: u.phone,
+              Status: u.status || "Active"
+            }))}
+            filename="User_List"
+          />
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm shadow-blue-200"
+          >
+            <UserPlus size={20} />
+            Add User
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center justify-between">
+          <div className="relative flex-1 min-w-[240px] max-w-md">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Search users..."
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-
-          <div className="p-6">
-            {activeTab === "users" && (
-              <div>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full">
-                    <div className="relative flex-1 max-w-md">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="text"
-                        placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full text-sm transition-all duration-200"
-                      />
-                    </div>
-
-                    <div className="relative">
-                      <select
-                        value={filterRole}
-                        onChange={(e) => setFilterRole(e.target.value)}
-                        className="appearance-none pl-3 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm w-full sm:w-48 transition-all duration-200"
-                      >
-                        <option value="all">All Roles</option>
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.name.toLowerCase()}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
-                      <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setShowAddUserModal(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    <span>Add User</span>
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {Object.entries(roleGroups).map(([role, usersInRole]) => {
-                    if (usersInRole.length === 0) return null;
-
-                    const isExpanded = expandedRoles[role] !== false;
-                    const roleInfo = roles.find(
-                      (r) => r.name.toLowerCase() === role
-                    ) || {
-                      name: role.charAt(0).toUpperCase() + role.slice(1),
-                      color: "gray",
-                    };
-
-                    return (
-                      <div
-                        key={role}
-                        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-                      >
-                        <div
-                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
-                          onClick={() => toggleRoleExpansion(role)}
-                        >
-                          <div className="flex items-center">
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mr-3 ${
-                                role === "admin"
-                                  ? "bg-red-100 text-red-800"
-                                  : role === "teacher"
-                                  ? "bg-green-100 text-green-800"
-                                  : role === "staff"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : role === "hod"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : role === "hr"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {roleInfo.name}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {usersInRole.length}{" "}
-                              {usersInRole.length === 1 ? "user" : "users"}
-                            </span>
-                          </div>
-                          <div className="text-gray-400">
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </div>
-
-                        {isExpanded && (
-                          <div className="border-t border-gray-100">
-                            <div className="overflow-x-auto">
-                              <table className="w-full divide-y divide-gray-100">
-                                <thead className="bg-gray-50">
-                                  <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      User
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Contact
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Actions
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-100">
-                                  {usersInRole.map((user) => (
-                                    <tr
-                                      key={user._id}
-                                      className="hover:bg-gray-50 transition-colors"
-                                    >
-                                      <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                          <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-                                            {user.fullName?.charAt(0) || "U"}
-                                          </div>
-                                          <div className="ml-4">
-                                            <div className="text-sm font-semibold text-gray-900">
-                                              {user.fullName}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                              {user.email}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2 text-sm text-gray-900">
-                                          <Phone className="w-4 h-4 text-gray-400" />
-                                          {user.phone || "N/A"}
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex items-center justify-end gap-3">
-                                          {role === "staff" && (
-                                            <button
-                                              onClick={() => {
-                                                setCurrentUser(user);
-                                                fetchUserPerformance(user._id);
-                                              }}
-                                              className="text-gray-400 hover:text-green-600 transition-colors p-1 rounded-full hover:bg-green-50"
-                                              title="View Performance"
-                                            >
-                                              <Eye className="w-4 h-4" />
-                                            </button>
-                                          )}
-                                          <button
-                                            onClick={() => handleEditUser(user)}
-                                            className="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
-                                            title="Edit"
-                                          >
-                                            <Edit className="w-4 h-4" />
-                                          </button>
-                                          <button
-                                            onClick={() =>
-                                              handleDeleteUser(
-                                                user._id,
-                                                user.role
-                                              )
-                                            }
-                                            className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50"
-                                            title="Delete"
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {sortedUsers.length === 0 && (
-                  <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-                    <div className="flex flex-col items-center justify-center gap-2 text-gray-400">
-                      <Users className="w-8 h-8" />
-                      <p className="text-sm font-medium">No users found</p>
-                      {searchTerm && (
-                        <button
-                          onClick={() => setSearchTerm("")}
-                          className="text-blue-600 text-xs hover:underline mt-2"
-                        >
-                          Clear search
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+          <div className="flex gap-3">
+            <div className="relative">
+              <Filter
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <select
+                className="pl-10 pr-8 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white cursor-pointer"
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+              >
+                <option value="all">All Roles</option>
+                {dynamicRoles.map(r => (
+                  <option key={r._id} value={r.name.toLowerCase()}>{r.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            </div>
+            <select
+              className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              value={sortBy}
+              onChange={(e) => handleSort(e.target.value)}
+            >
+              <option value="name">Sort by Name</option>
+              <option value="date">Sort by Date</option>
+              <option value="role">Sort by Role</option>
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Modals */}
+      <div className="space-y-6">
+        {Object.entries(roleGroups).map(([role, usersInRole]) => {
+          // Find the role definition for display (color/name)
+          const roleDef = combinedRoles.find(r => r.name.toLowerCase() === role) || { name: role, color: 'bg-gray-500' };
+
+          // Hide roles with no users unless it's a dynamic role we might want to show empty?
+          // Existing logic seemed to show all. 
+          // Let's show if it has users or if it matches dynamic roles?
+          if (usersInRole.length === 0) return null;
+
+          const isExpanded = expandedRoles[role] ?? true;
+
+          return (
+            <div
+              key={role}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              <div
+                className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => toggleRoleExpansion(role)}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${roleDef.color || 'bg-gray-500'
+                      }`}
+                  >
+                    {roleDef.name.toUpperCase()}
+                  </span>
+                  <h3 className="font-semibold text-gray-700">
+                    {roleDef.name} Users
+                  </h3>
+                  <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                    {usersInRole.length}
+                  </span>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="text-gray-400" size={20} />
+                ) : (
+                  <ChevronDown className="text-gray-400" size={20} />
+                )}
+              </div>
+
+              {isExpanded && (
+                <div className="divide-y divide-gray-100">
+                  {usersInRole.map((user) => (
+                    <div
+                      key={user._id}
+                      className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
+                          {user.fullName?.charAt(0) || user.name?.charAt(0) || "U"}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {user.fullName || user.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {user.email} • {user.phone}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Permissions Preview (based on Dynamic Role) */}
+                      {user.roleId?.permissions && (
+                        <div className="hidden md:flex gap-1">
+                          {user.roleId.permissions.slice(0, 2).map((p, i) => (
+                            <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
+                              {p}
+                            </span>
+                          ))}
+                          {user.roleId.permissions.length > 2 && (
+                            <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
+                              +{user.roleId.permissions.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => fetchUserPerformance(user._id)}
+                          className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="View Performance"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit User"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user._id, user.role.toLowerCase())}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete User"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {filteredUsers.length === 0 && (
+          <div className="text-center py-12">
+            <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="text-gray-400" size={32} />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900">
+              No users found
+            </h3>
+            <p className="text-gray-500">
+              Try adjusting your search or filters
+            </p>
+          </div>
+        )}
+      </div>
+
       {showAddUserModal && <AddUserModal />}
       {showEditUserModal && <EditUserModal />}
       {showPerformanceModal && <PerformanceModal />}

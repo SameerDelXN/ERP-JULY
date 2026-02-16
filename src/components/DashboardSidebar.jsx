@@ -21,9 +21,8 @@ const DashboardSidebar = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 z-50 w-64 h-screen bg-white shadow-2xl transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none lg:border-r lg:border-gray-100 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 z-50 w-64 h-screen bg-white shadow-2xl transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-none lg:border-r lg:border-gray-100 ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
@@ -40,7 +39,7 @@ const DashboardSidebar = ({
             <div className="mt-10">
               <div className="w-40 h-40 flex items-center justify-center ">
                 {" "}
-                
+
                 {/* Increase width/height */}
                 <Image
                   width={1920}
@@ -69,20 +68,18 @@ const DashboardSidebar = ({
                   onTabChange(item.id);
                   onClose();
                 }}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 group ${
-                  activeTab === item.id
-                    ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                className={`w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group ${activeTab === item.id
+                    ? "bg-white text-blue-700 shadow-sm border border-blue-100"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                  }`}
               >
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
-                      ? "bg-blue-100 text-blue-600"
-                      : "bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700"
-                  }`}
+                  className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 flex-shrink-0 ${activeTab === item.id
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                      : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+                    }`}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className="w-6 h-6 stroke-[1.5]" />
                 </div>
                 <span className="font-medium text-sm">{item.label}</span>
               </button>

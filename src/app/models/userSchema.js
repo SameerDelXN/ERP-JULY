@@ -31,8 +31,12 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "superadmin", "staff", "teacher", "hod", "hr"],
       default: "student",
+    },
+
+    roleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
     },
 
     isVerified: {

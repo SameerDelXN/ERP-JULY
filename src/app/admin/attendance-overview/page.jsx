@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarDays, Search, TrendingUp, User } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import ExportButton from '@/components/ExportButton';
 
 export default function AdminAttendanceOverview() {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -11,7 +12,7 @@ export default function AdminAttendanceOverview() {
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
-  
+
   // New state for period selection
   const [periodType, setPeriodType] = useState('weekly'); // 'weekly', 'monthly', 'yearly'
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek());
@@ -42,7 +43,7 @@ export default function AdminAttendanceOverview() {
       startOfWeek.setDate(date.getDate() - date.getDay());
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
-      
+
       weeks.push({
         value: startOfWeek.toISOString().slice(0, 10),
         label: `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -78,7 +79,7 @@ export default function AdminAttendanceOverview() {
   // Get all dates in the selected period
   function getDatesInPeriod() {
     const dates = [];
-    
+
     if (periodType === 'weekly') {
       const start = new Date(selectedWeek);
       for (let i = 0; i < 7; i++) {
@@ -101,7 +102,7 @@ export default function AdminAttendanceOverview() {
         }
       }
     }
-    
+
     return dates;
   }
 
@@ -113,8 +114,8 @@ export default function AdminAttendanceOverview() {
         body: JSON.stringify({ staffId, date, status: newStatus }),
       });
       if (!res.ok) throw new Error("Failed to update attendance");
-      
-      setAttendanceRecords(prev => 
+
+      setAttendanceRecords(prev =>
         prev.map(r => r.id === staffId && r.date === date ? { ...r, status: newStatus } : r)
       );
     } catch (error) {
@@ -128,7 +129,7 @@ export default function AdminAttendanceOverview() {
       try {
         const dates = getDatesInPeriod();
         const allRecords = [];
-        
+
         // Fetch attendance for each date in the period
         for (const date of dates) {
           try {
@@ -216,8 +217,8 @@ export default function AdminAttendanceOverview() {
   const selectedEmployeeData = uniqueEmployees.find(e => e.id === selectedEmployee);
 
   // Calculate attendance percentage
-  const attendancePercentage = stats.total > 0 
-    ? ((stats.present / stats.total) * 100).toFixed(1) 
+  const attendancePercentage = stats.total > 0
+    ? ((stats.present / stats.total) * 100).toFixed(1)
     : 0;
 
   // Get period display text
@@ -251,12 +252,23 @@ export default function AdminAttendanceOverview() {
           <User className="mr-3 text-indigo-600" size={32} />
           <h1 className="text-2xl font-bold">Attendance Overview</h1>
         </div>
+        <ExportButton
+          data={filteredRecords.map(r => ({
+            "Employee": r.employeeName,
+            "ID": r.employeeId,
+            "Role": r.role,
+            "Department": r.department,
+            "Status": r.status,
+            "Date": new Date(r.date).toLocaleDateString()
+          }))}
+          filename={`Attendance_Report_${getPeriodDisplayText()}`}
+        />
       </div>
 
       {/* Filter Section */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Filter Attendance</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Search Bar */}
           <div>
@@ -477,11 +489,10 @@ export default function AdminAttendanceOverview() {
           <div className="space-y-3">
             <button
               onClick={() => setFilter('all')}
-              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                filter === 'all' 
-                  ? 'border-indigo-500 bg-indigo-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${filter === 'all'
+                ? 'border-indigo-500 bg-indigo-50'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium">All Status</span>
@@ -490,11 +501,10 @@ export default function AdminAttendanceOverview() {
             </button>
             <button
               onClick={() => setFilter('Present')}
-              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                filter === 'Present' 
-                  ? 'border-green-500 bg-green-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${filter === 'Present'
+                ? 'border-green-500 bg-green-50'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-green-700">Present</span>
@@ -503,11 +513,10 @@ export default function AdminAttendanceOverview() {
             </button>
             <button
               onClick={() => setFilter('Absent')}
-              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                filter === 'Absent' 
-                  ? 'border-red-500 bg-red-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${filter === 'Absent'
+                ? 'border-red-500 bg-red-50'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-red-700">Absent</span>
@@ -516,11 +525,10 @@ export default function AdminAttendanceOverview() {
             </button>
             <button
               onClick={() => setFilter('Leave')}
-              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                filter === 'Leave' 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${filter === 'Leave'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-blue-700">On Leave</span>

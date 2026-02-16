@@ -1,11 +1,11 @@
 "use client";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import React, { useState, useEffect, useRef } from "react";
-import { adminSidebarItems } from "@/data/data";
-import { Bell, ChevronDown, LogOut, User, Settings, Shield, Moon, Sun } from "lucide-react";
+import { adminSidebarItems, ROUTE_PERMISSIONS } from "@/data/data";
+import { Bell, ChevronDown, LogOut, User, Settings, Shield, BookOpen } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Unauthorized from "@/components/Unauthorized";
 import { useSession } from "@/context/SessionContext";
 import Loading from "@/components/Loading";
@@ -13,6 +13,8 @@ import Loading from "@/components/Loading";
 const Layout = ({ children }) => {
   const { user, loading, logout } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+
   const [activeTab, setActiveTab] = useState(adminSidebarItems[0]?.id || "overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -20,20 +22,53 @@ const Layout = ({ children }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
-  // Close profile dropdown when clicking outside
+  // --- Route Protection ---
+  useEffect(() => {
+    if (!loading && user) {
+      const currentPath = pathname;
+      // Find if the current path matches any protected route prefix
+      const requiredPermission = Object.entries(ROUTE_PERMISSIONS).find(([route, perm]) => currentPath.startsWith(route))?.[1];
+
+      if (requiredPermission) {
+        const userPerms = user.roleId?.permissions || [];
+        if (!userPerms.includes(requiredPermission)) {
+          console.warn(`Access denied to ${currentPath}. Missing: ${requiredPermission}`);
+          router.replace('/admin/dashboard');
+        }
+      }
+    }
+  }, [pathname, user, loading, router]);
+
+  // --- Sidebar Filtering ---
+  const filteredSidebarItems = React.useMemo(() => {
+    if (!user) return [];
+    const perms = user.roleId?.permissions || [];
+
+    // Strict Mode: Only show items that are explicitly allowed in permissions
+    const items = adminSidebarItems.filter(item => perms.includes(`sidebar.${item.id}`));
+
+    // Inject Blogs for SuperAdmin ONLY (Bypassing permission system)
+    // Inject Blogs for SuperAdmin ONLY (Bypassing permission system)
+    if (user.role === 'superadmin') {
+      items.push({ id: "blogs", label: "Blogs", icon: BookOpen });
+    }
+    return items;
+  }, [user]);
+
+  // --- Click Outside Handler ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  // --- Auth Check ---
   useEffect(() => {
     if (loading) return;
 
@@ -42,7 +77,7 @@ const Layout = ({ children }) => {
       return;
     }
 
-    if (user.role === "admin") {
+    if (user.role === "admin" || user.role === "superadmin") { // Allow superadmin too just in case
       setIsAuthorized(true);
     } else {
       setIsAuthorized(false);
@@ -51,6 +86,8 @@ const Layout = ({ children }) => {
     setIsLoading(false);
   }, [user, loading, router]);
 
+
+  // --- Handlers ---
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
     if (newTab === "overview") {
@@ -89,13 +126,13 @@ const Layout = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <DashboardSidebar
-        items={adminSidebarItems}
+        items={filteredSidebarItems}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      
+
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
@@ -110,56 +147,50 @@ const Layout = ({ children }) => {
             </button>
 
             {/* User Profile Section */}
-            <div 
+            <div
               ref={profileRef}
               className="relative flex items-center space-x-3 px-3 py-2 rounded-2xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100/50 transition-all duration-300 cursor-pointer group border border-transparent hover:border-gray-200/50"
               onClick={() => setProfileOpen(!profileOpen)}
             >
-              {/* Avatar with Enhanced Styling */}
               <div className="relative">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 group-hover:scale-105 p-0.5 transition-transform duration-300">
                   <div className="w-full h-full rounded-full bg-white p-0.5">
-                    <Avatar name={user?.username || "admin User"} />
+                    <Avatar name={user?.username || "Admin User"} />
                   </div>
                 </div>
               </div>
 
-              {/* User Info with Enhanced Typography */}
               <div className="hidden sm:block">
                 <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-700 transition-colors duration-200">
-                  {user?.username || "admin User"}
+                  {user?.username || "Admin User"}
                 </p>
                 <p className="text-xs text-gray-500 flex items-center gap-1">
                   <Shield className="w-3 h-3" />
-                  admin Member
+                  Admin
                 </p>
               </div>
 
-              {/* Dropdown Arrow with Enhanced Animation */}
               <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-all duration-300 ${profileOpen ? 'transform rotate-180 text-blue-500' : ''}`} />
 
-              {/* Enhanced Profile Dropdown */}
+              {/* Profile Dropdown */}
               {profileOpen && (
                 <div className="absolute right-0 top-14 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl py-2 z-50 border border-gray-200/50 animate-in slide-in-from-top-2 duration-200">
-                  {/* Profile Header */}
                   <div className="px-4 py-4 border-b border-gray-100/50">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
                         <div className="w-full h-full rounded-full bg-white p-0.5">
-                          <Avatar name={user?.username || "admin User"} />
+                          <Avatar name={user?.username || "Admin User"} />
                         </div>
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{user?.username || "admin User"}</p>
-                        <p className="text-sm text-gray-500">{user?.email || "admin@company.com"}</p>
-     
+                        <p className="font-semibold text-gray-900">{user?.username || "Admin User"}</p>
+                        <p className="text-sm text-gray-500">{user?.email || "admin@techedu.com"}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Menu Items */}
                   <div className="py-2">
-                     <button
+                    <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200 group"
                       onClick={() => router.push('/admin/profile')}
                     >
@@ -170,7 +201,7 @@ const Layout = ({ children }) => {
                         <p className="font-medium">Profile Settings</p>
                         <p className="text-xs text-gray-500">Manage your account</p>
                       </div>
-                    </button> 
+                    </button>
                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700 transition-all duration-200 group"
                       onClick={() => router.push('/admin/settings')}
@@ -185,7 +216,6 @@ const Layout = ({ children }) => {
                     </button>
                   </div>
 
-                  {/* Logout Button */}
                   <div className="px-4 py-2 border-t border-gray-100/50">
                     <button
                       className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-700 transition-all duration-200 group rounded-lg"
@@ -204,7 +234,7 @@ const Layout = ({ children }) => {
               )}
             </div>
           </Header>
-        </div>  
+        </div>
 
         {/* Scrollable main area */}
         <main className="flex-1 overflow-y-auto pt-20 px-6">{children}</main>

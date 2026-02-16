@@ -9,22 +9,24 @@ import Modules from "@/components/Landing/Modules";
 import Navbar from "@/components/Landing/Navbar";
 import CircularPillars from "@/components/Landing/CircularPillars"
 import Testimonials from "@/components/Landing/Testimonials";
+import BlogsSection from "@/components/Landing/BlogsSection";
 import Image from "next/image";
 
 
 export default function Home() {
   return (
-   <>
-    <Navbar/>
-    <HeroSection/>
-    <CircularPillars/>
-    <Benefits/>
-    <Modules/>
-    <Features/>
-    <Testimonials/>
-    {/* <CTA/> */}
-    <ContactSection/>
-    <Footer/>
-   </>
+    <>
+      <Navbar />
+      <HeroSection />
+      <CircularPillars />
+      <Benefits />
+      <Modules />
+      <Features />
+      <Testimonials />
+      <BlogsSection />
+      {/* <CTA/> */}
+      <ContactSection />
+      <Footer />
+    </>
   );
 }

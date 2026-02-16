@@ -36,6 +36,7 @@ import {
 import Image from "next/image";
 import LoadingComponent from "@/components/Loading";
 import toast, { Toaster } from "react-hot-toast";
+import ExportButton from "@/components/ExportButton";
 
 const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
   const [enquiry, setEnquiry] = useState(null);
@@ -175,23 +176,20 @@ const EnquiryDetailsModal = ({ enquiryId, enquiries, onClose }) => {
               label="Full Name"
               value={
                 <span className="group relative inline-block">
-                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${
-                    enquiry.last || ""
-                  }`
+                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${enquiry.last || ""
+                    }`
                     .trim()
                     .substring(0, 25) || "N/A"}
-                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${
-                    enquiry.last || ""
-                  }`.trim().length > 25 && (
-                    <>
-                      <span>...</span>
-                      <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
-                        {`${enquiry.first || ""} ${enquiry.middle || ""} ${
-                          enquiry.last || ""
-                        }`.trim()}
-                      </span>
-                    </>
-                  )}
+                  {`${enquiry.first || ""} ${enquiry.middle || ""} ${enquiry.last || ""
+                    }`.trim().length > 25 && (
+                      <>
+                        <span>...</span>
+                        <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                          {`${enquiry.first || ""} ${enquiry.middle || ""} ${enquiry.last || ""
+                            }`.trim()}
+                        </span>
+                      </>
+                    )}
                 </span>
               }
               bgColor="bg-blue-50"
@@ -616,17 +614,17 @@ const EnquiriesLeads = () => {
         prevEnquiries.map((enquiry) =>
           enquiry._id === enquiryId
             ? {
-                ...enquiry,
-                counsellorId: counselorId,
-                status: "In Progress",
-                followUps: [
-                  ...(enquiry.followUps || []),
-                  {
-                    date: new Date(followUpDate).toISOString(),
-                    note: followUpNote || "Assigned Counselor",
-                  },
-                ],
-              }
+              ...enquiry,
+              counsellorId: counselorId,
+              status: "In Progress",
+              followUps: [
+                ...(enquiry.followUps || []),
+                {
+                  date: new Date(followUpDate).toISOString(),
+                  note: followUpNote || "Assigned Counselor",
+                },
+              ],
+            }
             : enquiry
         )
       );
@@ -762,19 +760,17 @@ const EnquiriesLeads = () => {
                     setActiveTab(tab.key);
                     setCurrentPage(1);
                   }}
-                  className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                    activeTab === tab.key
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === tab.key
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   {tab.label}
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                      activeTab === tab.key
-                        ? "bg-white/20 text-white"
-                        : "bg-white text-gray-600"
-                    }`}
+                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.key
+                      ? "bg-white/20 text-white"
+                      : "bg-white text-gray-600"
+                      }`}
                   >
                     {tab.count}
                   </span>
@@ -811,6 +807,17 @@ const EnquiriesLeads = () => {
                   results
                 </p>
               </div>
+              <ExportButton
+                data={filteredEnquiries.map(e => ({
+                  "Full Name": `${e.first || ''} ${e.last || ''}`,
+                  "Email": e.email,
+                  "Phone": e.phone,
+                  "Course": e.courseInterested,
+                  "Status": e.status,
+                  "Date": new Date(e.createdAt).toLocaleDateString()
+                }))}
+                filename={`Enquiries_${activeTab}`}
+              />
             </div>
           </div>
 
@@ -869,23 +876,20 @@ const EnquiriesLeads = () => {
                           </div>
                           <div>
                             <span className="group relative inline-block">
-                              {`${enquiry.first || ""} ${
-                                enquiry.middle || ""
-                              } ${enquiry.last || ""}`
+                              {`${enquiry.first || ""} ${enquiry.middle || ""
+                                } ${enquiry.last || ""}`
                                 .trim()
                                 .substring(0, 25) || "N/A"}
-                              {`${enquiry.first || ""} ${
-                                enquiry.middle || ""
-                              } ${enquiry.last || ""}`.trim().length > 25 && (
-                                <>
-                                  <span>...</span>
-                                  <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
-                                    {`${enquiry.first || ""} ${
-                                      enquiry.middle || ""
-                                    } ${enquiry.last || ""}`.trim()}
-                                  </span>
-                                </>
-                              )}
+                              {`${enquiry.first || ""} ${enquiry.middle || ""
+                                } ${enquiry.last || ""}`.trim().length > 25 && (
+                                  <>
+                                    <span>...</span>
+                                    <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap bottom-full left-1/2 transform -translate-x-1/2">
+                                      {`${enquiry.first || ""} ${enquiry.middle || ""
+                                        } ${enquiry.last || ""}`.trim()}
+                                    </span>
+                                  </>
+                                )}
                             </span>
                             <p className="text-sm text-gray-600">
                               {enquiry.email || "N/A"}
@@ -924,9 +928,9 @@ const EnquiriesLeads = () => {
                           <p className="text-gray-600">
                             {enquiry.createdAt
                               ? new Date(enquiry.createdAt).toLocaleTimeString(
-                                  [],
-                                  { hour: "2-digit", minute: "2-digit" }
-                                )
+                                [],
+                                { hour: "2-digit", minute: "2-digit" }
+                              )
                               : ""}
                           </p>
                         </div>
@@ -989,11 +993,10 @@ const EnquiriesLeads = () => {
                           <button
                             key={pageNumber}
                             onClick={() => paginate(pageNumber)}
-                            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                              currentPage === pageNumber
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-600 hover:bg-gray-100"
-                            }`}
+                            className={`px-3 py-2 text-sm rounded-lg transition-colors ${currentPage === pageNumber
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-600 hover:bg-gray-100"
+                              }`}
                           >
                             {pageNumber}
                           </button>

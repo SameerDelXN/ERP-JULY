@@ -285,7 +285,7 @@
 
 //   } catch (error) {
 //     console.error("Error importing data:", error);
-    
+
 //     // Handle bulk write errors (including duplicates)
 //     if (error.writeErrors) {
 //       const duplicates = error.writeErrors.map((err) => {
@@ -577,6 +577,7 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 mongoose.Promise = global.Promise;
 
 export async function POST(request) {
+  let validationErrors = [];
   try {
     // Connect to MongoDB
     await connectToDatabase();
@@ -646,14 +647,8 @@ export async function POST(request) {
     // Required fields that cannot be null/empty
     const requiredFields = [
       "dteApplicationNumber",
-      "admissionYear",
+      "firstName",
       "email",
-      "fullName",
-      "gender",
-      "programType",
-      "year",
-      "branch",
-      "dateOfBirth",
       "studentWhatsappNumber",
     ];
 
@@ -876,12 +871,13 @@ export async function POST(request) {
         return {
           dteApplicationNumber: op.dteApplicationNumber,
           fullName: op.fullName,
-          rowNumber: jsonData.findIndex(
-            (row) => row.DTEApplicationNumber === op.dteApplicationNumber
-          ) + 2,
-          error: err.err.errmsg.includes('duplicate')
-            ? 'Duplicate record'
-            : 'Write error'
+          rowNumber:
+            jsonData?.findIndex(
+              (row) => row.DTEApplicationNumber === op.dteApplicationNumber
+            ) + 2 || "Unknown",
+          error: err.err.errmsg.includes("duplicate")
+            ? "Duplicate record"
+            : "Write error",
         };
       });
 
@@ -889,7 +885,7 @@ export async function POST(request) {
         {
           error: "Partial import completed",
           message: `Imported ${error.result.result.nInserted} records, ${error.writeErrors.length} duplicates/errors encountered`,
-          totalRecords: jsonData.length,
+          totalRecords: jsonData?.length || 0,
           insertedCount: error.result.result.nInserted,
           duplicates: duplicates,
           validationErrors: validationErrors || [],
@@ -898,10 +894,12 @@ export async function POST(request) {
       );
     }
 
+    // Return a proper JSON error response for all errors
     return NextResponse.json(
       {
         error: "Failed to import data",
-        details: error.message,
+        message: error.message || "An unexpected error occurred",
+        details: error.stack ? error.stack.split('\n')[0] : error.toString(),
         validationErrors: validationErrors || [],
       },
       { status: 500 }
@@ -958,11 +956,12 @@ async function handleApprovedStatus(admissionData, admissionId) {
     }
 
     if (missingFields.length > 0) {
-      throw new Error(
-        `Missing required fields for student creation: ${missingFields.join(
+      console.warn(
+        `Skipping student creation for admission ${admissionId}. Missing fields: ${missingFields.join(
           ", "
         )}`
       );
+      return null;
     }
 
     // Check if student already exists for this admission

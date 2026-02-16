@@ -1,33 +1,93 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 const StudentProfile = () => {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [student, setStudent] = useState(null);
+  const [editedStudent, setEditedStudent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [editMode, setEditMode] = useState(false);
 
-useEffect(() => {
-  const fetchStudent = async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch(`/api/students/${params.id}`);
-      if (!res.ok) throw new Error(`Failed to fetch student: ${res.status}`);
-      const data = await res.json();
-      setStudent(data);
-      setIsLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setIsLoading(false);
+  // Check for edit=true in URL params
+  useEffect(() => {
+    if (searchParams.get('edit') === 'true') {
+      setEditMode(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`/api/students/${params.id}`);
+        if (!res.ok) throw new Error(`Failed to fetch student: ${res.status}`);
+        const data = await res.json();
+        setStudent(data);
+        setEditedStudent(data);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
+
+    if (params.id) fetchStudent();
+  }, [params.id]);
+
+  // Handle input changes for editing
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith('address.')) {
+      const field = name.split('.')[1];
+      setEditedStudent(prev => ({
+        ...prev,
+        address: {
+          ...(prev.address || {}),
+          [field]: value
+        }
+      }));
+    } else {
+      setEditedStudent(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  if (params.id) fetchStudent();
-}, [params.id]);
+  // Save profile changes
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const res = await fetch(`/api/students/${student._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editedStudent),
+      });
 
+      if (!res.ok) throw new Error('Failed to update student');
+
+      setStudent(editedStudent);
+      setEditMode(false);
+      // Remove edit param from URL
+      router.replace(`/admin/student-profiles/${params.id}`);
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Update error:', error);
+      alert('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Cancel editing
+  const handleCancel = () => {
+    setEditedStudent(student);
+    setEditMode(false);
+    router.replace(`/admin/student-profiles/${params.id}`);
+  };
 
 
   if (isLoading) {
@@ -81,7 +141,40 @@ useEffect(() => {
           >
             ← Back to Students
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mt-2">Student Profile</h1>
+          <div className="flex justify-between items-center mt-2">
+            <h1 className="text-3xl font-bold text-gray-900">Student Profile</h1>
+
+            {/* Edit/Save/Cancel Buttons */}
+            <div className="flex items-center gap-3">
+              {editMode ? (
+                <>
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setEditMode(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Profile Card */}
@@ -109,21 +202,64 @@ useEffect(() => {
                 <div className="space-y-3">
                   <div>
                     <span className="text-sm font-medium text-gray-500">Full Name</span>
-                    <p className="text-gray-900">{student.fullName || student.name}</p>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={editedStudent?.fullName || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter full name"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{student.fullName || student.name}</p>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Email</span>
-                    <p className="text-gray-900">{student.email}</p>
+                    {editMode ? (
+                      <input
+                        type="email"
+                        name="email"
+                        value={editedStudent?.email || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter email"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{student.email}</p>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Phone</span>
-                    <p className="text-gray-900">{student.phone || "Not provided"}</p>
+                    {editMode ? (
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={editedStudent?.phone || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter phone number"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{student.phone || "Not provided"}</p>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Date of Birth</span>
-                    <p className="text-gray-900">
-                      {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : "Not provided"}
-                    </p>
+                    {editMode ? (
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={editedStudent?.dateOfBirth ? editedStudent.dateOfBirth.split('T')[0] : ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <p className="text-gray-900">
+                        {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : "Not provided"}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -138,23 +274,56 @@ useEffect(() => {
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Program Type</span>
-                    <p className="text-gray-900">{student.programType || "N/A"}</p>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        name="programType"
+                        value={editedStudent?.programType || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter program type"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{student.programType || "N/A"}</p>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Branch/Course</span>
-                    <p className="text-gray-900">{student.branch}</p>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        name="branch"
+                        value={editedStudent?.branch || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter branch/course"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{student.branch}</p>
+                    )}
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Status    </span>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        student.status === "active"
+                    <span className="text-sm font-medium text-gray-500">Status</span>
+                    {editMode ? (
+                      <select
+                        name="status"
+                        value={editedStudent?.status || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${student.status === "active"
                           ? "bg-green-100 text-green-800"
                           : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {student.status ? student.status.charAt(0).toUpperCase() + student.status.slice(1) : "N/A"}
-                    </span>
+                          }`}
+                      >
+                        {student.status ? student.status.charAt(0).toUpperCase() + student.status.slice(1) : "N/A"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

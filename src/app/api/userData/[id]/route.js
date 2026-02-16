@@ -11,6 +11,11 @@ export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
 
+    // Sanitize roleId: convert empty string to null to prevent ObjectId cast error
+    if (data.roleId === "") {
+      data.roleId = null;
+    }
+
     // Disallow password update here for security unless explicitly handled
     if (data.password) {
       return NextResponse.json({
@@ -57,10 +62,10 @@ export async function PUT(req, { params }) {
     });
 
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error('Error updating user [PUT /api/userData/[id]]:', error); // Enhanced logging
     return NextResponse.json({
       success: false,
-      message: 'Server error while updating user',
+      message: error.message || 'Server error while updating user', // Return actual error message to client for debugging
     }, {
       status: 500
     });

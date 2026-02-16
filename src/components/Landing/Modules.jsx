@@ -91,7 +91,7 @@ export default function ModulesSection() {
 
         <div className="mt-12 text-center">
 
-          <button className="px-7 py-3.5 text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md hover:shadow-lg transition">
+          <button suppressHydrationWarning className="px-7 py-3.5 text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md hover:shadow-lg transition">
 
             View All Module Features
           </button>

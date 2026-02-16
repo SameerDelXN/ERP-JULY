@@ -215,8 +215,12 @@ export async function POST(req) {
     }
 
     // Validate role
+    // validRoles should include variations or we should normalize before checking. 
+    // Normalized check:
     const validRoles = ["admin", "superadmin", "student", "staff", "parents", "hod", "teacher", "hr"];
-    if (!validRoles.includes(role)) {
+    const normalizedRole = role.toLowerCase().replace(/\s+/g, '');
+
+    if (!validRoles.includes(normalizedRole)) {
       return new Response(JSON.stringify({ message: "Invalid role" }), { status: 400 });
     }
 
@@ -297,7 +301,11 @@ export async function POST(req) {
     }
     console.log(userFromDB)
     // Verify that the user's role matches the selected role
-    if (userFromDB.role !== role) {
+    // Normalize both to lowercase and remove spaces to handle "Super Admin" vs "superadmin" mismatch
+    const normalizedDbRole = userFromDB.role.toLowerCase().replace(/\s+/g, '');
+    const normalizedInputRole = role.toLowerCase().replace(/\s+/g, '');
+
+    if (normalizedDbRole !== normalizedInputRole) {
       return new Response(JSON.stringify({ message: "Invalid role or password" }), { status: 401 });
     }
 
@@ -320,7 +328,8 @@ export async function POST(req) {
         id: userFromDB._id,
         username: userFromDB.fullName,
         email: userFromDB.email,
-        role: userFromDB.role,
+        // Normalize role to ensure "Super Admin" becomes "superadmin" for frontend consistency
+        role: userFromDB.role.toLowerCase().replace(/\s+/g, ''),
       },
     }), { status: 200 });
 

@@ -1,989 +1,54 @@
-// "use client";
-
-// import { useState, useEffect, useRef } from "react";
-// import { Plus, Trash2, X, Save, Search, FileText } from "lucide-react";
-
-// export default function FeeStructurePage() {
-//   const [formData, setFormData] = useState({
-//     programType: "",
-//     departmentName: "",
-//     year: "",
-//     caste: "",
-//     category: "",
-//     yearWiseFeeStructure: "",
-//     scholarshipParticular: "",
-//     feesFromStudent: [],
-//     feesFromSocialWelfare: [],
-//     totalStudentFees: 0,
-//     totalSocialWelfareFees: 0,
-//     totalFees: 0,
-//   });
-
-//   const [studentFeeItem, setStudentFeeItem] = useState({
-//     componentName: "",
-//     amount: "",
-//     collectionOrder: "",
-//     displayOrder: "",
-//   });
-
-//   const [welfareFeeItem, setWelfareFeeItem] = useState({
-//     componentName: "",
-//     amount: "",
-//     collectionOrder: "",
-//     displayOrder: "",
-//   });
-
-//   const [departmentData, setDepartmentData] = useState([]);
-//   const [yearList, setYearList] = useState([]);
-//   const [existingFeeStructures, setExistingFeeStructures] = useState([]);
-//   const [showAddForm, setShowAddForm] = useState(false);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [activeTab, setActiveTab] = useState("structures");
-
-//   // Refs for student fee inputs
-//   const studentComponentRef = useRef(null);
-//   const studentAmountRef = useRef(null);
-
-//   // Refs for welfare fee inputs
-//   const welfareComponentRef = useRef(null);
-//   const welfareAmountRef = useRef(null);
-
-//   const [casteList] = useState([
-//     { id: "general", name: "General" },
-//     { id: "obc", name: "OBC" },
-//     { id: "sc", name: "SC" },
-//     { id: "st", name: "ST" },
-//     { id: "ews", name: "EWS" },
-//   ]);
-
-//   const [categoryList] = useState([
-//     { id: "regular", name: "Regular" },
-//     { id: "management", name: "Management Quota" },
-//     { id: "nri", name: "NRI Quota" },
-//     { id: "sports", name: "Sports Quota" },
-//     { id: "defense", name: "Defense Quota" },
-//   ]);
-
-//   const [yearWiseFeeStructureList] = useState([
-//     { id: "annual", name: "Annual" },
-//     { id: "semester", name: "Semester" },
-//     { id: "quarterly", name: "Quarterly" },
-//     { id: "monthly", name: "Monthly" },
-//   ]);
-
-//   const [scholarshipList] = useState([
-//     { id: "none", name: "No Scholarship" },
-//     { id: "merit", name: "Merit-based Scholarship" },
-//     { id: "need", name: "Need-based Scholarship" },
-//     { id: "government", name: "Government Scholarship" },
-//     { id: "institutional", name: "Institutional Scholarship" },
-//     { id: "sports", name: "Sports Scholarship" },
-//     { id: "minority", name: "Minority Scholarship" },
-//   ]);
-
-//   // Fetch existing fee structures
-//   useEffect(() => {
-//     const loadFeeStructures = async () => {
-//       try {
-//         const res = await fetch("/api/fee/feestructure");
-//         const data = await res.json();
-//         if (data.success && data.feeStructures) {
-//           setExistingFeeStructures(data.feeStructures);
-//         }
-//       } catch (err) {
-//         console.error("Error loading fee structures:", err);
-//       }
-//     };
-//     loadFeeStructures();
-//   }, []);
-
-//   // Fetch departments
-//   useEffect(() => {
-//     const loadDepartments = async () => {
-//       try {
-//         const res = await fetch("/api/department");
-//         const data = await res.json();
-//         if (data.departments) {
-//           setDepartmentData(data.departments);
-//         }
-//       } catch (err) {
-//         console.error("Error loading departments:", err);
-//       }
-//     };
-//     loadDepartments();
-//   }, []);
-
-//   // Auto-load years when department selected
-//   useEffect(() => {
-//     if (formData.departmentName) {
-//       const dept = departmentData.find(
-//         (d) => d.department === formData.departmentName
-//       );
-//       if (dept) {
-//         setYearList(dept.years || []);
-//       }
-//     }
-//   }, [formData.departmentName, departmentData]);
-
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleStudentFeeItemChange = (e) => {
-//     const { name, value } = e.target;
-//     const activeElement = document.activeElement;
-//     const isComponentInput = activeElement === studentComponentRef.current;
-//     const isAmountInput = activeElement === studentAmountRef.current;
-
-//     setStudentFeeItem((prev) => ({ ...prev, [name]: value }));
-
-//     requestAnimationFrame(() => {
-//       if (isComponentInput && studentComponentRef.current) {
-//         studentComponentRef.current.focus();
-//       } else if (isAmountInput && studentAmountRef.current) {
-//         studentAmountRef.current.focus();
-//       }
-//     });
-//   };
-
-//   const handleWelfareFeeItemChange = (e) => {
-//     const { name, value } = e.target;
-//     const activeElement = document.activeElement;
-//     const isComponentInput = activeElement === welfareComponentRef.current;
-//     const isAmountInput = activeElement === welfareAmountRef.current;
-
-//     setWelfareFeeItem((prev) => ({ ...prev, [name]: value }));
-
-//     requestAnimationFrame(() => {
-//       if (isComponentInput && welfareComponentRef.current) {
-//         welfareComponentRef.current.focus();
-//       } else if (isAmountInput && welfareAmountRef.current) {
-//         welfareAmountRef.current.focus();
-//       }
-//     });
-//   };
-
-//   const addStudentFeeItem = () => {
-//     if (!studentFeeItem.componentName || !studentFeeItem.amount) {
-//       alert("Please enter component name and amount");
-//       return;
-//     }
-
-//     const updatedFees = [
-//       ...formData.feesFromStudent,
-//       {
-//         componentName: studentFeeItem.componentName,
-//         amount: parseFloat(studentFeeItem.amount),
-//         collectionOrder: parseInt(studentFeeItem.collectionOrder) || 1,
-//         displayOrder: parseInt(studentFeeItem.displayOrder) || 1,
-//       },
-//     ];
-
-//     const studentTotal = updatedFees.reduce(
-//       (sum, item) => sum + parseFloat(item.amount || 0),
-//       0
-//     );
-
-//     const grandTotal = studentTotal + formData.totalSocialWelfareFees;
-
-//     setFormData((prev) => ({
-//       ...prev,
-//       feesFromStudent: updatedFees,
-//       totalStudentFees: studentTotal,
-//       totalFees: grandTotal,
-//     }));
-
-//     setStudentFeeItem({
-//       componentName: "",
-//       amount: "",
-//       collectionOrder: "",
-//       displayOrder: "",
-//     });
-
-//     setTimeout(() => {
-//       if (studentComponentRef.current) {
-//         studentComponentRef.current.focus();
-//       }
-//     }, 0);
-//   };
-
-//   const addWelfareFeeItem = () => {
-//     if (!welfareFeeItem.componentName || !welfareFeeItem.amount) {
-//       alert("Please enter component name and amount");
-//       return;
-//     }
-
-//     const updatedFees = [
-//       ...formData.feesFromSocialWelfare,
-//       {
-//         componentName: welfareFeeItem.componentName,
-//         amount: parseFloat(welfareFeeItem.amount),
-//         collectionOrder: parseInt(welfareFeeItem.collectionOrder) || 1,
-//         displayOrder: parseInt(welfareFeeItem.displayOrder) || 1,
-//       },
-//     ];
-
-//     const welfareTotal = updatedFees.reduce(
-//       (sum, item) => sum + parseFloat(item.amount || 0),
-//       0
-//     );
-
-//     const grandTotal = formData.totalStudentFees + welfareTotal;
-
-//     setFormData((prev) => ({
-//       ...prev,
-//       feesFromSocialWelfare: updatedFees,
-//       totalSocialWelfareFees: welfareTotal,
-//       totalFees: grandTotal,
-//     }));
-
-//     setWelfareFeeItem({
-//       componentName: "",
-//       amount: "",
-//       collectionOrder: "",
-//       displayOrder: "",
-//     });
-
-//     setTimeout(() => {
-//       if (welfareComponentRef.current) {
-//         welfareComponentRef.current.focus();
-//       }
-//     }, 0);
-//   };
-
-//   const removeStudentFeeItem = (index) => {
-//     const updatedFees = formData.feesFromStudent.filter((_, i) => i !== index);
-//     const studentTotal = updatedFees.reduce(
-//       (sum, item) => sum + parseFloat(item.amount || 0),
-//       0
-//     );
-//     const grandTotal = studentTotal + formData.totalSocialWelfareFees;
-
-//     setFormData((prev) => ({
-//       ...prev,
-//       feesFromStudent: updatedFees,
-//       totalStudentFees: studentTotal,
-//       totalFees: grandTotal,
-//     }));
-//   };
-
-//   const removeWelfareFeeItem = (index) => {
-//     const updatedFees = formData.feesFromSocialWelfare.filter((_, i) => i !== index);
-//     const welfareTotal = updatedFees.reduce(
-//       (sum, item) => sum + parseFloat(item.amount || 0),
-//       0
-//     );
-//     const grandTotal = formData.totalStudentFees + welfareTotal;
-
-//     setFormData((prev) => ({
-//       ...prev,
-//       feesFromSocialWelfare: updatedFees,
-//       totalSocialWelfareFees: welfareTotal,
-//       totalFees: grandTotal,
-//     }));
-//   };
-
-//   const handleSubmit = async () => {
-//     if (
-//       !formData.programType ||
-//       !formData.departmentName ||
-//       !formData.year ||
-//       (formData.feesFromStudent.length === 0 && formData.feesFromSocialWelfare.length === 0)
-//     ) {
-//       alert("Please fill all required fields and add at least one fee item");
-//       return;
-//     }
-
-//     setIsLoading(true);
-
-//     const payload = {
-//       programType: formData.programType,
-//       departmentName: formData.departmentName,
-//       year: formData.year,
-//       caste: formData.caste,
-//       category: formData.category,
-//       yearWiseFeeStructure: formData.yearWiseFeeStructure,
-//       scholarshipParticular: formData.scholarshipParticular,
-//       feesFromStudent: formData.feesFromStudent,
-//       feesFromSocialWelfare: formData.feesFromSocialWelfare,
-//     };
-
-//     try {
-//       const res = await fetch("/api/fee/feestructure", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(payload),
-//       });
-
-//       const data = await res.json();
-
-//       if (data.success) {
-//         alert("Fee structure saved successfully!");
-//         setFormData({
-//           programType: "",
-//           departmentName: "",
-//           year: "",
-//           caste: "",
-//           category: "",
-//           yearWiseFeeStructure: "",
-//           scholarshipParticular: "",
-//           feesFromStudent: [],
-//           feesFromSocialWelfare: [],
-//           totalStudentFees: 0,
-//           totalSocialWelfareFees: 0,
-//           totalFees: 0,
-//         });
-//         setShowAddForm(false);
-
-//         // Refresh the list
-//         const refreshRes = await fetch("/api/fee/feestructure");
-//         const refreshData = await refreshRes.json();
-//         if (refreshData.success && refreshData.feeStructures) {
-//           setExistingFeeStructures(refreshData.feeStructures);
-//         }
-//       } else {
-//         alert(data.error || "Failed to save fee structure");
-//       }
-//     } catch (err) {
-//       console.error(err);
-//       alert("Error occurred");
-//     }
-
-//     setIsLoading(false);
-//   };
-
-//   const deleteFeeStructure = async (id) => {
-//     if (!confirm("Are you sure you want to delete this fee structure?")) {
-//       return;
-//     }
-
-//     try {
-//       const res = await fetch(`/api/fee/feestructure?id=${id}`, {
-//         method: "DELETE",
-//       });
-
-//       const data = await res.json();
-
-//       if (data.success) {
-//         alert("Fee structure deleted!");
-//         setExistingFeeStructures(
-//           existingFeeStructures.filter((f) => f._id !== id)
-//         );
-//       } else {
-//         alert(data.error || "Failed to delete");
-//       }
-//     } catch (err) {
-//       console.error(err);
-//       alert("Error occurred");
-//     }
-//   };
-
-//   // Filter structures based on search
-//   const filteredStructures = existingFeeStructures.filter((structure) => {
-//     const searchLower = searchTerm.toLowerCase();
-//     return (
-//       structure.departmentName?.toLowerCase().includes(searchLower) ||
-//       structure.programType?.toLowerCase().includes(searchLower) ||
-//       structure.year?.toLowerCase().includes(searchLower) ||
-//       structure.caste?.toLowerCase().includes(searchLower)
-//     );
-//   });
-
-//   const AddFeeStructureModal = () => (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-//       <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto border border-gray-100">
-//         <div className="flex justify-between items-center mb-6">
-//           <h2 className="text-lg font-medium text-gray-900">
-//             Add New Fee Structure
-//           </h2>
-//           <button
-//             onClick={() => setShowAddForm(false)}
-//             className="text-gray-400 hover:text-gray-600 transition-colors"
-//           >
-//             <X className="w-5 h-5" />
-//           </button>
-//         </div>
-
-//         <div className="space-y-6">
-//           {/* Basic Information */}
-//           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Program Type *
-//               </label>
-//               <select
-//                 name="programType"
-//                 value={formData.programType}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Program Type</option>
-//                 {departmentData.map((d) => (
-//                   <option key={d._id} value={d.programType}>
-//                     {d.programType}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Department Name *
-//               </label>
-//               <select
-//                 name="departmentName"
-//                 value={formData.departmentName}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Department</option>
-//                 {departmentData.map((d) => (
-//                   <option key={d._id} value={d.department}>
-//                     {d.department}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Year *
-//               </label>
-//               <select
-//                 name="year"
-//                 value={formData.year}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Year</option>
-//                 {yearList.map((y, index) => (
-//                   <option key={index} value={y.year}>
-//                     {y.year}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Caste
-//               </label>
-//               <select
-//                 name="caste"
-//                 value={formData.caste}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Caste</option>
-//                 {casteList.map((c) => (
-//                   <option key={c.id} value={c.id}>
-//                     {c.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Category
-//               </label>
-//               <select
-//                 name="category"
-//                 value={formData.category}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Category</option>
-//                 {categoryList.map((c) => (
-//                   <option key={c.id} value={c.id}>
-//                     {c.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Fee Structure Type
-//               </label>
-//               <select
-//                 name="yearWiseFeeStructure"
-//                 value={formData.yearWiseFeeStructure}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Type</option>
-//                 {yearWiseFeeStructureList.map((y) => (
-//                   <option key={y.id} value={y.id}>
-//                     {y.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Scholarship Type
-//               </label>
-//               <select
-//                 name="scholarshipParticular"
-//                 value={formData.scholarshipParticular}
-//                 onChange={handleInputChange}
-//                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-//               >
-//                 <option value="">Select Scholarship</option>
-//                 {scholarshipList.map((s) => (
-//                   <option key={s.id} value={s.id}>
-//                     {s.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-//           </div>
-
-//           {/* Fee Components Section */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//             {/* Fees From Student */}
-//             <div className="border border-gray-200 rounded-lg p-4">
-//               <h3 className="text-base font-medium text-purple-700 mb-4">
-//                 Fees From Student
-//               </h3>
-
-//               <div className="space-y-3">
-//                 <div className="grid grid-cols-2 gap-2">
-//                   <input
-//                     ref={studentComponentRef}
-//                     type="text"
-//                     name="componentName"
-//                     placeholder="Component Name"
-//                     value={studentFeeItem.componentName}
-//                     onChange={handleStudentFeeItemChange}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-
-//                   <input
-//                     ref={studentAmountRef}
-//                     type="number"
-//                     name="amount"
-//                     placeholder="Amount"
-//                     value={studentFeeItem.amount}
-//                     onChange={handleStudentFeeItemChange}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-//                 </div>
-
-//                 <div className="grid grid-cols-2 gap-2">
-//                   <input
-//                     type="number"
-//                     name="collectionOrder"
-//                     placeholder="Collection Order"
-//                     value={studentFeeItem.collectionOrder}
-//                     onChange={handleStudentFeeItemChange}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-
-//                   <input
-//                     type="number"
-//                     name="displayOrder"
-//                     placeholder="Display Order"
-//                     value={studentFeeItem.displayOrder}
-//                     onChange={handleStudentFeeItemChange}
-//                     onKeyPress={(e) => {
-//                       if (e.key === "Enter") {
-//                         addStudentFeeItem();
-//                       }
-//                     }}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-//                 </div>
-
-//                 <button
-//                   type="button"
-//                   onClick={addStudentFeeItem}
-//                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-//                 >
-//                   Add Student Fee
-//                 </button>
-//               </div>
-
-//               {/* Student Fee List */}
-//               <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-//                 {formData.feesFromStudent.map((item, index) => (
-//                   <div
-//                     key={index}
-//                     className="flex justify-between items-center bg-gray-50 p-3 border border-gray-200 rounded-lg"
-//                   >
-//                     <div className="flex-1">
-//                       <p className="text-sm font-medium text-gray-900">
-//                         {item.componentName}
-//                       </p>
-//                       <p className="text-xs text-gray-600">
-//                         ₹{item.amount} • Col: {item.collectionOrder} • Disp:{" "}
-//                         {item.displayOrder}
-//                       </p>
-//                     </div>
-//                     <button
-//                       type="button"
-//                       onClick={() => removeStudentFeeItem(index)}
-//                       className="text-red-500 hover:text-red-700 ml-2"
-//                     >
-//                       <Trash2 className="w-4 h-4" />
-//                     </button>
-//                   </div>
-//                 ))}
-//               </div>
-
-//               {formData.totalStudentFees > 0 && (
-//                 <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-//                   <p className="text-sm font-bold text-blue-700">
-//                     Total Student Fees: ₹
-//                     {formData.totalStudentFees.toLocaleString()}
-//                   </p>
-//                 </div>
-//               )}
-//             </div>
-
-//             {/* Fees From Social Welfare */}
-//             <div className="border border-gray-200 rounded-lg p-4">
-//               <h3 className="text-base font-medium text-purple-700 mb-4">
-//                 Fees From Social Welfare
-//               </h3>
-
-//               <div className="space-y-3">
-//                 <div className="grid grid-cols-2 gap-2">
-//                   <input
-//                     ref={welfareComponentRef}
-//                     type="text"
-//                     name="componentName"
-//                     placeholder="Component Name"
-//                     value={welfareFeeItem.componentName}
-//                     onChange={handleWelfareFeeItemChange}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-
-//                   <input
-//                     ref={welfareAmountRef}
-//                     type="number"
-//                     name="amount"
-//                     placeholder="Amount"
-//                     value={welfareFeeItem.amount}
-//                     onChange={handleWelfareFeeItemChange}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-//                 </div>
-
-//                 <div className="grid grid-cols-2 gap-2">
-//                   <input
-//                     type="number"
-//                     name="collectionOrder"
-//                     placeholder="Collection Order"
-//                     value={welfareFeeItem.collectionOrder}
-//                     onChange={handleWelfareFeeItemChange}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-
-//                   <input
-//                     type="number"
-//                     name="displayOrder"
-//                     placeholder="Display Order"
-//                     value={welfareFeeItem.displayOrder}
-//                     onChange={handleWelfareFeeItemChange}
-//                     onKeyPress={(e) => {
-//                       if (e.key === "Enter") {
-//                         addWelfareFeeItem();
-//                       }
-//                     }}
-//                     className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-//                   />
-//                 </div>
-
-//                 <button
-//                   type="button"
-//                   onClick={addWelfareFeeItem}
-//                   className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-//                 >
-//                   Add Welfare Fee
-//                 </button>
-//               </div>
-
-//               {/* Welfare Fee List */}
-//               <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-//                 {formData.feesFromSocialWelfare.map((item, index) => (
-//                   <div
-//                     key={index}
-//                     className="flex justify-between items-center bg-gray-50 p-3 border border-gray-200 rounded-lg"
-//                   >
-//                     <div className="flex-1">
-//                       <p className="text-sm font-medium text-gray-900">
-//                         {item.componentName}
-//                       </p>
-//                       <p className="text-xs text-gray-600">
-//                         ₹{item.amount} • Col: {item.collectionOrder} • Disp:{" "}
-//                         {item.displayOrder}
-//                       </p>
-//                     </div>
-//                     <button
-//                       type="button"
-//                       onClick={() => removeWelfareFeeItem(index)}
-//                       className="text-red-500 hover:text-red-700 ml-2"
-//                     >
-//                       <Trash2 className="w-4 h-4" />
-//                     </button>
-//                   </div>
-//                 ))}
-//               </div>
-
-//               {formData.totalSocialWelfareFees > 0 && (
-//                 <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-//                   <p className="text-sm font-bold text-green-700">
-//                     Total Welfare Fees: ₹
-//                     {formData.totalSocialWelfareFees.toLocaleString()}
-//                   </p>
-//                 </div>
-//               )}
-//             </div>
-//           </div>
-
-//           {/* Grand Total */}
-//           {formData.totalFees > 0 && (
-//             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
-//               <div className="grid grid-cols-3 gap-4 text-center">
-//                 <div>
-//                   <p className="text-xs text-gray-600 mb-1">Student Fees</p>
-//                   <p className="text-lg font-bold text-blue-600">
-//                     ₹{formData.totalStudentFees.toLocaleString()}
-//                   </p>
-//                 </div>
-//                 <div>
-//                   <p className="text-xs text-gray-600 mb-1">Welfare Fees</p>
-//                   <p className="text-lg font-bold text-green-600">
-//                     ₹{formData.totalSocialWelfareFees.toLocaleString()}
-//                   </p>
-//                 </div>
-//                 <div>
-//                   <p className="text-xs text-gray-600 mb-1">Grand Total</p>
-//                   <p className="text-xl font-bold text-purple-600">
-//                     ₹{formData.totalFees.toLocaleString()}
-//                   </p>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Action Buttons */}
-//           <div className="flex justify-end gap-3 pt-2">
-//             <button
-//               type="button"
-//               onClick={() => setShowAddForm(false)}
-//               className="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-//             >
-//               Cancel
-//             </button>
-//             <button
-//               type="button"
-//               onClick={handleSubmit}
-//               disabled={isLoading}
-//               className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${
-//                 isLoading ? "opacity-70 cursor-not-allowed" : ""
-//               }`}
-//             >
-//               {isLoading ? (
-//                 <span>Processing...</span>
-//               ) : (
-//                 <>
-//                   <Save className="w-4 h-4" />
-//                   <span>Save Fee Structure</span>
-//                 </>
-//               )}
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <div className="p-6">
-//         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-//           <div className="flex border-b border-gray-100">
-//             <button
-//               onClick={() => setActiveTab("structures")}
-//               className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 ${
-//                 activeTab === "structures"
-//                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-//                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-//               }`}
-//             >
-//               <FileText className="w-4 h-4" />
-//               <span>Fee Structures</span>
-//               <span className="ml-1 bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs">
-//                 {existingFeeStructures.length}
-//               </span>
-//             </button>
-//           </div>
-
-//           <div className="p-6">
-//             {activeTab === "structures" && (
-//               <div>
-//                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-//                   <div className="relative flex-1 max-w-md w-full">
-//                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-//                     <input
-//                       type="text"
-//                       placeholder="Search fee structures..."
-//                       value={searchTerm}
-//                       onChange={(e) => setSearchTerm(e.target.value)}
-//                       className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full text-sm transition-all duration-200"
-//                     />
-//                   </div>
-
-//                   <button
-//                     onClick={() => setShowAddForm(true)}
-//                     className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
-//                   >
-//                     <Plus className="w-4 h-4" />
-//                     <span>Add Fee Structure</span>
-//                   </button>
-//                 </div>
-
-//                 {filteredStructures.length === 0 ? (
-//                   <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-//                     <div className="flex flex-col items-center justify-center gap-2 text-gray-400">
-//                       <FileText className="w-12 h-12 text-gray-300" />
-//                       <p className="text-sm font-medium">
-//                         No fee structures found
-//                       </p>
-//                       {searchTerm ? (
-//                         <button
-//                           onClick={() => setSearchTerm("")}
-//                           className="text-blue-600 text-xs hover:underline mt-2"
-//                         >
-//                           Clear search
-//                         </button>
-//                       ) : (
-//                         <p className="text-xs text-gray-400">
-//                           Click "Add Fee Structure" to create one
-//                         </p>
-//                       )}
-//                     </div>
-//                   </div>
-//                 ) : (
-//                   <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-//                     <div className="overflow-x-auto">
-//                       <table className="w-full divide-y divide-gray-100">
-//                         <thead className="bg-gray-50">
-//                           <tr>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Program
-//                             </th>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Department
-//                             </th>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Year
-//                             </th>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Caste
-//                             </th>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Student Fees
-//                             </th>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Welfare Fees
-//                             </th>
-//                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Total
-//                             </th>
-//                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-//                               Actions
-//                             </th>
-//                           </tr>
-//                         </thead>
-//                         <tbody className="bg-white divide-y divide-gray-100">
-//                           {filteredStructures.map((structure) => (
-//                             <tr
-//                               key={structure._id}
-//                               className="hover:bg-gray-50 transition-colors"
-//                             >
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-gray-900">
-//                                   {structure.programType}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-gray-900">
-//                                   {structure.departmentName}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-gray-900">
-//                                   {structure.year}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-gray-900">
-//                                   {structure.caste
-//                                     ? structure.caste.toUpperCase()
-//                                     : "General"}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-blue-600 font-medium">
-//                                   ₹{structure.totalStudentFees?.toLocaleString() || 0}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-green-600 font-medium">
-//                                   ₹
-//                                   {structure.totalSocialWelfareFees?.toLocaleString() ||
-//                                     0}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap">
-//                                 <div className="text-sm text-purple-600 font-bold">
-//                                   ₹{structure.totalFees?.toLocaleString() || 0}
-//                                 </div>
-//                               </td>
-//                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-//                                 <button
-//                                   onClick={() =>
-//                                     deleteFeeStructure(structure._id)
-//                                   }
-//                                   className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50"
-//                                   title="Delete"
-//                                 >
-//                                   <Trash2 className="w-4 h-4" />
-//                                 </button>
-//                               </td>
-//                             </tr>
-//                           ))}
-//                         </tbody>
-//                       </table>
-//                     </div>
-//                   </div>
-//                 )}
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Add Modal */}
-//       {showAddForm && <AddFeeStructureModal />}
-//     </div>
-//   );
-// }
-
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, X, Save, Search, FileText } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  X,
+  Save,
+  Search,
+  FileText,
+  LayoutDashboard,
+  CreditCard,
+  Filter,
+  DollarSign,
+  TrendingUp,
+  Users,
+  AlertCircle,
+  Lock
+} from "lucide-react";
+import ExportButton from "@/components/ExportButton";
+import Card from "@/components/Card";
+import StatsCard from "@/components/StatsCard";
+import { useSession } from "@/context/SessionContext";
 
 export default function FeeStructurePage() {
+  // Get user session and role
+  const { user, loading: sessionLoading } = useSession();
+  const userRole = user?.role?.toLowerCase() || '';
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const isStudent = userRole === 'student';
+  const isTeacher = userRole === 'teacher';
+  const isStaff = userRole === 'staff' || userRole === 'hr';
+
+  const [activeTab, setActiveTab] = useState(isAdmin ? "dashboard" : "structures"); // dashboard, structures, payments
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter States
+  const [filterDepartment, setFilterDepartment] = useState("");
+  const [filterYear, setFilterYear] = useState("");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+
+
+  // Data States
+  const [existingFeeStructures, setExistingFeeStructures] = useState([]);
+  const [departmentData, setDepartmentData] = useState([]);
+  const [yearList, setYearList] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({ totalCollections: 0, activeStructures: 0, totalStructureValue: 0, pendingFees: 0 });
+
+  // Form State
   const [formData, setFormData] = useState({
     programType: "",
     departmentName: "",
@@ -997,6 +62,12 @@ export default function FeeStructurePage() {
     totalStudentFees: 0,
     totalSocialWelfareFees: 0,
     totalFees: 0,
+    paymentModes: {
+      cash: true,
+      upi: true,
+      cheque: true,
+      bankTransfer: true
+    }
   });
 
   const [studentFeeItem, setStudentFeeItem] = useState({
@@ -1013,22 +84,13 @@ export default function FeeStructurePage() {
     displayOrder: "",
   });
 
-  const [departmentData, setDepartmentData] = useState([]);
-  const [yearList, setYearList] = useState([]);
-  const [existingFeeStructures, setExistingFeeStructures] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("structures");
-
-  // Refs for student fee inputs
+  // Refs
   const studentComponentRef = useRef(null);
   const studentAmountRef = useRef(null);
-
-  // Refs for welfare fee inputs
   const welfareComponentRef = useRef(null);
   const welfareAmountRef = useRef(null);
 
+  // Static Lists
   const [casteList] = useState([
     { id: "general", name: "General" },
     { id: "obc", name: "OBC" },
@@ -1062,37 +124,35 @@ export default function FeeStructurePage() {
     { id: "minority", name: "Minority Scholarship" },
   ]);
 
-  // Fetch existing fee structures
+  // Initial Data Fetching
   useEffect(() => {
-    const loadFeeStructures = async () => {
-      try {
-        const res = await fetch("/api/fee/feestructure");
-        const data = await res.json();
-        if (data.success && data.feeStructures) {
-          setExistingFeeStructures(data.feeStructures);
-        }
-      } catch (err) {
-        console.error("Error loading fee structures:", err);
-      }
-    };
     loadFeeStructures();
-  }, []);
-
-  // Fetch departments
-  useEffect(() => {
-    const loadDepartments = async () => {
-      try {
-        const res = await fetch("/api/department");
-        const data = await res.json();
-        if (data.departments) {
-          setDepartmentData(data.departments);
-        }
-      } catch (err) {
-        console.error("Error loading departments:", err);
-      }
-    };
     loadDepartments();
   }, []);
+
+  const loadFeeStructures = async () => {
+    try {
+      const res = await fetch("/api/fee/feestructure");
+      const data = await res.json();
+      if (data.success && data.feeStructures) {
+        setExistingFeeStructures(data.feeStructures);
+      }
+    } catch (err) {
+      console.error("Error loading fee structures:", err);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const res = await fetch("/api/department");
+      const data = await res.json();
+      if (data.departments) {
+        setDepartmentData(data.departments);
+      }
+    } catch (err) {
+      console.error("Error loading departments:", err);
+    }
+  };
 
   // Auto-load years when department selected
   useEffect(() => {
@@ -1106,6 +166,7 @@ export default function FeeStructurePage() {
     }
   }, [formData.departmentName, departmentData]);
 
+  // Handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -1113,36 +174,12 @@ export default function FeeStructurePage() {
 
   const handleStudentFeeItemChange = (e) => {
     const { name, value } = e.target;
-    const activeElement = document.activeElement;
-    const isComponentInput = activeElement === studentComponentRef.current;
-    const isAmountInput = activeElement === studentAmountRef.current;
-
     setStudentFeeItem((prev) => ({ ...prev, [name]: value }));
-
-    requestAnimationFrame(() => {
-      if (isComponentInput && studentComponentRef.current) {
-        studentComponentRef.current.focus();
-      } else if (isAmountInput && studentAmountRef.current) {
-        studentAmountRef.current.focus();
-      }
-    });
   };
 
   const handleWelfareFeeItemChange = (e) => {
     const { name, value } = e.target;
-    const activeElement = document.activeElement;
-    const isComponentInput = activeElement === welfareComponentRef.current;
-    const isAmountInput = activeElement === welfareAmountRef.current;
-
     setWelfareFeeItem((prev) => ({ ...prev, [name]: value }));
-
-    requestAnimationFrame(() => {
-      if (isComponentInput && welfareComponentRef.current) {
-        welfareComponentRef.current.focus();
-      } else if (isAmountInput && welfareAmountRef.current) {
-        welfareAmountRef.current.focus();
-      }
-    });
   };
 
   const addStudentFeeItem = () => {
@@ -1151,34 +188,26 @@ export default function FeeStructurePage() {
       return;
     }
 
-    const amount = parseFloat(studentFeeItem.amount);
-    if (isNaN(amount) || amount < 0) {
-      alert("Please enter a valid amount");
-      return;
-    }
-
     const updatedFees = [
       ...formData.feesFromStudent,
       {
         componentName: studentFeeItem.componentName,
-        amount: amount,
+        amount: parseFloat(studentFeeItem.amount),
         collectionOrder: parseInt(studentFeeItem.collectionOrder) || 1,
         displayOrder: parseInt(studentFeeItem.displayOrder) || 1,
       },
     ];
 
     const studentTotal = updatedFees.reduce(
-      (sum, item) => sum + item.amount,
+      (sum, item) => sum + parseFloat(item.amount || 0),
       0
     );
-
-    const grandTotal = studentTotal + formData.totalSocialWelfareFees;
 
     setFormData((prev) => ({
       ...prev,
       feesFromStudent: updatedFees,
       totalStudentFees: studentTotal,
-      totalFees: grandTotal,
+      totalFees: studentTotal + prev.totalSocialWelfareFees,
     }));
 
     setStudentFeeItem({
@@ -1188,11 +217,7 @@ export default function FeeStructurePage() {
       displayOrder: "",
     });
 
-    setTimeout(() => {
-      if (studentComponentRef.current) {
-        studentComponentRef.current.focus();
-      }
-    }, 0);
+    studentComponentRef.current?.focus();
   };
 
   const addWelfareFeeItem = () => {
@@ -1201,34 +226,26 @@ export default function FeeStructurePage() {
       return;
     }
 
-    const amount = parseFloat(welfareFeeItem.amount);
-    if (isNaN(amount) || amount < 0) {
-      alert("Please enter a valid amount");
-      return;
-    }
-
     const updatedFees = [
       ...formData.feesFromSocialWelfare,
       {
         componentName: welfareFeeItem.componentName,
-        amount: amount,
+        amount: parseFloat(welfareFeeItem.amount),
         collectionOrder: parseInt(welfareFeeItem.collectionOrder) || 1,
         displayOrder: parseInt(welfareFeeItem.displayOrder) || 1,
       },
     ];
 
     const welfareTotal = updatedFees.reduce(
-      (sum, item) => sum + item.amount,
+      (sum, item) => sum + parseFloat(item.amount || 0),
       0
     );
-
-    const grandTotal = formData.totalStudentFees + welfareTotal;
 
     setFormData((prev) => ({
       ...prev,
       feesFromSocialWelfare: updatedFees,
       totalSocialWelfareFees: welfareTotal,
-      totalFees: grandTotal,
+      totalFees: prev.totalStudentFees + welfareTotal,
     }));
 
     setWelfareFeeItem({
@@ -1238,42 +255,34 @@ export default function FeeStructurePage() {
       displayOrder: "",
     });
 
-    setTimeout(() => {
-      if (welfareComponentRef.current) {
-        welfareComponentRef.current.focus();
-      }
-    }, 0);
+    welfareComponentRef.current?.focus();
   };
 
   const removeStudentFeeItem = (index) => {
     const updatedFees = formData.feesFromStudent.filter((_, i) => i !== index);
     const studentTotal = updatedFees.reduce(
-      (sum, item) => sum + item.amount,
+      (sum, item) => sum + parseFloat(item.amount || 0),
       0
     );
-    const grandTotal = studentTotal + formData.totalSocialWelfareFees;
-
     setFormData((prev) => ({
       ...prev,
       feesFromStudent: updatedFees,
       totalStudentFees: studentTotal,
-      totalFees: grandTotal,
+      totalFees: studentTotal + prev.totalSocialWelfareFees,
     }));
   };
 
   const removeWelfareFeeItem = (index) => {
     const updatedFees = formData.feesFromSocialWelfare.filter((_, i) => i !== index);
     const welfareTotal = updatedFees.reduce(
-      (sum, item) => sum + item.amount,
+      (sum, item) => sum + parseFloat(item.amount || 0),
       0
     );
-    const grandTotal = formData.totalStudentFees + welfareTotal;
-
     setFormData((prev) => ({
       ...prev,
       feesFromSocialWelfare: updatedFees,
       totalSocialWelfareFees: welfareTotal,
-      totalFees: grandTotal,
+      totalFees: prev.totalStudentFees + welfareTotal,
     }));
   };
 
@@ -1290,23 +299,11 @@ export default function FeeStructurePage() {
 
     setIsLoading(true);
 
-    const payload = {
-      programType: formData.programType,
-      departmentName: formData.departmentName,
-      year: formData.year,
-      caste: formData.caste,
-      category: formData.category,
-      yearWiseFeeStructure: formData.yearWiseFeeStructure,
-      scholarshipParticular: formData.scholarshipParticular,
-      feesFromStudent: formData.feesFromStudent,
-      feesFromSocialWelfare: formData.feesFromSocialWelfare,
-    };
-
     try {
       const res = await fetch("/api/fee/feestructure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
@@ -1328,13 +325,7 @@ export default function FeeStructurePage() {
           totalFees: 0,
         });
         setShowAddForm(false);
-
-        // Refresh the list
-        const refreshRes = await fetch("/api/fee/feestructure");
-        const refreshData = await refreshRes.json();
-        if (refreshData.success && refreshData.feeStructures) {
-          setExistingFeeStructures(refreshData.feeStructures);
-        }
+        loadFeeStructures();
       } else {
         alert(data.error || "Failed to save fee structure");
       }
@@ -1359,7 +350,7 @@ export default function FeeStructurePage() {
       const data = await res.json();
 
       if (data.success) {
-        alert("Fee structure deleted!");
+        // alert("Fee structure deleted!");
         setExistingFeeStructures(
           existingFeeStructures.filter((f) => f._id !== id)
         );
@@ -1372,588 +363,791 @@ export default function FeeStructurePage() {
     }
   };
 
-  // Filter structures based on search
+  // Unique Program Types from departments
+  const uniqueProgramTypes = [...new Set(departmentData.map(d => d.programType).filter(Boolean))];
+
+  // Departments filtered by selected program type in form
+  const filteredDepartmentsForForm = formData.programType
+    ? departmentData.filter(d => d.programType === formData.programType)
+    : departmentData;
+
+  // All unique departments and years for filters
+  const allDepartments = [...new Set(existingFeeStructures.map(s => s.departmentName).filter(Boolean))];
+  const allYears = [...new Set(existingFeeStructures.map(s => s.year).filter(Boolean))];
+
+  // Filter Logic with Department and Year filters
   const filteredStructures = existingFeeStructures.filter((structure) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       structure.departmentName?.toLowerCase().includes(searchLower) ||
       structure.programType?.toLowerCase().includes(searchLower) ||
       structure.year?.toLowerCase().includes(searchLower) ||
-      structure.caste?.toLowerCase().includes(searchLower)
-    );
+      structure.caste?.toLowerCase().includes(searchLower);
+    const matchesDept = filterDepartment ? structure.departmentName === filterDepartment : true;
+    const matchesYear = filterYear ? structure.year === filterYear : true;
+    return matchesSearch && matchesDept && matchesYear;
   });
 
-  const AddFeeStructureModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-gray-900">
-            Add New Fee Structure
-          </h2>
+  // Calculate Dashboard Stats from API data
+  const totalFeesConfigured = existingFeeStructures.reduce((acc, curr) => acc + (curr.totalFees || 0), 0);
+  const totalStructures = existingFeeStructures.length;
+  const totalCollections = dashboardStats.totalCollections;
+  const pendingFees = dashboardStats.pendingFees;
+
+  // Fetch Dashboard Stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/fee/dashboard-stats');
+        const data = await res.json();
+        if (data.success) {
+          setDashboardStats(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    };
+    fetchStats();
+  }, [existingFeeStructures]);
+
+
+
+  // Modal JSX is rendered inline below to prevent re-mounting on state changes
+
+  return (
+    <div className="min-h-screen bg-gray-50/50 p-6">
+
+      {/* Header Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 inline-flex">
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === "dashboard"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                : "text-gray-500 hover:text-indigo-900 hover:bg-indigo-50"
+                }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </button>
+          )}
           <button
-            onClick={() => setShowAddForm(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            onClick={() => setActiveTab("structures")}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === "structures"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+              : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+              }`}
           >
-            <X className="w-5 h-5" />
+            <FileText className="w-4 h-4" />
+            Fee Structures
+          </button>
+          <button
+            onClick={() => setActiveTab("payments")}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === "payments"
+              ? "bg-green-600 text-white shadow-md shadow-green-200"
+              : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            {isStudent ? "My Payments" : "Payments & Due"}
           </button>
         </div>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Program Type *
-              </label>
-              <select
-                name="programType"
-                value={formData.programType}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Program Type</option>
-                {departmentData.map((d) => (
-                  <option key={d._id} value={d.programType}>
-                    {d.programType}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Role Indicator for non-admins */}
+        {!isAdmin && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">
+            <Lock className="w-4 h-4" />
+            <span>Read-only access ({userRole})</span>
+          </div>
+        )}
+      </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Department Name *
-              </label>
-              <select
-                name="departmentName"
-                value={formData.departmentName}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Department</option>
-                {departmentData.map((d) => (
-                  <option key={d._id} value={d.department}>
-                    {d.department}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Year *
-              </label>
-              <select
-                name="year"
-                value={formData.year}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Year</option>
-                {yearList.map((y, index) => (
-                  <option key={index} value={y.year}>
-                    {y.year}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Caste
-              </label>
-              <select
-                name="caste"
-                value={formData.caste}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Caste</option>
-                {casteList.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Category</option>
-                {categoryList.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fee Structure Type
-              </label>
-              <select
-                name="yearWiseFeeStructure"
-                value={formData.yearWiseFeeStructure}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Type</option>
-                {yearWiseFeeStructureList.map((y) => (
-                  <option key={y.id} value={y.id}>
-                    {y.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Scholarship Type
-              </label>
-              <select
-                name="scholarshipParticular"
-                value={formData.scholarshipParticular}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="">Select Scholarship</option>
-                {scholarshipList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+      {/* DASHBOARD TAB */}
+      {activeTab === "dashboard" && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Header with Export Button */}
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-900">Overview</h2>
+            <div className="relative">
+              <ExportButton
+                data={existingFeeStructures.map(s => ({
+                  Department: s.departmentName,
+                  Program: s.programType,
+                  Year: s.year,
+                  Caste: s.caste || 'All',
+                  Category: s.category || 'All',
+                  "Student Fees": s.totalStudentFees || 0,
+                  "Welfare Fees": s.totalSocialWelfareFees || 0,
+                  "Total Fees": s.totalFees || 0
+                }))}
+                filename="Fee_Structures_Report"
+              />
             </div>
           </div>
 
-          {/* Fee Components Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Fees From Student */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-base font-medium text-purple-700 mb-4">
-                Fees From Student
-              </h3>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    ref={studentComponentRef}
-                    type="text"
-                    name="componentName"
-                    placeholder="Component Name"
-                    value={studentFeeItem.componentName}
-                    onChange={handleStudentFeeItemChange}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <input
-                    ref={studentAmountRef}
-                    type="number"
-                    name="amount"
-                    placeholder="Amount"
-                    value={studentFeeItem.amount}
-                    onChange={handleStudentFeeItemChange}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    name="collectionOrder"
-                    placeholder="Collection Order"
-                    value={studentFeeItem.collectionOrder}
-                    onChange={handleStudentFeeItemChange}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <input
-                    type="number"
-                    name="displayOrder"
-                    placeholder="Display Order"
-                    value={studentFeeItem.displayOrder}
-                    onChange={handleStudentFeeItemChange}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        addStudentFeeItem();
-                      }
-                    }}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addStudentFeeItem}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  Add Student Fee
-                </button>
-              </div>
-
-              {/* Student Fee List */}
-              <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-                {formData.feesFromStudent.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center bg-gray-50 p-3 border border-gray-200 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {item.componentName}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        ₹{item.amount} • Col: {item.collectionOrder} • Disp: {item.displayOrder}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeStudentFeeItem(index)}
-                      className="text-red-500 hover:text-red-700 ml-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {formData.totalStudentFees > 0 && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm font-bold text-blue-700">
-                    Total Student Fees: ₹{formData.totalStudentFees.toLocaleString()}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Fees From Social Welfare */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-base font-medium text-purple-700 mb-4">
-                Fees From Social Welfare
-              </h3>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    ref={welfareComponentRef}
-                    type="text"
-                    name="componentName"
-                    placeholder="Component Name"
-                    value={welfareFeeItem.componentName}
-                    onChange={handleWelfareFeeItemChange}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <input
-                    ref={welfareAmountRef}
-                    type="number"
-                    name="amount"
-                    placeholder="Amount"
-                    value={welfareFeeItem.amount}
-                    onChange={handleWelfareFeeItemChange}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    name="collectionOrder"
-                    placeholder="Collection Order"
-                    value={welfareFeeItem.collectionOrder}
-                    onChange={handleWelfareFeeItemChange}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <input
-                    type="number"
-                    name="displayOrder"
-                    placeholder="Display Order"
-                    value={welfareFeeItem.displayOrder}
-                    onChange={handleWelfareFeeItemChange}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        addWelfareFeeItem();
-                      }
-                    }}
-                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addWelfareFeeItem}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                >
-                  Add Welfare Fee
-                </button>
-              </div>
-
-              {/* Welfare Fee List */}
-              <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-                {formData.feesFromSocialWelfare.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center bg-gray-50 p-3 border border-gray-200 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {item.componentName}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        ₹{item.amount} • Col: {item.collectionOrder} • Disp: {item.displayOrder}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeWelfareFeeItem(index)}
-                      className="text-red-500 hover:text-red-700 ml-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {formData.totalSocialWelfareFees > 0 && (
-                <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <p className="text-sm font-bold text-green-700">
-                    Total Welfare Fees: ₹{formData.totalSocialWelfareFees.toLocaleString()}
-                  </p>
-                </div>
-              )}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatsCard
+              title="Total Collections"
+              value={`₹${(totalCollections / 100000).toFixed(2)}L`}
+              icon={DollarSign}
+              color="green"
+              trend="up"
+              trendValue="12%"
+            />
+            <StatsCard
+              title="Pending Fees"
+              value={`₹${(pendingFees / 100000).toFixed(2)}L`}
+              icon={AlertCircle}
+              color="orange"
+              trend="down"
+              trendValue="5%"
+            />
+            <StatsCard
+              title="Active Structures"
+              value={totalStructures}
+              icon={FileText}
+              color="blue"
+            />
+            <StatsCard
+              title="Total Value"
+              value={`₹${(totalFeesConfigured / 10000000).toFixed(2)}Cr`}
+              icon={TrendingUp}
+              color="purple"
+            />
           </div>
 
-          {/* Grand Total */}
-          {formData.totalFees > 0 && (
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Student Fees</p>
-                  <p className="text-lg font-bold text-blue-600">
-                    ₹{formData.totalStudentFees.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Welfare Fees</p>
-                  <p className="text-lg font-bold text-green-600">
-                    ₹{formData.totalSocialWelfareFees.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Grand Total</p>
-                  <p className="text-xl font-bold text-purple-600">
-                    ₹{formData.totalFees.toLocaleString()}
-                  </p>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Transactions</h3>
+              <div className="bg-gray-50 rounded-xl p-8 text-center text-gray-400">
+                Chart Placeholder (Transactions over time)
               </div>
             </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${
-                isLoading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
-            >
-              {isLoading ? (
-                <span>Processing...</span>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Fee Structure</span>
-                </>
-              )}
-            </button>
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Collection by Dept</h3>
+              <div className="space-y-4">
+                {['Computer Science', 'Mechanical', 'Civil', 'Electrical'].map((dept, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">{dept}</span>
+                    <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.random() * 100}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      )}
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-          <div className="flex border-b border-gray-100">
-            <button
-              onClick={() => setActiveTab("structures")}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 ${
-                activeTab === "structures"
-                  ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Fee Structures</span>
-              <span className="ml-1 bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs">
-                {existingFeeStructures.length}
-              </span>
-            </button>
-          </div>
+      {/* FEE STRUCTURES TAB */}
+      {activeTab === "structures" && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="relative flex-1 max-w-md w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search fee structures / department..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full text-sm shadow-sm"
+              />
+            </div>
 
-          <div className="p-6">
-            {activeTab === "structures" && (
-              <div>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <div className="relative flex-1 max-w-md w-full">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search fee structures..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full text-sm transition-all duration-200"
-                    />
-                  </div>
+            <div className="flex gap-3 w-full sm:w-auto">
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilterMenu(!showFilterMenu)}
+                  className={`flex items-center gap-2 px-4 py-3 border rounded-xl text-sm font-medium transition-colors ${filterDepartment || filterYear
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <Filter className="w-4 h-4" />
+                  <span>Filter</span>
+                  {(filterDepartment || filterYear) && (
+                    <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-600 text-white rounded-full">
+                      {[filterDepartment, filterYear].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
 
-                  <button
-                    onClick={() => setShowAddForm(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-6
-00 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Fee Structure</span>
-                  </button>
-                </div>
-
-                {filteredStructures.length === 0 ? (
-                  <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-                    <div className="flex flex-col items-center justify-center gap-2 text-gray-400">
-                      <FileText className="w-12 h-12 text-gray-300" />
-                      <p className="text-sm font-medium">
-                        No fee structures found
-                      </p>
-                      {searchTerm ? (
-                        <button
-                          onClick={() => setSearchTerm("")}
-                          className="text-blue-600 text-xs hover:underline mt-2"
+                {showFilterMenu && (
+                  <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-lg p-4 z-20 w-64">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Department</label>
+                        <select
+                          value={filterDepartment}
+                          onChange={(e) => setFilterDepartment(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         >
-                          Clear search
-                        </button>
-                      ) : (
-                        <p className="text-xs text-gray-400">
-                          Click "Add Fee Structure" to create one
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full divide-y divide-gray-100">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Program
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Department
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Year
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Caste
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Student Fees
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Welfare Fees
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Total
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
-                          {filteredStructures.map((structure) => (
-                            <tr
-                              key={structure._id}
-                              className="hover:bg-gray-50 transition-colors"
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {structure.programType}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {structure.departmentName}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {structure.year}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {structure.caste
-                                    ? structure.caste.toUpperCase()
-                                    : "General"}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-blue-600 font-medium">
-                                  ₹{structure.totalStudentFees?.toLocaleString() || 0}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-green-600 font-medium">
-                                  ₹{structure.totalSocialWelfareFees?.toLocaleString() || 0}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-purple-600 font-bold">
-                                  ₹{structure.totalFees?.toLocaleString() || 0}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button
-                                  onClick={() => deleteFeeStructure(structure._id)}
-                                  className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
+                          <option value="">All Departments</option>
+                          {allDepartments.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
                           ))}
-                        </tbody>
-                      </table>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Year</label>
+                        <select
+                          value={filterYear}
+                          onChange={(e) => setFilterYear(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        >
+                          <option value="">All Years</option>
+                          {allYears.map((year) => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2 pt-2 border-t border-gray-100">
+                        <button
+                          onClick={() => { setFilterDepartment(""); setFilterYear(""); }}
+                          className="flex-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={() => setShowFilterMenu(false)}
+                          className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Apply
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
-            )}
+              {isAdmin && (
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-md shadow-blue-200 w-full sm:w-auto justify-center"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create New Structure</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {filteredStructures.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center shadow-sm">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-blue-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">No Fee Structures Found</h3>
+              <p className="text-sm text-gray-500 mb-6">Get started by creating a new fee structure for a department.</p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium text-sm"
+              >
+                Create Now
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50/50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Program / Dept</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Year / Term</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Applies To</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student Fee</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Welfare Fee</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredStructures.map((structure) => (
+                      <tr
+                        key={structure._id}
+                        className="hover:bg-gray-50/50 transition-colors group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">{structure.departmentName}</div>
+                          <div className="text-xs text-gray-500">{structure.programType}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                            {structure.year}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-700">
+                            {structure.caste ? structure.caste.toUpperCase() : "All Castes"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {structure.category ? structure.category : "All Categories"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">₹{structure.totalStudentFees?.toLocaleString() || 0}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">₹{structure.totalSocialWelfareFees?.toLocaleString() || 0}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
+                            ₹{structure.totalFees?.toLocaleString() || 0}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          {isAdmin ? (
+                            <button
+                              onClick={() => deleteFeeStructure(structure._id)}
+                              className="text-gray-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PAYMENTS TAB (Placeholder for now) */}
+      {activeTab === "payments" && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900">Recent Transactions</h2>
+            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-sm">
+              <Download className="w-4 h-4" />
+              Export Report
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="w-8 h-8 text-green-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Payment Module Integration</h3>
+            <p className="text-sm text-gray-500 max-w-md mx-auto mt-2">
+              This section would show the list of student payments, due dates, and collection status.
+              It requires integration with the student database and payment gateway records.
+            </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Add Modal */}
-      {showAddForm && <AddFeeStructureModal />}
+      {/* Add Fee Structure Modal - Rendered inline to prevent focus loss */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto border border-gray-100 shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                Create New Fee Structure
+              </h2>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Program Type *</label>
+                  <select
+                    name="programType"
+                    value={formData.programType}
+                    onChange={(e) => {
+                      handleInputChange(e);
+                      setFormData(prev => ({ ...prev, departmentName: "", year: "" }));
+                      setYearList([]);
+                    }}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                  >
+                    <option value="">Select Program Type</option>
+                    {uniqueProgramTypes.map((pt) => (
+                      <option key={pt} value={pt}>{pt}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Department Name *</label>
+                  <select
+                    name="departmentName"
+                    value={formData.departmentName}
+                    onChange={handleInputChange}
+                    disabled={!formData.programType}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{formData.programType ? "Select Department" : "Select Program Type first"}</option>
+                    {filteredDepartmentsForForm.map((d) => (
+                      <option key={d._id} value={d.department}>{d.department}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
+                  <select
+                    name="year"
+                    value={formData.year}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                  >
+                    <option value="">Select Year</option>
+                    {yearList.map((y, index) => (
+                      <option key={index} value={y.year}>{y.year}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Caste</label>
+                  <select
+                    name="caste"
+                    value={formData.caste}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                  >
+                    <option value="">Select Caste</option>
+                    {casteList.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                  >
+                    <option value="">Select Category</option>
+                    {categoryList.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Fee Structure Type</label>
+                  <select
+                    name="yearWiseFeeStructure"
+                    value={formData.yearWiseFeeStructure}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                  >
+                    <option value="">Select Type</option>
+                    {yearWiseFeeStructureList.map((y) => (
+                      <option key={y.id} value={y.id}>{y.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Scholarship Type</label>
+                  <select
+                    name="scholarshipParticular"
+                    value={formData.scholarshipParticular}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                  >
+                    <option value="">Select Scholarship</option>
+                    {scholarshipList.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Payment Modes Section */}
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-2xl border border-purple-100">
+                <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-purple-600" />
+                  Accepted Payment Modes
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { key: 'cash', label: 'Cash', icon: '💵', receiptInfo: 'Signature line, Received by' },
+                    { key: 'upi', label: 'UPI', icon: '📱', receiptInfo: 'Transaction ID, UPI Reference' },
+                    { key: 'cheque', label: 'Cheque', icon: '📝', receiptInfo: 'Cheque No., Bank Name' },
+                    { key: 'bankTransfer', label: 'Bank Transfer', icon: '🏦', receiptInfo: 'Account No., IFSC, Txn Ref' }
+                  ].map((mode) => (
+                    <label
+                      key={mode.key}
+                      className={`flex flex-col items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.paymentModes[mode.key]
+                        ? 'border-purple-500 bg-white shadow-md'
+                        : 'border-gray-200 bg-gray-50 opacity-60'
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.paymentModes[mode.key]}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          paymentModes: { ...prev.paymentModes, [mode.key]: e.target.checked }
+                        }))}
+                        className="sr-only"
+                      />
+                      <span className="text-2xl mb-2">{mode.icon}</span>
+                      <span className="text-sm font-semibold text-gray-800">{mode.label}</span>
+                      <span className="text-xs text-gray-500 text-center mt-1">{mode.receiptInfo}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-purple-600 mt-3 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Receipt format will vary based on selected payment mode
+                </p>
+              </div>
+
+              <div className="border-t border-gray-100 my-4"></div>
+
+              {/* Fee Components Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Fees From Student */}
+                <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5">
+                  <h3 className="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Fees From Student
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        ref={studentComponentRef}
+                        type="text"
+                        name="componentName"
+                        placeholder="Component Name"
+                        value={studentFeeItem.componentName}
+                        onChange={handleStudentFeeItemChange}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <input
+                        ref={studentAmountRef}
+                        type="number"
+                        name="amount"
+                        placeholder="Amount (₹)"
+                        value={studentFeeItem.amount}
+                        onChange={handleStudentFeeItemChange}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="number"
+                        name="collectionOrder"
+                        placeholder="Collection Order"
+                        title="Order in which fees are collected"
+                        value={studentFeeItem.collectionOrder}
+                        onChange={handleStudentFeeItemChange}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <input
+                        type="number"
+                        name="displayOrder"
+                        placeholder="Display Rank (1=first)"
+                        title="Ranking for display sequence (1 appears first)"
+                        value={studentFeeItem.displayOrder}
+                        onChange={handleStudentFeeItemChange}
+                        onKeyPress={(e) => e.key === "Enter" && addStudentFeeItem()}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={addStudentFeeItem}
+                      className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold shadow-md shadow-blue-200"
+                    >
+                      Add Student Fee Component
+                    </button>
+                  </div>
+
+                  {/* Student Fee List */}
+                  <div className="mt-5 space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {formData.feesFromStudent.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center italic py-2">No components added yet.</p>
+                    )}
+                    {formData.feesFromStudent.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center bg-white p-3 border border-blue-100 rounded-xl shadow-sm"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900">{item.componentName}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Col: {item.collectionOrder} • Disp: {item.displayOrder}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-blue-600">₹{item.amount}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeStudentFeeItem(index)}
+                            className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-blue-100 flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-800">Total Student Fees</span>
+                    <span className="text-lg font-bold text-blue-700">₹{formData.totalStudentFees.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Fees From Social Welfare */}
+                <div className="bg-green-50/50 border border-green-100 rounded-2xl p-5">
+                  <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Fees From Social Welfare
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        ref={welfareComponentRef}
+                        type="text"
+                        name="componentName"
+                        placeholder="Component Name"
+                        value={welfareFeeItem.componentName}
+                        onChange={handleWelfareFeeItemChange}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      />
+                      <input
+                        ref={welfareAmountRef}
+                        type="number"
+                        name="amount"
+                        placeholder="Amount (₹)"
+                        value={welfareFeeItem.amount}
+                        onChange={handleWelfareFeeItemChange}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="number"
+                        name="collectionOrder"
+                        placeholder="Collection Order"
+                        title="Order in which fees are collected"
+                        value={welfareFeeItem.collectionOrder}
+                        onChange={handleWelfareFeeItemChange}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      />
+                      <input
+                        type="number"
+                        name="displayOrder"
+                        placeholder="Display Rank (1=first)"
+                        title="Ranking for display sequence (1 appears first)"
+                        value={welfareFeeItem.displayOrder}
+                        onChange={handleWelfareFeeItemChange}
+                        onKeyPress={(e) => e.key === "Enter" && addWelfareFeeItem()}
+                        className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={addWelfareFeeItem}
+                      className="w-full px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm font-semibold shadow-md shadow-green-200"
+                    >
+                      Add Welfare Fee Component
+                    </button>
+                  </div>
+
+                  {/* Welfare Fee List */}
+                  <div className="mt-5 space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {formData.feesFromSocialWelfare.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center italic py-2">No components added yet.</p>
+                    )}
+                    {formData.feesFromSocialWelfare.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center bg-white p-3 border border-green-100 rounded-xl shadow-sm"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900">{item.componentName}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Col: {item.collectionOrder} • Disp: {item.displayOrder}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-green-600">₹{item.amount}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeWelfareFeeItem(index)}
+                            className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-green-100 flex justify-between items-center">
+                    <span className="text-sm font-medium text-green-800">Total Welfare Fees</span>
+                    <span className="text-lg font-bold text-green-700">₹{formData.totalSocialWelfareFees.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grand Total */}
+              <div className="bg-gray-900 p-5 rounded-2xl text-white flex justify-between items-center shadow-lg">
+                <div className="text-gray-300 text-sm">Total Fee Structure Value</div>
+                <div className="text-3xl font-bold">₹{formData.totalFees.toLocaleString()}</div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-6 py-2.5 text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className={`px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-lg shadow-blue-200 ${isLoading ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
+                >
+                  {isLoading ? (
+                    <span>Processing...</span>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Structure</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

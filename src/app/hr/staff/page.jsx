@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, Search, Filter, Users, Phone, ChevronDown, ChevronU
 
 // Color palette for departments
 const colorPalette = [
-  'red', 'green', 'blue', 'purple', 'yellow', 'pink', 
+  'red', 'green', 'blue', 'purple', 'yellow', 'pink',
   'indigo', 'orange', 'teal', 'cyan', 'lime', 'amber',
   'emerald', 'violet', 'rose', 'fuchsia', 'sky', 'slate'
 ];
@@ -13,8 +13,8 @@ const colorPalette = [
 const getDepartmentColor = (department) => {
   const index = department.toLowerCase().charCodeAt(0) % colorPalette.length;
   const color = colorPalette[index];
-  
-  switch(color) {
+
+  switch (color) {
     case 'red': return 'bg-red-100 text-red-800';
     case 'green': return 'bg-green-100 text-green-800';
     case 'blue': return 'bg-blue-100 text-blue-800';
@@ -79,12 +79,12 @@ export default function StaffManagement() {
 
     // Get all unique departments from actual data
     const uniqueDepartments = [...new Set(staffToGroup.map(person => person.department).filter(Boolean))];
-    
+
     // Initialize groups for all departments found in data
     uniqueDepartments.forEach((dept) => {
       grouped[dept.toLowerCase()] = [];
     });
-    
+
     // Add "other" for any staff without department
     grouped["other"] = [];
 
@@ -267,7 +267,7 @@ export default function StaffManagement() {
 
     setIsSubmitting(true);
 
-    const url = currentStaff 
+    const url = currentStaff
       ? `/api/hr/staff?id=${currentStaff._id}`
       : `/api/hr/staff`;
     const method = currentStaff ? 'PUT' : 'POST';
@@ -301,7 +301,7 @@ export default function StaffManagement() {
       } else {
         setStaff([...staff, newStaff]);
       }
-      
+
       setIsModalOpen(false);
       setShowEditModal(false);
       resetForm();
@@ -316,16 +316,16 @@ export default function StaffManagement() {
   // Delete staff
   const handleDelete = async (staffId) => {
     if (!confirm('Are you sure you want to delete this staff member?')) return;
-    
+
     try {
       setLoading(true);
       const res = await fetch(`/api/hr/staff/${staffId}`, { method: 'DELETE' });
       const response = await res.json();
-      
+
       if (!response.success) {
         throw new Error(response.error || 'Failed to delete staff');
       }
-      
+
       setStaff(staff.filter(s => s._id !== staffId));
     } catch (error) {
       setError('Error deleting staff: ' + error.message);
@@ -421,9 +421,8 @@ export default function StaffManagement() {
                 name="staffId"
                 value={formData.staffId}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.staffId ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.staffId ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter staff ID"
               />
               {errors.staffId && (
@@ -438,9 +437,8 @@ export default function StaffManagement() {
                 value={formData.name}
                 onChange={handleInputChange}
                 maxLength={25}
-                className={`w-full px-3 py-2 border ${
-                  errors.name ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.name ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter full name"
               />
               {errors.name && (
@@ -457,9 +455,8 @@ export default function StaffManagement() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.email ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter email address"
               />
               {errors.email && (
@@ -473,9 +470,8 @@ export default function StaffManagement() {
                 name="contactNumber"
                 value={formData.contactNumber}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.contactNumber ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.contactNumber ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter contact number"
                 maxLength={10}
               />
@@ -492,9 +488,8 @@ export default function StaffManagement() {
                 name="department"
                 value={formData.department}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.department ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.department ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
               >
                 <option value="">Select Department</option>
                 {departments.slice(0, -1).map((dept) => (
@@ -514,9 +509,8 @@ export default function StaffManagement() {
                 name="designation"
                 value={formData.designation}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.designation ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.designation ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter designation"
               />
               {errors.designation && (
@@ -534,9 +528,8 @@ export default function StaffManagement() {
                   name="salary"
                   value={formData.salary}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.salary ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.salary ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter salary"
                 />
                 {errors.salary && (
@@ -552,9 +545,8 @@ export default function StaffManagement() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.password ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter password"
                 />
                 {errors.password && (
@@ -575,9 +567,8 @@ export default function StaffManagement() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${
-                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                }`}
             >
               {isSubmitting ? (
                 <span>Processing...</span>
@@ -616,9 +607,8 @@ export default function StaffManagement() {
                 name="staffId"
                 value={formData.staffId}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.staffId ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.staffId ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter staff ID"
               />
               {errors.staffId && (
@@ -632,9 +622,8 @@ export default function StaffManagement() {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.name ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.name ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter full name"
               />
               {errors.name && (
@@ -651,9 +640,8 @@ export default function StaffManagement() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.email ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter email address"
               />
               {errors.email && (
@@ -669,9 +657,8 @@ export default function StaffManagement() {
                 onChange={handleInputChange}
                 maxLength={10}
                 minLength={10}
-                className={`w-full px-3 py-2 border ${
-                  errors.contactNumber ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.contactNumber ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter contact number"
               />
               {errors.contactNumber && (
@@ -688,9 +675,8 @@ export default function StaffManagement() {
                 value={formData.department}
                 onChange={handleInputChange}
                 disabled
-                className={`w-full px-3 py-2 border ${
-                  errors.department ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-100`}
+                className={`w-full px-3 py-2 border ${errors.department ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-100`}
               >
                 <option value="">Select Department</option>
                 <option value="HR">HR</option>
@@ -717,9 +703,8 @@ export default function StaffManagement() {
                 name="designation"
                 value={formData.designation}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.designation ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                className={`w-full px-3 py-2 border ${errors.designation ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                 placeholder="Enter designation"
               />
               {errors.designation && (
@@ -737,9 +722,8 @@ export default function StaffManagement() {
                   name="salary"
                   value={formData.salary}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.salary ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.salary ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Enter salary"
                 />
                 {errors.salary && (
@@ -755,9 +739,8 @@ export default function StaffManagement() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border ${
-                    errors.password ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
+                  className={`w-full px-3 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
                   placeholder="Leave empty to keep current password"
                 />
                 {errors.password && (
@@ -778,9 +761,8 @@ export default function StaffManagement() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${
-                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                }`}
             >
               {isSubmitting ? (
                 <span>Updating...</span>
@@ -804,11 +786,10 @@ export default function StaffManagement() {
           <div className="flex border-b border-gray-100">
             <button
               onClick={() => setActiveTab("staff")}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 ${
-                activeTab === "staff"
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all duration-200 ${activeTab === "staff"
                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <Users className="w-4 h-4" />
               <span>Staff</span>
@@ -865,7 +846,7 @@ export default function StaffManagement() {
                     if (staffInDept.length === 0) return null;
 
                     const isExpanded = expandedDepartments[department] !== false;
-                    const departmentName = department === 'other' ? 'Other' : 
+                    const departmentName = department === 'other' ? 'Other' :
                       department.charAt(0).toUpperCase() + department.slice(1);
                     const colorClass = getDepartmentColor(department);
 

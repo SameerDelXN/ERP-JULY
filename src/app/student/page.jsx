@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { User, Edit, BookOpen, Settings, Lock, Loader2, MapPin, Users, Phone, PhoneCall, Shield } from 'lucide-react';
+import { User, Edit, BookOpen, Settings, Lock, Loader2, MapPin, Users, Phone, PhoneCall, Shield, Save, X } from 'lucide-react';
 import { useSession } from '@/context/SessionContext';
 
 export default function StudentProfilePage() {
@@ -28,7 +28,7 @@ export default function StudentProfilePage() {
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [isLoadingContact, setIsLoadingContact] = useState(false);
   const [isLoadingFamily, setIsLoadingFamily] = useState(false);
-//------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------
   const [admission, setAdmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,7 +40,7 @@ export default function StudentProfilePage() {
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
-//-------------------------------------------------------------------------------
+  //-------------------------------------------------------------------------------
   const fetchStudent = async () => {
     try {
       setIsLoadingStudent(true);
@@ -57,8 +57,8 @@ export default function StudentProfilePage() {
 
   useEffect(() => {
     if (!user?.id) return;
-   fetchStudent();
-    
+    fetchStudent();
+
   }, [user?.id]);
 
   //-----------------------------------------------------------------------
@@ -93,7 +93,7 @@ export default function StudentProfilePage() {
     // if (!user?.admissionId) return;
     // const id = user?.admissionId;
     //console.log(user.admissionId)
-    
+
     const fetchAdmissionDetails = async () => {
       try {
         const response = await fetch(`/api/students/${id}/admission`);
@@ -159,7 +159,7 @@ export default function StudentProfilePage() {
   };
 
   //----------------------------------------------------------------------------------------
-  
+
   // const id = student.admissionId;
   // const fetchAdmissionDetails = async () => {
   //   try {
@@ -181,7 +181,7 @@ export default function StudentProfilePage() {
   if (error) return <div>Error: {error}</div>;
   if (!admission) return <div>No admission data found</div>;
   //---------------------------------------------------------------------------------------------------
- // Loading component
+  // Loading component
   const LoadingSpinner = () => (
     <div className="flex items-center justify-center p-8">
       <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -229,6 +229,43 @@ export default function StudentProfilePage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Student Profile</h1>
+
+          {/* Edit/Save/Cancel buttons - allowed for student, staff, HOD, admin */}
+          {['student', 'staff', 'hod', 'admin', 'superadmin'].includes(user?.role?.toLowerCase()) && (
+            <div className="flex items-center gap-3">
+              {editMode ? (
+                <>
+                  <button
+                    onClick={() => setEditMode(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <X size={18} />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveProfileChanges}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {isSaving ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Save size={18} />
+                    )}
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setEditMode(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Edit size={18} />
+                  Edit Profile
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -289,72 +326,161 @@ export default function StudentProfilePage() {
                     {/* Full Name */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Full Name</label>
-                      <p className="text-gray-900 font-medium">
-                        {student.fullName || user.fullName || <span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={student.fullName || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Enter full name"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {student.fullName || user.fullName || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
 
                     {/* Email */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Email</label>
-                      <p className="text-gray-900 font-medium">
-                        {student.email || user.email ||<span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="email"
+                          name="email"
+                          value={student.email || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Enter email address"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {student.email || user.email || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
 
                     {/* Date of Birth */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Date of Birth</label>
-                      <p className="text-gray-900 font-medium">
-                        {student.dateOfBirth ? (
-                          formatDate(student.dateOfBirth)
-                        ) : (
-                          <span className="text-gray-400">Not provided</span>
-                        )}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="date"
+                          name="dateOfBirth"
+                          value={student.dateOfBirth ? student.dateOfBirth.split('T')[0] : ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {student.dateOfBirth ? (
+                            formatDate(student.dateOfBirth)
+                          ) : (
+                            <span className="text-gray-400">Not provided</span>
+                          )}
+                        </p>
+                      )}
                     </div>
 
-                     {/* Gender */}
+                    {/* Gender */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Gender</label>
-                      <p className="text-gray-900 font-medium">
-                        {admission?.gender || <span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <select
+                          name="gender"
+                          value={student.gender || admission?.gender || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {admission?.gender || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
 
                     {/* Religion */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Religion</label>
-                      <p className="text-gray-900 font-medium">
-                        {admission?.religionAsPerLC || <span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          name="religion"
+                          value={student.religion || admission?.religionAsPerLC || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Enter religion"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {admission?.religionAsPerLC || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
 
                     {/* Caste */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Caste</label>
-                      <p className="text-gray-900 font-medium">
-                        {admission?.casteAsPerLC || <span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          name="caste"
+                          value={student.caste || admission?.casteAsPerLC || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Enter caste"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {admission?.casteAsPerLC || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
 
                     {/* Nationality */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Nationality</label>
-                      <p className="text-gray-900 font-medium">
-                        {admission?.nationality || <span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          name="nationality"
+                          value={student.nationality || admission?.nationality || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Enter nationality"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {admission?.nationality || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
 
                     {/* Domicile */}
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-gray-600">Domicile</label>
-                      <p className="text-gray-900 font-medium">
-                        {admission?.domicile || <span className="text-gray-400">Not provided</span>}
-                      </p>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          name="domicile"
+                          value={student.domicile || admission?.domicile || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Enter domicile"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {admission?.domicile || <span className="text-gray-400">Not provided</span>}
+                        </p>
+                      )}
                     </div>
-                  
-                    
+
                   </div>
                 )}
               </div>
@@ -399,16 +525,27 @@ export default function StudentProfilePage() {
                       {/* Address Fields */}
                       <dl className="divide-y divide-gray-100">
                         {[
-                          { label: 'Address Line', value: student.address.addressLine },
-                          { label: 'City', value: student.address.city },
-                          { label: 'State', value: student.address.state },
-                          { label: 'Pincode', value: student.address.pincode },
-                          { label: 'Country', value: student.address.country }
-                        ].map(({ label, value }) => (
+                          { label: 'Address Line', key: 'addressLine', value: student.address?.addressLine },
+                          { label: 'City', key: 'city', value: student.address?.city },
+                          { label: 'State', key: 'state', value: student.address?.state },
+                          { label: 'Pincode', key: 'pincode', value: student.address?.pincode },
+                          { label: 'Country', key: 'country', value: student.address?.country }
+                        ].map(({ label, key, value }) => (
                           <div key={label} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex-1 min-w-0">
                               <dt className="text-sm font-medium text-gray-600 mb-1">{label}</dt>
-                              <dd className="text-gray-900 break-words">{value || '-'}</dd>
+                              {editMode ? (
+                                <input
+                                  type="text"
+                                  name={`address.${key}`}
+                                  value={value || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                  placeholder={`Enter ${label.toLowerCase()}`}
+                                />
+                              ) : (
+                                <dd className="text-gray-900 break-words">{value || '-'}</dd>
+                              )}
                             </div>
                           </div>
                         ))}

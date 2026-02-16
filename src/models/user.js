@@ -25,8 +25,12 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['admin', 'faculty', 'student','hr','staff'],
       default: 'student',
+    },
+
+    roleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
     },
 
     isActive: {

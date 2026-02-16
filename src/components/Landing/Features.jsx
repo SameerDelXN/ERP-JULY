@@ -134,7 +134,7 @@ export default function FeaturesSection() {
 
         {/* Button */}
         <div className="mt-12 text-center">
-          <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full 
+          <button suppressHydrationWarning className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full 
                             transition shadow-md hover:shadow-lg">
             See All Feature In Detail
           </button>

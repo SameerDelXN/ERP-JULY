@@ -44,7 +44,7 @@ export async function GET() {
       })),
     ];
 
-    console.log("Combined",combinedList);
+    console.log("Combined", combinedList);
 
     return NextResponse.json({ success: true, data: combinedList });
   } catch (error) {
@@ -61,44 +61,44 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    if(body.department?.toLowerCase()==='teacher'){
-      const existing = await Teacher.findOne({teacherId:body.staffId});
-      if(existing){
+    if (body.department?.toLowerCase() === 'teacher') {
+      const existing = await Teacher.findOne({ teacherId: body.staffId });
+      if (existing) {
         return NextResponse.json(
-          {success:false,error:'Teacher id already present'},
-          {status:400}
+          { success: false, error: 'Teacher id already present' },
+          { status: 400 }
         );
       }
 
 
-       const newTeacher = await Teacher.create({
+      const newTeacher = await Teacher.create({
         teacherId: body.staffId,
         fullName: body.name,
         email: body.email,
         department: body.department,
         role: body.designation,
-        
+
         phone: body.contactNumber,
         salary: body.salary || null,
-       
+
       });
 
-      return NextResponse.json({success:true,data:newTeacher},{status:200});
+      return NextResponse.json({ success: true, data: newTeacher }, { status: 200 });
     }
 
-    const existing = await Staff.findOne({staffId:body.staffId});
-    if(existing){
+    const existing = await Staff.findOne({ staffId: body.staffId });
+    if (existing) {
       return NextResponse.json(
-        {success:false,error:"staff Id already present"},
-        {status:404}
+        { success: false, error: "staff Id already present" },
+        { status: 404 }
       );
     }
 
     const newStaff = await Staff.create(body);
 
-    
 
-    return NextResponse.json({success:true,data:newStaff},{status:200});
+
+    return NextResponse.json({ success: true, data: newStaff }, { status: 200 });
 
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -117,7 +117,7 @@ export async function PUT(request) {
   try {
     const updates = await request.json();
 
-    if(updates.department?.toLowerCase()==='teacher'){
+    if (updates.department?.toLowerCase() === 'teacher') {
       const updatedTeacher = await Teacher.findByIdAndUpdate(id, {
         teacherId: updates.staffId,
         fullName: updates.name,
@@ -126,7 +126,7 @@ export async function PUT(request) {
         role: updates.designation,
         phone: updates.contactNumber,
         salary: updates.salary || null,
-        
+
       }, { new: true });
 
       return NextResponse.json({ success: true, data: updatedTeacher });
@@ -144,26 +144,26 @@ export async function DELETE(request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
-  console.log("ID",id);
+  console.log("ID", id);
 
   if (!id) {
     return NextResponse.json({ success: false, error: 'Missing staff ID' }, { status: 400 });
   }
 
   try {
-    
+
     const staffMember = await Staff.findById(id);
-    if(staffMember){
+    if (staffMember) {
       await Staff.findByIdAndDelete(id);
-      return NextResponse.json({success:true,message:"Staff deleted"});
+      return NextResponse.json({ success: true, message: "Staff deleted" });
     }
 
     const teacherMember = await Teacher.findById(id);
-    if(teacherMember){
+    if (teacherMember) {
       await Teacher.findByIdAndDelete(id);
-      return NextResponse.json({success:true,message:"Teacher deleted"});
+      return NextResponse.json({ success: true, message: "Teacher deleted" });
     }
-    return NextResponse.json({ success: false, message: 'Staff not found' },{status:404});
+    return NextResponse.json({ success: false, message: 'Staff not found' }, { status: 404 });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }

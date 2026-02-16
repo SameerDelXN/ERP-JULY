@@ -11,6 +11,7 @@ import {
   MoreVertical,
   Check,
 } from "lucide-react";
+import ExportButton from "@/components/ExportButton";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function DepartmentManagement() {
@@ -61,7 +62,7 @@ export default function DepartmentManagement() {
         throw new Error("Failed to fetch teachers");
       }
       const data = await response.json();
-      console.log("adat = ",data)
+      console.log("adat = ", data)
       // Filter teachers who are HODs with null department
       // const availableHods = data.hodTeachers.filter(
       //   (teacher) => !teacher.department
@@ -120,36 +121,36 @@ export default function DepartmentManagement() {
   };
 
 
-const handleDelete = async (departmentId, departmentName) => {
-  if (!window.confirm(`Are you sure you want to delete ${departmentName}?`)) {
-    return;
-  }
-
-  try {
-    // Using both path parameter and query parameter approaches
-    const response = await fetch(`/api/department/${departmentId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error || 
-        `Failed to delete department (Status: ${response.status})`
-      );
+  const handleDelete = async (departmentId, departmentName) => {
+    if (!window.confirm(`Are you sure you want to delete ${departmentName}?`)) {
+      return;
     }
 
-    const data = await response.json();
-    toast.success(data.message);
-    fetchDepartments(); // Refresh the list
-  } catch (error) {
-    console.error("Delete error:", error);
-    toast.error(error.message);
-  }
-};
+    try {
+      // Using both path parameter and query parameter approaches
+      const response = await fetch(`/api/department/${departmentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+          `Failed to delete department (Status: ${response.status})`
+        );
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      fetchDepartments(); // Refresh the list
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error(error.message);
+    }
+  };
 
 
   const resetForm = () => {
@@ -177,7 +178,7 @@ const handleDelete = async (departmentId, departmentName) => {
   const handleEditClick = (department) => {
 
     console.log(department);
-    
+
     setFormData({
       departmentName: department.department,
       programType: department.programType || "",
@@ -193,7 +194,7 @@ const handleDelete = async (departmentId, departmentName) => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Toaster/>
+      <Toaster />
       {error && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
           Error: {error}
@@ -204,13 +205,25 @@ const handleDelete = async (departmentId, departmentName) => {
         <h1 className="text-3xl font-bold text-indigo-900">
           Department Management
         </h1>
-        <button
-          onClick={() => setShowDialog(true)}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Department
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            data={departments.map(d => ({
+              "Department": d.department,
+              "Program": d.programType || "N/A",
+              "HOD Name": d.hod?.fullName || "Not Assigned",
+              "HOD Email": d.hod?.email || "N/A",
+              "Description": d.description || ""
+            }))}
+            filename="Departments_List"
+          />
+          <button
+            onClick={() => setShowDialog(true)}
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Department
+          </button>
+        </div>
       </div>
 
       {loading ? (

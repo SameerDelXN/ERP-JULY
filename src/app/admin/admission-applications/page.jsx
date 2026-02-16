@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   Eye,
+  Edit2,
   Calendar,
   User,
   Mail,
@@ -472,6 +473,8 @@ const AdmissionApplications = () => {
   const [itemsPerPage] = useState(10);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingApplicationId, setEditingApplicationId] = useState(null);
   const { user } = useSession();
   const [importLoading, setImportLoading] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
@@ -757,17 +760,11 @@ const AdmissionApplications = () => {
       }
 
       // Define required columns (match your backend expectations)
+      // Define required columns (match your backend expectations)
       const requiredColumns = [
         "DTEApplicationNumber",
         "FirstName",
-        "LastName",
         "Email",
-        "Gender",
-        "AdmissionYear",
-        "ProgramType",
-        "Year",
-        "Branch",
-        "DateOfBirth",
         "StudentWhatsappNo",
       ];
 
@@ -817,7 +814,30 @@ const AdmissionApplications = () => {
 
     xhr.addEventListener("load", async () => {
       try {
-        const result = JSON.parse(xhr.response);
+        // Check if response is valid JSON
+        let result;
+        try {
+          result = JSON.parse(xhr.response);
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          console.error("Response text:", xhr.response);
+
+          // The response is not valid JSON (likely HTML error page)
+          toast.error("Server returned an invalid response. Please check the console for details.");
+          setImportErrors([
+            {
+              row: "Server Error",
+              errors: [
+                `Status: ${xhr.status}`,
+                "The server returned an invalid response format.",
+                "This usually indicates a server error. Check server logs for details."
+              ],
+            },
+          ]);
+          setImportLoading(false);
+          return;
+        }
+
         await fetchAdmission();
 
         if (xhr.status === 200) {
@@ -833,7 +853,7 @@ const AdmissionApplications = () => {
         setImportErrors([
           {
             row: "Unknown",
-            errors: ["Failed to parse server response"],
+            errors: ["Failed to process server response: " + error.message],
           },
         ]);
       } finally {
@@ -934,40 +954,8 @@ const AdmissionApplications = () => {
       {
         DTEApplicationNumber: "",
         FirstName: "",
-        MiddleName: "",
-        LastName: "",
-        FullName: "",
-        NameAsPerAadhar: "",
         Email: "",
         StudentWhatsappNo: "",
-        Branch: "",
-        ProgramType: "",
-        Year: "",
-        Round: "",
-        SeatType: "",
-        Shift: "",
-        Quota: "",
-        AdmissionCategory: "",
-        Gender: "",
-        MotherName: "",
-        FatherGuardianWhatsAppMobileNo: "",
-        CastAsPerLC: "",
-        Domicile: "",
-        Nationality: "",
-        FamilyIncome: "",
-        AdmissionYear: "",
-        DateOfBirth: "",
-        AddressLine: "",
-        City: "",
-        State: "",
-        Pincode: "",
-        Country: "",
-        FeesCategory: "",
-        AdmissionType: "",
-        SubCastAsPerLC: "",
-        ReligionAsPerLC: "",
-        MothersMobileNo: "",
-        IsForeignNational: "",
       },
     ];
 
@@ -1271,40 +1259,8 @@ const AdmissionApplications = () => {
                                   {[
                                     "DTEApplicationNumber",
                                     "FirstName",
-                                    "MiddleName",
-                                    "LastName",
-                                    "FullName",
-                                    "NameAsPerAadhar",
                                     "Email",
                                     "StudentWhatsappNo",
-                                    "Branch",
-                                    "ProgramType",
-                                    "Year",
-                                    "Round",
-                                    "SeatType",
-                                    "Shift",
-                                    "Quota",
-                                    "AdmissionCategory",
-                                    "Gender",
-                                    "MotherName",
-                                    "FatherGuardianWhatsAppMobileNo",
-                                    "CastAsPerLC",
-                                    "Domicile",
-                                    "Nationality",
-                                    "FamilyIncome",
-                                    "AdmissionYear",
-                                    "DateOfBirth",
-                                    "AddressLine",
-                                    "City",
-                                    "State",
-                                    "Pincode",
-                                    "Country",
-                                    "FeesCategory",
-                                    "AdmissionType",
-                                    "SubCastAsPerLC",
-                                    "ReligionAsPerLC",
-                                    "MothersMobileNo",
-                                    "IsForeignNational",
                                   ].map((header) => (
                                     <th
                                       key={header}
@@ -1321,109 +1277,13 @@ const AdmissionApplications = () => {
                                     DTE1234567**
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    FirstName
+                                    John
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    MiddleName
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    LastName
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    FullName
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    NameAsPerAadhar
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    email@gmail.com
+                                    email@example.com
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                                     9988776655
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Information Technology
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Diploma/UG/PG
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    1st/2nd/3rd/4th
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    CAP1/CAP2/CAP3/Institute Level
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    GOV/MIN/Management/TFWS
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Morning/Afternoon/Evening
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Quota
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    CAP/Institute Level/Against CAP
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Gender
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    MotherName
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    9988776655
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    CastAsPerLC
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Maharashtra
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Indian
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    98765
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    2024-25
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    yyyy/mm/dd
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    AddressLine
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    City
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    State
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    123456
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Country
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    FeesCategory
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    AdmissionType
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    SubCastAsPerLC
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    ReligionAsPerLC
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    9988776655
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                    Yes/No
                                   </td>
                                 </tr>
                               </tbody>
@@ -1439,13 +1299,7 @@ const AdmissionApplications = () => {
                                 Important Notes
                               </h4>
                               <p className="text-sm text-blue-700 mt-1">
-                                • DTEApplicationNumber, AdmissionYear, Email,
-                                FullName , Gender , ProgramType , Year , Branch
-                                , DateOfBirth , StudentWhatsappNumber, these
-                                fields are required
-                                <br />
-                                • Date format should be yyyy/mm/dd
-                                <br />
+                                • The following fields are mandatory: DTEApplicationNumber, FirstName, Email, StudentWhatsappNo.
                               </p>
                             </div>
                           </div>
@@ -1526,7 +1380,7 @@ const AdmissionApplications = () => {
                       onClick={() => fileInputRef.current.click()}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
-                      <Download className="w-4 h-4" />
+                      <Upload className="w-4 h-4" />
                       <span>Select File</span>
                     </button>
                   </div>
@@ -2118,9 +1972,17 @@ const AdmissionApplications = () => {
                         <button
                           className="text-blue-600 hover:text-blue-900"
                           onClick={() => openDetailsModal(application._id)}
+                          title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
+                        <Link
+                          href={`/admin/admission-applications/edit/${application._id}`}
+                          className="text-gray-400 hover:text-green-600"
+                          title="Edit Application"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Link>
                       </div>
                     </td>
                   </tr>
@@ -2161,8 +2023,8 @@ const AdmissionApplications = () => {
                             key={pageNumber}
                             onClick={() => paginate(pageNumber)}
                             className={`px-3 py-2 text-sm rounded-lg transition-colors ${currentPage === pageNumber
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-600 hover:bg-gray-100"
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-600 hover:bg-gray-100"
                               }`}
                           >
                             {pageNumber}

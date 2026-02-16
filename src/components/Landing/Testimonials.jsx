@@ -103,6 +103,7 @@ export default function TestimonialsSection() {
         {/* Desktop / Tablet */}
         <div className="hidden md:flex items-center gap-6 justify-center">
           <button
+            suppressHydrationWarning
             onClick={prev}
             className="p-3 rounded-full bg-white shadow hover:bg-gray-200 transition"
           >
@@ -116,6 +117,7 @@ export default function TestimonialsSection() {
           </div>
 
           <button
+            suppressHydrationWarning
             onClick={next}
             className="p-3 rounded-full bg-white shadow hover:bg-gray-200 transition"
           >
@@ -130,12 +132,14 @@ export default function TestimonialsSection() {
           )}
           <div className="flex justify-center mt-6 space-x-4">
             <button
+              suppressHydrationWarning
               onClick={prev}
               className="p-2 rounded-full bg-white shadow hover:bg-gray-200"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
+              suppressHydrationWarning
               onClick={next}
               className="p-2 rounded-full bg-white shadow hover:bg-gray-200"
             >

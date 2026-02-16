@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import ExportButton from "@/components/ExportButton";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -342,21 +343,19 @@ const AdminDashboard = () => {
             <div className="flex gap-1 bg-gray-50 rounded-lg p-1">
               <button
                 onClick={() => setAdmissionView("monthly")}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
-                  admissionView === "monthly"
-                    ? "bg-indigo-600 text-white shadow"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${admissionView === "monthly"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setAdmissionView("yearly")}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
-                  admissionView === "yearly"
-                    ? "bg-indigo-600 text-white shadow"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${admissionView === "yearly"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 Yearly
               </button>
@@ -554,6 +553,8 @@ const AdminDashboard = () => {
     );
   }
 
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -562,13 +563,30 @@ const AdminDashboard = () => {
           <h1 className="text-2xl font-bold text-gray-800">
             Dashboard Overview
           </h1>
-          <div className="text-sm text-gray-500">
-            Last updated:{" "}
-            {new Date().toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <ExportButton
+                data={[
+                  { Metric: "Total Students", Value: dashboardData?.students || 0 },
+                  { Metric: "Total Staff", Value: dashboardData?.staffs || 0 },
+                  { Metric: "Total Teachers", Value: dashboardData?.teachers || 0 },
+                  { Metric: "HR Personnel", Value: dashboardData?.hr || 0 },
+                  { Metric: "Total HOD", Value: dashboardData?.hod || 0 },
+                  { Metric: "Active Courses", Value: dashboardData?.activeCourse || 0 },
+                  { Metric: "Pending Admissions", Value: dashboardData?.inProcessAdmissions || 0 },
+                  { Metric: "New Enquiries", Value: dashboardData?.newEnquiries || 0 },
+                ]}
+                filename="admin_dashboard"
+              />
+            </div>
+            <div className="text-sm text-gray-500">
+              Last updated:{" "}
+              {new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </div>
           </div>
         </div>
 

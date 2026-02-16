@@ -151,7 +151,7 @@ export const SessionProvider = ({ children }) => {
         } else if (data.user.role.toLowerCase() === 'student') {
           redirectPath = '/student';
         } else if (data.user.role.toLowerCase() === 'superadmin') {
-          redirectPath = '/superadmin/benefits';
+          redirectPath = '/superadmin/blogs';
         } else {
           redirectPath = `/${data.user.role}`;
         }

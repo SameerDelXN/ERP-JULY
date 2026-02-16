@@ -67,6 +67,12 @@ const feeStructureSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    paymentModes: {
+      cash: { type: Boolean, default: true },
+      upi: { type: Boolean, default: true },
+      cheque: { type: Boolean, default: true },
+      bankTransfer: { type: Boolean, default: true }
+    },
     isActive: {
       type: Boolean,
       default: true,

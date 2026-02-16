@@ -159,6 +159,7 @@ export async function POST(req) {
       phone,
       password: hashedPassword,
       role,
+      roleId: body.roleId,
     });
     await logUserAction({
       userId: 'admin',
