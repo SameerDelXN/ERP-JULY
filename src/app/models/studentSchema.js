@@ -88,7 +88,27 @@ const studentSchema = new mongoose.Schema(
     },
      sessionToken:{
       type:String
-    }
+    },
+    // Added fields from Admission
+    totalFees: { type: Number, default: 0 },
+    feesCategory: { type: String },
+    casteAsPerLC: { type: String },
+    subCasteAsPerLC: { type: String },
+    domicile: { type: String },
+    nationality: { type: String },
+    religionAsPerLC: { type: String },
+    isForeignNational: { type: Boolean },
+    motherName: { type: String },
+    familyIncome: { type: Number },
+    fatherGuardianWhatsappNumber: { type: String },
+    motherMobileNumber: { type: String },
+    seatType: { type: String },
+    admissionCategoryDTE: { type: String },
+    quota: { type: String },
+    admissionYear: { type: String },
+    round: { type: String },
+    admissionType: { type: String },
+    dteApplicationNumber: { type: String },
   },
   { timestamps: true }
 );

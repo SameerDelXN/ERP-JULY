@@ -129,7 +129,8 @@ export default function StudentProfilePage() {
 
       if (!res.ok) throw new Error('Failed to update student profile');
 
-      await fetchStudent(); // ✅ Refresh UI with updated data
+      const updatedData = await res.json();
+      setStudent(updatedData.student);
       setEditMode(false);
       alert('Profile updated successfully!');
     } catch (error) {
@@ -230,8 +231,8 @@ export default function StudentProfilePage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Student Profile</h1>
 
-          {/* Edit/Save/Cancel buttons - allowed for student, staff, HOD, admin */}
-          {['student', 'staff', 'hod', 'admin', 'superadmin'].includes(user?.role?.toLowerCase()) && (
+          {/* Edit/Save/Cancel buttons - allowed for student, staff, HOD, admin, but hidden on courses tab */}
+          {['student', 'staff', 'hod', 'admin', 'superadmin'].includes(user?.role?.toLowerCase()) && activeTab !== 'courses' && (
             <div className="flex items-center gap-3">
               {editMode ? (
                 <>
@@ -389,7 +390,7 @@ export default function StudentProfilePage() {
                       {editMode ? (
                         <select
                           name="gender"
-                          value={student.gender || admission?.gender || ''}
+                          value={student.gender || ''}
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         >
@@ -400,7 +401,7 @@ export default function StudentProfilePage() {
                         </select>
                       ) : (
                         <p className="text-gray-900 font-medium">
-                          {admission?.gender || <span className="text-gray-400">Not provided</span>}
+                          {student.gender || <span className="text-gray-400">Not provided</span>}
                         </p>
                       )}
                     </div>
@@ -412,14 +413,14 @@ export default function StudentProfilePage() {
                         <input
                           type="text"
                           name="religion"
-                          value={student.religion || admission?.religionAsPerLC || ''}
+                          value={student.religion || ''}
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="Enter religion"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">
-                          {admission?.religionAsPerLC || <span className="text-gray-400">Not provided</span>}
+                          {student.religionAsPerLC || <span className="text-gray-400">Not provided</span>}
                         </p>
                       )}
                     </div>
@@ -430,15 +431,15 @@ export default function StudentProfilePage() {
                       {editMode ? (
                         <input
                           type="text"
-                          name="caste"
-                          value={student.caste || admission?.casteAsPerLC || ''}
+                          name="casteAsPerLC"
+                          value={student.casteAsPerLC || ''}
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="Enter caste"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">
-                          {admission?.casteAsPerLC || <span className="text-gray-400">Not provided</span>}
+                          {student.casteAsPerLC || <span className="text-gray-400">Not provided</span>}
                         </p>
                       )}
                     </div>
@@ -450,14 +451,14 @@ export default function StudentProfilePage() {
                         <input
                           type="text"
                           name="nationality"
-                          value={student.nationality || admission?.nationality || ''}
+                          value={student.nationality || ''}
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="Enter nationality"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">
-                          {admission?.nationality || <span className="text-gray-400">Not provided</span>}
+                          {student.nationality || <span className="text-gray-400">Not provided</span>}
                         </p>
                       )}
                     </div>
@@ -469,14 +470,14 @@ export default function StudentProfilePage() {
                         <input
                           type="text"
                           name="domicile"
-                          value={student.domicile || admission?.domicile || ''}
+                          value={student.domicile || ''}
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           placeholder="Enter domicile"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">
-                          {admission?.domicile || <span className="text-gray-400">Not provided</span>}
+                          {student.domicile || <span className="text-gray-400">Not provided</span>}
                         </p>
                       )}
                     </div>
@@ -589,8 +590,8 @@ export default function StudentProfilePage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {[
                           { label: 'Phone Number', key: 'mobileNumber', icon: Phone, color: 'blue' },
-                          { label: 'Alternate Phone', key: 'alternatePhone', icon: PhoneCall, color: 'purple' },
-                          { label: 'Emergency Contact', key: 'emergencyContact', icon: Shield, color: 'red' },
+                          // { label: 'Alternate Phone', key: 'alternatePhone', icon: PhoneCall, color: 'purple' },
+                          // { label: 'Emergency Contact', key: 'emergencyContact', icon: Shield, color: 'red' },
                         ].map(({ label, key, icon: Icon, color }) => (
                           <div key={key} className="space-y-2">
                             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -600,12 +601,23 @@ export default function StudentProfilePage() {
 
                             {editMode ? (
                               <input
-                                type="text"
+                                type="tel"
                                 name={key}
                                 value={student[key] || ''}
                                 onChange={handleInputChange}
                                 placeholder={`Enter ${label.toLowerCase()}`}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                pattern={
+                                  key === 'mobileNumber' 
+                                    ? /^[6-9]\d{10}$/
+                                    : /^[6-9]\d{10}$/
+                                }
+                                maxLength={10}
+                                onInput={(e) => {
+                                  // Only allow numbers for phone fields
+                                  const value = e.target.value.replace(/\D/g, '');
+                                  e.target.value = value;
+                                }}
                               />
                             ) : (
                               <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -628,17 +640,92 @@ export default function StudentProfilePage() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-800 mb-6">Family Details</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Name</label>
-                    <p className="text-base text-gray-900">{admission?.motherName || 'N/A'}</p>
-                  </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Name</label>
+    {editMode ? (
+      <input
+        type="text"
+        name="motherName"
+        value={student.motherName || admission?.motherName || ''}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        placeholder="Enter mother's name"
+        maxLength={50}
+      />
+    ) : (
+      <p className="text-base text-gray-900">{student.motherName || admission?.motherName || 'N/A'}</p>
+    )}
+  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Mobile Number</label>
-                    <p className="text-base text-gray-900">{admission?.motherMobileNumber || 'N/A'}</p>
-                  </div>
-                </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Mobile Number</label>
+    {editMode ? (
+      <input
+        type="tel"
+        name="motherMobileNumber"
+        value={student.motherMobileNumber || ''}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        placeholder="Enter mother's mobile number"
+        pattern={{
+          value: /^[0-9]{10}$/,
+          message: "Please enter exactly 10 digits (0-9 only)"
+        }}
+        maxLength={10}
+        onInput={(e) => {
+          // Only allow digits for phone fields
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+        }}
+      />
+    ) : (
+      <p className="text-base text-gray-900">{student.motherMobileNumber || admission?.motherMobileNumber || 'N/A'}</p>
+    )}
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Father/Guardian WhatsApp Number</label>
+    {editMode ? (
+      <input
+        type="tel"
+        name="fatherGuardianWhatsappNumber"
+        value={student.fatherGuardianWhatsappNumber || ''}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        placeholder="Enter father/guardian WhatsApp number"
+        pattern={{
+          value: /^[0-9]{10}$/,
+          message: "Please enter exactly 10 digits (0-9 only)"
+        }}
+        maxLength={10}
+        onInput={(e) => {
+          // Only allow digits for phone fields
+          const value = e.target.value.replace(/\D/g, '');
+          e.target.value = value;
+        }}
+      />
+    ) : (
+      <p className="text-base text-gray-900">{student.fatherGuardianWhatsappNumber || admission?.fatherGuardianWhatsappNumber || 'N/A'}</p>
+    )}
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Family Income</label>
+    {editMode ? (
+      <input
+        type="number"
+        name="familyIncome"
+        value={student.familyIncome || ''}
+        onChange={handleInputChange}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        placeholder="Enter family income"
+      />
+    ) : (
+      <p className="text-base text-gray-900">{student.familyIncome || admission?.familyIncome || 'N/A'}</p>
+    )}
+  </div>
+</div>
               </div>
             )}
 

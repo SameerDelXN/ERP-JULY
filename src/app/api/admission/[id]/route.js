@@ -239,7 +239,8 @@ export async function PUT(req, { params }) {
           status: 'active',
           programType,
           currentYear: year,
-          branch
+          branch,
+          prn: studentId // Set PRN to studentId to avoid null duplicates
         });
       }
 

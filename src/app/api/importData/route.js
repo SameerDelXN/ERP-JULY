@@ -648,8 +648,11 @@ export async function POST(request) {
     const requiredFields = [
       "dteApplicationNumber",
       "firstName",
+      "lastName",
+      "gender",
       "email",
       "studentWhatsappNumber",
+     
     ];
 
     // Fetch existing branches (departments) from the database for validation

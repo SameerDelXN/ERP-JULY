@@ -222,6 +222,7 @@ export async function POST(req) {
       details,
       documents,
       status,
+      totalFees,
       assignedStaff // Add this
     } = body;
 
@@ -250,6 +251,7 @@ export async function POST(req) {
       seatType,
       admissionCategoryDTE,
       feesCategory,
+      totalFees,
       admissionType,
       casteAsPerLC,
       subCasteAsPerLC,
@@ -345,91 +347,34 @@ export async function PUT(req) {
     }
 
     const body = await req.json();
-    const {
-      enquiryId,
-      counsellorId,
-      dteApplicationNumber,
-      admissionYear,
-      email,
-      fullName,
-      nameAsPerAadhar,
-      firstName,
-      middleName,
-      lastName,
-      gender,
-      programType,
-      year,
-      branch,
-      shift,
-      round,
-      quota,
-      seatType,
-      admissionCategoryDTE,
-      feesCategory,
-      admissionType,
-      casteAsPerLC,
-      subCasteAsPerLC,
-      domicile,
-      nationality,
-      religionAsPerLC,
-      isForeignNational,
-      dateOfBirth,
-      motherName,
-      familyIncome,
-      studentWhatsappNumber,
-      fatherGuardianWhatsappNumber,
-      motherMobileNumber,
-      address,
-      documents,
-      status,
-      isPrnGenerated,
-      assignedStaff
-    } = body;
-
-    // ...
+    
+    // Only update the fields that are provided in the request
+    const updateFields = {};
+    if (body.status !== undefined) updateFields.status = body.status;
+    if (body.isPrnGenerated !== undefined) updateFields.isPrnGenerated = body.isPrnGenerated;
+    
+    // Add other fields only if they exist in the body
+    const optionalFields = [
+      'enquiryId', 'counsellorId', 'assignedStaff', 'dteApplicationNumber',
+      'admissionYear', 'email', 'fullName', 'nameAsPerAadhar', 'firstName',
+      'middleName', 'lastName', 'gender', 'programType', 'year', 'branch',
+      'shift', 'round', 'quota', 'seatType', 'admissionCategoryDTE',
+      'feesCategory', 'totalFees', 'admissionType', 'casteAsPerLC', 'subCasteAsLC',
+      'domicile', 'nationality', 'religionAsPerLC', 'isForeignNational',
+      'dateOfBirth', 'motherName', 'familyIncome', 'studentWhatsappNumber',
+      'fatherGuardianWhatsappNumber', 'motherMobileNumber', 'address',
+      'documents'
+    ];
+    
+    optionalFields.forEach(field => {
+      if (body[field] !== undefined) {
+        updateFields[field] = body[field];
+      }
+    });
 
     const updatedAdmission = await Admission.findByIdAndUpdate(
       id,
-      {
-        enquiryId,
-        counsellorId,
-        assignedStaff,
-        dteApplicationNumber,
-        admissionYear,
-        email: email?.toLowerCase(),
-        fullName,
-        nameAsPerAadhar,
-        firstName,
-        middleName,
-        lastName,
-        gender,
-        programType,
-        year,
-        branch,
-        shift,
-        round,
-        quota,
-        seatType,
-        admissionCategoryDTE,
-        feesCategory,
-        admissionType,
-        casteAsPerLC,
-        subCasteAsPerLC,
-        domicile,
-        nationality,
-        religionAsPerLC,
-        isForeignNational,
-        dateOfBirth,
-        motherName,
-        familyIncome,
-        studentWhatsappNumber,
-        fatherGuardianWhatsappNumber,
-        motherMobileNumber,
-        address,
-        documents,
-        status,
-        isPrnGenerated,
-      },
+      updateFields,
       { new: true, runValidators: true }
     );
 

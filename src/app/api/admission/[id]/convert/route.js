@@ -20,11 +20,29 @@ export async function POST(req, { params }) {
             return NextResponse.json({ error: "Admission already approved/converted" }, { status: 400 });
         }
 
-        // 1. Generate Student ID (Example: STU + Year + Random 4 digits)
-        // In a real app, you might want a sequence counter.
-        const yearSuffix = new Date().getFullYear().toString().slice(-2);
-        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-        const studentId = `STU${yearSuffix}${randomSuffix}`;
+        // 1. Generate Unique Student ID (Example: STU + Year + Random 4 digits)
+        let studentId;
+        let isUnique = false;
+        let attempts = 0;
+        
+        while (!isUnique && attempts < 10) {
+            const yearSuffix = new Date().getFullYear().toString().slice(-2);
+            const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+            studentId = `STU${yearSuffix}${randomSuffix}`;
+            
+            // Check if this studentId already exists
+            const existingStudent = await Student.findOne({ studentId: studentId });
+            const existingUser = await User.findOne({ username: studentId });
+            
+            if (!existingStudent && !existingUser) {
+                isUnique = true;
+            }
+            attempts++;
+        }
+        
+        if (!isUnique) {
+            return NextResponse.json({ error: "Unable to generate unique student ID" }, { status: 500 });
+        }
 
         // 2. Create User Record
         // Username = studentId
@@ -50,18 +68,40 @@ export async function POST(req, { params }) {
 
         // 3. Create Student Profile
         const newStudent = await Student.create({
-            userId: newUser._id,
             studentId: studentId,
-            firstName: admission.firstName || admission.fullName.split(' ')[0],
-            lastName: admission.lastName || admission.fullName.split(' ').pop(),
+            admissionId: admission._id,
+            fullName: admission.fullName,
             email: admission.email,
-            academicDetails: {
-                program: admission.programType,
-                branch: admission.branch,
-                year: admission.year,
-            },
-            admissionId: admission._id
-            // Map other necessary fields from admission...
+            mobileNumber: admission.studentWhatsappNumber?.toString() || "",
+            dateOfBirth: admission.dateOfBirth ? new Date(admission.dateOfBirth) : new Date(),
+            gender: admission.gender,
+            address: admission.address && admission.address[0] ? admission.address[0] : {},
+            programType: admission.programType,
+            branch: admission.branch,
+            currentYear: admission.year,
+            prn: studentId,
+            counsellorId: admission.counsellorId,
+            status: "active",
+            // Mapping missing fields
+            feesCategory: admission.feesCategory,
+            casteAsPerLC: admission.casteAsPerLC,
+            subCasteAsPerLC: admission.subCasteAsPerLC,
+            domicile: admission.domicile,
+            nationality: admission.nationality,
+            religionAsPerLC: admission.religionAsPerLC,
+            isForeignNational: admission.isForeignNational,
+            motherName: admission.motherName,
+            familyIncome: admission.familyIncome,
+            fatherGuardianWhatsappNumber: admission.fatherGuardianWhatsappNumber?.toString() || "",
+            motherMobileNumber: admission.motherMobileNumber?.toString() || "",
+            seatType: admission.seatType,
+            admissionCategoryDTE: admission.admissionCategoryDTE,
+            quota: admission.quota,
+            admissionYear: admission.admissionYear,
+            round: admission.round,
+            admissionType: admission.admissionType,
+            dteApplicationNumber: admission.dteApplicationNumber,
+            totalFees: admission.totalFees
         });
 
         // Update User with Profile ID if needed (depends on your User/Profile link strategy)

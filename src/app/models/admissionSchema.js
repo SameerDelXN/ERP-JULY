@@ -206,6 +206,7 @@ const admissionSchema = new mongoose.Schema(
     // Family details
     motherName: { type: String },
     familyIncome: { type: Number, default: 0 },
+    totalFees: { type: Number, default: 0 },
 
     // Contact details
     studentWhatsappNumber: { type: Number },

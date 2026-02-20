@@ -86,6 +86,8 @@ const DetailCardDocuments = ({
 
 const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
   const [application, setApplication] = useState(null);
+  const [feeStructures, setFeeStructures] = useState([]);
+  const [currentFeeStructure, setCurrentFeeStructure] = useState(null);
 
   useEffect(() => {
     if (admissionId && admission) {
@@ -93,6 +95,46 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
       setApplication(foundEnquiry || null);
     }
   }, [admissionId, admission]);
+
+  useEffect(() => {
+    const fetchFeeStructures = async () => {
+      try {
+        const res = await fetch("/api/fee/feestructure");
+        if (res.ok) {
+          const data = await res.json();
+          setFeeStructures(data.feeStructures || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch fee structures", e);
+      }
+    };
+    fetchFeeStructures();
+  }, []);
+
+  // Helper to normalize year for comparison
+  const normalizeYear = (year) => {
+    if (!year) return "";
+    const str = year.toString().toLowerCase().trim();
+    if (["1", "1st", "first", "fe", "i"].some(s => str.includes(s))) return "1";
+    if (["2", "2nd", "second", "se", "ii"].some(s => str.includes(s))) return "2";
+    if (["3", "3rd", "third", "te", "iii"].some(s => str.includes(s))) return "3";
+    if (["4", "4th", "fourth", "be", "iv"].some(s => str.includes(s))) return "4";
+    return str;
+  };
+
+  useEffect(() => {
+    if (application && feeStructures.length > 0) {
+      const found = feeStructures.find(
+        (fee) => {
+          const matchProgram = fee.programType?.trim().toLowerCase() === application.programType?.trim().toLowerCase();
+          const matchBranch = fee.departmentName?.trim().toLowerCase() === application.branch?.trim().toLowerCase();
+          const matchYear = normalizeYear(fee.year) === normalizeYear(application.year);
+          return matchProgram && matchBranch && matchYear;
+        }
+      );
+      setCurrentFeeStructure(found || null);
+    }
+  }, [application, feeStructures]);
 
   if (!application) {
     return (
@@ -137,6 +179,19 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
+  };
+
+  const getTotalFee = (structure) => {
+    if (!structure) return 0;
+    const studentTotal =
+      structure.feesFromStudent?.reduce((sum, item) => sum + (item.amount || 0), 0) ||
+      0;
+    const welfareTotal =
+      structure.feesFromSocialWelfare?.reduce(
+        (sum, item) => sum + (item.amount || 0),
+        0
+      ) || 0;
+    return studentTotal + welfareTotal;
   };
 
   return (
@@ -279,6 +334,13 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               value={application.round}
               bgColor="bg-orange-50"
               iconColor="text-orange-600"
+            />
+            <DetailCard
+              icon={<IndianRupee className="w-5 h-5" />}
+              label="Total Fees"
+              value={application.totalFees ? `₹${application.totalFees}` : "N/A"}
+              bgColor="bg-green-50"
+              iconColor="text-green-600"
             />
             <DetailCard
               icon={<GraduationCap className="w-5 h-5" />}
@@ -459,6 +521,107 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
               <p className="text-gray-500">No documents uploaded</p>
             )}
           </div>
+
+          {/* Fee Structure Display Table */}
+          {currentFeeStructure && (
+            <div className="mt-6 border rounded-xl overflow-hidden shadow-sm bg-gray-50 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                    Fee Structure Details
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                        Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year}
+                    </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white rounded-lg border">
+                {/* Student Fees */}
+                {currentFeeStructure.feesFromStudent?.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="text-sm font-semibold text-gray-600 mb-2">
+                      Fees from Student
+                    </h5>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-gray-600">
+                              Component
+                            </th>
+                            <th className="px-4 py-2 text-right text-gray-600">
+                              Amount (₹)
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {currentFeeStructure.feesFromStudent.map(
+                            (item, idx) => (
+                              <tr key={`student-${idx}`}>
+                                <td className="px-4 py-2">
+                                  {item.componentName}
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  {item.amount}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Social Welfare Fees */}
+                {currentFeeStructure.feesFromSocialWelfare?.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="text-sm font-semibold text-gray-600 mb-2">
+                      Fees from Social Welfare
+                    </h5>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-gray-600">
+                              Component
+                            </th>
+                            <th className="px-4 py-2 text-right text-gray-600">
+                              Amount (₹)
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {currentFeeStructure.feesFromSocialWelfare.map(
+                            (item, idx) => (
+                              <tr key={`welfare-${idx}`}>
+                                <td className="px-4 py-2">
+                                  {item.componentName}
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  {item.amount}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-4 border-t mt-2">
+                  <p className="text-lg font-bold text-gray-900">
+                    Total Fee: ₹{getTotalFee(currentFeeStructure)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1001,19 +1164,25 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
       selectedProgramType &&
       selectedBranch &&
       selectedYear &&
-      selectedCaste &&
       feeStructures.length > 0
     ) {
       const matchingFeeStructures = feeStructures.filter(
-        (fee) =>
-          fee.programType?.toLowerCase() === selectedProgramType.toLowerCase() &&
-          fee.departmentName?.toLowerCase() === selectedBranch.toLowerCase() &&
-          fee.year === selectedYear &&
-          fee.caste?.toLowerCase() === selectedCaste.toLowerCase()
+        (fee) => {
+           const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+           const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+           const feeYear = normalizeYear(fee.year);
+           const selYear = normalizeYear(selectedYear);
+           const matchYear = feeYear === selYear;
+           
+           // Only match on 3 factors: year, program type, and branch
+           return matchProgram && matchBranch && matchYear;
+        }
       );
       
       if (matchingFeeStructures.length === 0) {
-        if(watch("feesCategory") !== "") setValue("feesCategory", "");
+        // Only clear if the user is actively selecting. If loading existing data, we might want to be careful.
+        // But if no structure exists, we probably should clear it to avoid invalid state.
+        if (watch("feesCategory") !== "") setValue("feesCategory", "");
         return;
       }
       
@@ -1024,17 +1193,23 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
         ),
       ];
 
-      // If only one option available, auto-select it? Maybe better to let user select.
-      // But if current selection is invalid, clear it.
       const currentFeesCategory = watch("feesCategory");
+      
+      // Check if current selection is valid. 
+      // Note: "Active Fee Structure" in UI corresponds to "none" or empty string or null in data usually?
+      // In the dropdown we map:  label: (!sp || sp === "none") ? "Active Fee Structure"
+      
        if (
           currentFeesCategory &&
           !scholarshipOptions.includes(currentFeesCategory)
         ) {
-          setValue("feesCategory", "");
+          // Verify if it's a case of "none" mismatch or similar
+          // If current is "Active Fee Structure" user-side but "none" in data... actually the value is "none".
+           setValue("feesCategory", "");
         } else if (scholarshipOptions.length === 1 && !currentFeesCategory) {
-           // Optional: Auto select if there's only 1 option and nothing is selected
-           // setValue("feesCategory", scholarshipOptions[0]);
+           // Auto-select if only 1 option available? 
+           // Better UX might be to select it
+           setValue("feesCategory", scholarshipOptions[0]);
         }
       
     } else {
@@ -1056,23 +1231,39 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
         selectedProgramType &&
         selectedBranch &&
         selectedYear &&
-        selectedCaste &&
         selectedFeesCategory &&
         feeStructures.length > 0
     ) {
         const found = feeStructures.find(
-            (fee) =>
-            fee.programType?.toLowerCase() === selectedProgramType.toLowerCase() &&
-            fee.departmentName?.toLowerCase() === selectedBranch.toLowerCase() &&
-            fee.year === selectedYear &&
-            fee.caste?.toLowerCase() === selectedCaste.toLowerCase() &&
-            fee.scholarshipParticular === selectedFeesCategory
+            (fee) => {
+              const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+              const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+              const matchYear = normalizeYear(fee.year) === normalizeYear(selectedYear);
+              const matchCategory = fee.scholarshipParticular === selectedFeesCategory;
+              
+              // Only match on 3 factors: year, program type, and branch, plus category
+              return matchProgram && matchBranch && matchYear && matchCategory;
+            }
         );
         setCurrentFeeStructure(found || null);
+        
+        // Auto-calculate and set totalFees
+        if (found) {
+            const studentTotal = found.feesFromStudent?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+            const welfareTotal = found.feesFromSocialWelfare?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+            const total = studentTotal + welfareTotal;
+            // Only update if changed to avoid loop (though useEffect deps handle it)
+            setValue("totalFees", total);
+        } else {
+             setValue("totalFees", 0);
+        }
     } else {
         setCurrentFeeStructure(null);
+        // Don't necessarily clear fees if fields are just being typed, 
+        // but if the combination is invalid, maybe we should.
+        // For now, let's play safe and only clear if specific required fields change to something invalid
     }
-  }, [selectedProgramType, selectedBranch, selectedYear, selectedCaste, selectedFeesCategory, feeStructures]);
+  }, [selectedProgramType, selectedBranch, selectedYear, selectedCaste, selectedFeesCategory, feeStructures, setValue]);
 
 
   // Program type options
@@ -1110,39 +1301,47 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
     { value: "4th", label: "4th Year" },
   ];
 
+  // Helper to normalize year for comparison
+  const normalizeYear = (year) => {
+    if (!year) return "";
+    const str = year.toString().toLowerCase().trim();
+    if (["1", "1st", "first", "fe", "i"].some(s => str.includes(s))) return "1";
+    if (["2", "2nd", "second", "se", "ii"].some(s => str.includes(s))) return "2";
+    if (["3", "3rd", "third", "te", "iii"].some(s => str.includes(s))) return "3";
+    if (["4", "4th", "fourth", "be", "iv"].some(s => str.includes(s))) return "4";
+    return str;
+  };
+
   // Fees category options
   // Helper to get options safely with relaxed matching
   const getFeeCategoryOptions = () => {
-      console.log("Debug Filtering:", {
-        selectedProgramType,
-        selectedBranch,
-        selectedYear,
-        selectedCaste,
-        feeStructuresCount: feeStructures.length
-      });
-
       const matches = feeStructures.filter(
             (fee) => {
               const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
               const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
-              const matchYear = fee.year === selectedYear; 
-              const matchCaste = fee.caste?.trim().toLowerCase() === selectedCaste?.trim().toLowerCase();
               
-              if (!matchProgram || matchBranch || matchYear || matchCaste) {
-                 // console.log("Mismatch debug:", { fee });
-              }
-              return matchProgram && matchBranch && matchYear && matchCaste;
+              const feeYear = normalizeYear(fee.year);
+              const selYear = normalizeYear(selectedYear);
+              const matchYear = feeYear === selYear; 
+              
+              // Only match on 3 factors: year, program type, and branch
+              return matchProgram && matchBranch && matchYear;
             }
           );
       
-      console.log("Matches details:", matches);
-
       const uniqueCategories = [
           ...new Set(
             matches
               .map((fee) => fee.scholarshipParticular)
           ),
         ];
+
+      if (uniqueCategories.length === 0) {
+        return [{ value: "", label: "No Fee Structure Found" }];
+      }
+      
+      // Ensure "none" is handled nicely if it's the only option or one of them.
+      // We want to return options. The caller (useEffect) handles selection logic, but here we provide valid options.
         
       return [
         { value: "", label: "Select Fees Category" },
@@ -1326,6 +1525,15 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
             !selectedCaste ||
             feesCategoryOptions.length <= 1
           }
+        />
+        <FormField
+          control={control}
+          name="totalFees"
+          label="Total Fees (₹)"
+          type="number"
+          error={errors.totalFees}
+          disabled={true} // Read-only
+          required
         />
         <FormField
           control={control}
@@ -2178,15 +2386,11 @@ const AdmissionApplications = () => {
   //   } catch (error) {
   //     console.error("Error updating status:", error);
   //     toast.error(error.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleStatusChange = async (id, newStatus) => {
     try {
       setLoading(true);
 
+      // Only send the fields we want to update
       const response = await fetch(`/api/admission/${id}`, {
         method: "PUT",
         headers: {
@@ -2194,8 +2398,7 @@ const AdmissionApplications = () => {
         },
         body: JSON.stringify({
           status: newStatus,
-          isPrnGenerated: true,
-          // Include any other fields that might be needed for student creation
+          isPrnGenerated: newStatus === "approved" ? true : undefined,
         }),
       });
 
@@ -2212,9 +2415,25 @@ const AdmissionApplications = () => {
       // Show success message
       toast.success(`Application ${newStatus} successfully`);
 
-      // If approved, show additional success message about student creation
+      // If approved, convert to student profile
       if (newStatus === "approved") {
-        toast.success("Student record created successfully");
+        try {
+          const convertResponse = await fetch(`/api/admission/${id}/convert`, {
+            method: 'POST',
+          });
+          
+          if (convertResponse.ok) {
+            const convertResult = await convertResponse.json();
+            console.log("Converted to student:", convertResult);
+            toast.success("Student profile created successfully!");
+          } else {
+            console.error("Conversion failed");
+            toast.warning("Application approved but student creation failed");
+          }
+        } catch (convertError) {
+          console.error("Conversion error:", convertError);
+          toast.warning("Application approved but student creation failed");
+        }
       }
     } catch (error) {
       console.error("Error updating status:", error);

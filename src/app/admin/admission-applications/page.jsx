@@ -669,6 +669,26 @@ const AdmissionApplications = () => {
       : "N/A";
   };
 
+  // Handle convert admission to student
+  const handleConvertToStudent = async (admissionId, studentName) => {
+    if (window.confirm(`Are you sure you want to convert ${studentName} to a student profile?`)) {
+      try {
+        const res = await fetch(`/api/admission/${admissionId}/convert`, {
+          method: 'POST',
+        });
+        if (!res.ok) throw new Error("Failed to convert admission");
+        const result = await res.json();
+        // Refresh admissions list
+        fetchAdmission();
+        toast.success(`Successfully converted ${studentName} to student profile`);
+        console.log("Conversion result:", result);
+      } catch (err) {
+        console.error("Convert error:", err);
+        toast.error("Failed to convert admission to student");
+      }
+    }
+  };
+
   const fetchAdmission = async () => {
     try {
       setLoading(true);
@@ -950,14 +970,29 @@ const AdmissionApplications = () => {
     }
   };
   const handleExportToExcelSample = () => {
-    const exportData = [
-      {
-        DTEApplicationNumber: "",
-        FirstName: "",
-        Email: "",
-        StudentWhatsappNo: "",
-      },
-    ];
+    // const exportData = [
+    //   {
+    //     DTEApplicationNumber: "",
+    //     FirstName: "",
+    //     LastName: "",
+    //     DateofBirth: "",
+    //     Gender: "",
+    //     Email: "",
+    //     StudentWhatsappNo: ""
+    //   },
+    // ];
+
+    // Change your Excel template header
+const exportData = [
+  {
+    DTEApplicationNumber: "",
+    FirstName: "",
+    LastName: "",
+    Gender: "",
+    Email: "",
+    StudentWhatsappNo: ""
+  },
+];
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
@@ -1259,8 +1294,12 @@ const AdmissionApplications = () => {
                                   {[
                                     "DTEApplicationNumber",
                                     "FirstName",
+                                    "LastName",
+                                    // "DateofBirth",
+                                    "Gender",
                                     "Email",
                                     "StudentWhatsappNo",
+     
                                   ].map((header) => (
                                     <th
                                       key={header}
@@ -1278,6 +1317,15 @@ const AdmissionApplications = () => {
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                                     John
+                                  </td>
+                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                    Doe
+                                  </td>
+                                   {/* <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                   10 Jan 1995
+                                  </td> */}
+                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                   Male
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                                     email@example.com
@@ -1299,7 +1347,7 @@ const AdmissionApplications = () => {
                                 Important Notes
                               </h4>
                               <p className="text-sm text-blue-700 mt-1">
-                                • The following fields are mandatory: DTEApplicationNumber, FirstName, Email, StudentWhatsappNo.
+                                • The following fields are mandatory: DTEApplicationNumber, FirstName, LastName, Gender, Email, StudentWhatsappNo.
                               </p>
                             </div>
                           </div>

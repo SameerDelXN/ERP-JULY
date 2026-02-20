@@ -17,6 +17,7 @@ import {
     BookOpen,
     File,
     Eye,
+    IndianRupee,
 } from "lucide-react";
 import LoadingComponent from "@/components/Loading";
 import FormField from "@/components/forms/FormField";
@@ -30,6 +31,8 @@ const EditAdmissionPage = ({ params }) => {
     const [application, setApplication] = useState(null);
     const [courses, setCourses] = useState([]);
     const [loadingCourses, setLoadingCourses] = useState(true);
+    const [feeStructures, setFeeStructures] = useState([]);
+    const [currentFeeStructure, setCurrentFeeStructure] = useState(null);
 
     const {
         control,
@@ -70,6 +73,7 @@ const EditAdmissionPage = ({ params }) => {
             casteAsPerLC: "",
             feesCategory: "",
             quota: "",
+            totalFees: "",
 
             // Academic Background
             sscBoard: "",
@@ -100,6 +104,123 @@ const EditAdmissionPage = ({ params }) => {
     });
 
     const selectedProgramType = watch("programType");
+    const selectedBranch = watch("branch");
+    const selectedYear = watch("year");
+    const selectedFeesCategory = watch("feesCategory");
+
+    // Helper to normalize year for comparison
+    const normalizeYear = (year) => {
+        if (!year) return "";
+        const str = year.toString().toLowerCase().trim();
+        if (["1", "1st", "first", "fe", "i"].some(s => str.includes(s))) return "1";
+        if (["2", "2nd", "second", "se", "ii"].some(s => str.includes(s))) return "2";
+        if (["3", "3rd", "third", "te", "iii"].some(s => str.includes(s))) return "3";
+        if (["4", "4th", "fourth", "be", "iv"].some(s => str.includes(s))) return "4";
+        return str;
+    };
+
+    // Update feesCategory options based on matching fee structures
+    useEffect(() => {
+        if (
+            selectedProgramType &&
+            selectedBranch &&
+            selectedYear &&
+            feeStructures.length > 0
+        ) {
+            const matchingFeeStructures = feeStructures.filter(
+                (fee) => {
+                    const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+                    const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+                    const feeYear = normalizeYear(fee.year);
+                    const selYear = normalizeYear(selectedYear);
+                    const matchYear = feeYear === selYear;
+                    
+                    // Only match on 3 factors: year, program type, and branch
+                    return matchProgram && matchBranch && matchYear;
+                }
+            );
+            
+            if (matchingFeeStructures.length === 0) {
+                return;
+            }
+        }
+    }, [selectedProgramType, selectedBranch, selectedYear, feeStructures]);
+
+    // Update current fee structure object for display when category changes
+    useEffect(() => {
+        if (
+            selectedProgramType &&
+            selectedBranch &&
+            selectedYear &&
+            selectedFeesCategory &&
+            feeStructures.length > 0
+        ) {
+            const found = feeStructures.find(
+                (fee) => {
+                    const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+                    const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+                    const matchYear = normalizeYear(fee.year) === normalizeYear(selectedYear);
+                    const matchCategory = fee.scholarshipParticular === selectedFeesCategory;
+                    
+                    // Only match on 3 factors: year, program type, and branch, plus category
+                    return matchProgram && matchBranch && matchYear && matchCategory;
+                }
+            );
+            setCurrentFeeStructure(found || null);
+            
+            // Auto-calculate and set totalFees
+            if (found) {
+                const studentTotal = found.feesFromStudent?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+                const welfareTotal = found.feesFromSocialWelfare?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+                const total = studentTotal + welfareTotal;
+                // Update form value
+                const currentValues = watch();
+                if (currentValues.totalFees !== total) {
+                    reset({ ...currentValues, totalFees: total });
+                }
+            }
+        } else {
+            setCurrentFeeStructure(null);
+        }
+    }, [selectedProgramType, selectedBranch, selectedYear, selectedFeesCategory, feeStructures, reset, watch]);
+
+    // Helper to get fee category options
+    const getFeeCategoryOptions = () => {
+        const matches = feeStructures.filter(
+            (fee) => {
+                const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+                const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+                
+                const feeYear = normalizeYear(fee.year);
+                const selYear = normalizeYear(selectedYear);
+                const matchYear = feeYear === selYear; 
+                
+                // Only match on 3 factors: year, program type, and branch
+                return matchProgram && matchBranch && matchYear;
+            }
+        );
+        
+        const uniqueCategories = [
+            ...new Set(
+                matches
+                    .map((fee) => fee.scholarshipParticular)
+            ),
+        ];
+
+        if (uniqueCategories.length === 0) {
+            return [{ value: "", label: "No Fee Structure Found" }];
+        }
+        
+        return [
+            { value: "", label: "Select Fees Category" },
+            ...uniqueCategories.map((sp) => ({
+                value: sp,
+                label: (!sp || sp === "none") ? "Active Fee Structure" : sp.charAt(0).toUpperCase() + sp.slice(1),
+            })),
+        ];
+    };
+
+    const feesCategoryOptions = getFeeCategoryOptions();
 
     // Fetch courses
     useEffect(() => {
@@ -118,6 +239,22 @@ const EditAdmissionPage = ({ params }) => {
             }
         };
         fetchCourses();
+    }, []);
+
+    // Fetch fee structures
+    useEffect(() => {
+        const fetchFeeStructures = async () => {
+            try {
+                const res = await fetch("/api/fee/feestructure");
+                if (res.ok) {
+                    const data = await res.json();
+                    setFeeStructures(data.feeStructures || []);
+                }
+            } catch (error) {
+                console.error("Error fetching fee structures:", error);
+            }
+        };
+        fetchFeeStructures();
     }, []);
 
     // Fetch application data
@@ -167,6 +304,7 @@ const EditAdmissionPage = ({ params }) => {
                         casteAsPerLC: data.data.casteAsPerLC || "",
                         feesCategory: data.data.feesCategory || "",
                         quota: data.data.quota || "",
+                        totalFees: data.data.totalFees || "",
 
                         // Academic Background
                         sscBoard: data.data.sscBoard || "",
@@ -750,9 +888,24 @@ const EditAdmissionPage = ({ params }) => {
                                     control={control}
                                     name="feesCategory"
                                     label="Fees Category"
-                                    type="text"
-                                    placeholder="Enter fees category"
+                                    type="select"
+                                    options={feesCategoryOptions}
                                     error={errors?.feesCategory}
+                                    disabled={
+                                        !selectedProgramType ||
+                                        !selectedBranch ||
+                                        !selectedYear ||
+                                        feesCategoryOptions.length <= 1
+                                    }
+                                />
+                                <FormField
+                                    control={control}
+                                    name="totalFees"
+                                    label="Total Fees (₹)"
+                                    type="number"
+                                    error={errors?.totalFees}
+                                    disabled={true} // Read-only
+                                    required
                                 />
                                 <FormField
                                     control={control}
@@ -766,6 +919,107 @@ const EditAdmissionPage = ({ params }) => {
                                 />
                             </div>
                         </div>
+
+                        {/* Fee Structure Display */}
+                        {currentFeeStructure && (
+                            <div className="mb-8 border rounded-xl overflow-hidden shadow-sm bg-gray-50 p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <FileText className="w-4 h-4 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            Fee Structure Details
+                                        </h3>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-white rounded-lg border">
+                                    {/* Student Fees */}
+                                    {currentFeeStructure.feesFromStudent?.length > 0 && (
+                                        <div className="mb-4">
+                                            <h5 className="text-sm font-semibold text-gray-600 mb-2">
+                                                Fees from Student
+                                            </h5>
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full text-sm">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-4 py-2 text-left text-gray-600">
+                                                                Component
+                                                            </th>
+                                                            <th className="px-4 py-2 text-right text-gray-600">
+                                                                Amount (₹)
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y">
+                                                        {currentFeeStructure.feesFromStudent.map(
+                                                            (item, idx) => (
+                                                                <tr key={`student-${idx}`}>
+                                                                    <td className="px-4 py-2">
+                                                                        {item.componentName}
+                                                                    </td>
+                                                                    <td className="px-4 py-2 text-right">
+                                                                        {item.amount}
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Social Welfare Fees */}
+                                    {currentFeeStructure.feesFromSocialWelfare?.length > 0 && (
+                                        <div className="mb-4">
+                                            <h5 className="text-sm font-semibold text-gray-600 mb-2">
+                                                Fees from Social Welfare
+                                            </h5>
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full text-sm">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-4 py-2 text-left text-gray-600">
+                                                                Component
+                                                            </th>
+                                                            <th className="px-4 py-2 text-right text-gray-600">
+                                                                Amount (₹)
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y">
+                                                        {currentFeeStructure.feesFromSocialWelfare.map(
+                                                            (item, idx) => (
+                                                                <tr key={`welfare-${idx}`}>
+                                                                    <td className="px-4 py-2">
+                                                                        {item.componentName}
+                                                                    </td>
+                                                                    <td className="px-4 py-2 text-right">
+                                                                        {item.amount}
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end pt-4 border-t mt-2">
+                                        <p className="text-lg font-bold text-gray-900">
+                                            Total Fee: ₹{currentFeeStructure.feesFromStudent?.reduce((sum, item) => sum + (item.amount || 0), 0) + (currentFeeStructure.feesFromSocialWelfare?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Additional Details Section */}
                         <div className="mb-8">
