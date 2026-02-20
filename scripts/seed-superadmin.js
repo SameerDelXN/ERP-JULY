@@ -62,7 +62,6 @@ async function seedSuperAdmin() {
         // Get or create the User model
         const User = mongoose.models.user || mongoose.model('user', userSchema);
 
-        // Check if superadmin already exists
         const existingSuperAdmin = await User.findOne({ role: 'superadmin' });
 
         if (existingSuperAdmin) {
