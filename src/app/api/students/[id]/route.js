@@ -1,5 +1,6 @@
-import { connectToDatabase } from '../../../lib/mongodb';
-import studentSchema from '../../../models/studentSchema';
+import { connectToDatabase } from '@/lib/mongoose';
+import Student from '@/app/models/studentSchema';
+import User from '@/app/models/userSchema';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
@@ -11,8 +12,8 @@ export async function GET(req, { params }) {
     const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
 
     const studentData = isValidObjectId
-      ? await studentSchema.findOne({ $or: [{ _id: id }, { studentId: id }] })
-      : await studentSchema.findOne({ studentId: id });
+      ? await Student.findOne({ $or: [{ _id: id }, { studentId: id }] })
+      : await Student.findOne({ studentId: id });
 
     if (!studentData) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
@@ -32,7 +33,7 @@ export async function PUT(req, { params }) {
     const data = await req.json();
 
     const filter = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { studentId: id };
-    const updatedStudent = await studentSchema.findOneAndUpdate(filter, data, {
+    const updatedStudent = await Student.findOneAndUpdate(filter, data, {
       new: true,
       runValidators: true,
     });
@@ -58,13 +59,25 @@ export async function DELETE(req, { params }) {
       ? { _id: id }
       : { studentId: id };
 
-    const deletedStudent = await studentSchema.findOneAndDelete(filter);
-
-    if (!deletedStudent) {
+    // First find the student to get associated data
+    const student = await Student.findOne(filter);
+    
+    if (!student) {
       return NextResponse.json({ message: 'Student not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Student deleted successfully' }, { status: 200 });
+    // Delete the associated User record (using studentId as username)
+    await User.findOneAndDelete({ username: student.studentId });
+
+    // Delete the student record
+    const deletedStudent = await Student.findOneAndDelete(filter);
+
+    console.log(`✅ Deleted student: ${deletedStudent.studentId} and associated user record`);
+
+    return NextResponse.json({ 
+      message: 'Student and associated user deleted successfully', 
+      student: deletedStudent 
+    }, { status: 200 });
   } catch (error) {
     console.error('[DELETE_STUDENT_ERROR]', error);
     return NextResponse.json({ message: 'Error deleting student', error }, { status: 500 });

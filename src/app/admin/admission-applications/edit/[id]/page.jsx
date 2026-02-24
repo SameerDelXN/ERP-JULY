@@ -106,6 +106,7 @@ const EditAdmissionPage = ({ params }) => {
     const selectedProgramType = watch("programType");
     const selectedBranch = watch("branch");
     const selectedYear = watch("year");
+    const selectedCaste = watch("casteAsPerLC");
     const selectedFeesCategory = watch("feesCategory");
 
     // Helper to normalize year for comparison
@@ -125,6 +126,7 @@ const EditAdmissionPage = ({ params }) => {
             selectedProgramType &&
             selectedBranch &&
             selectedYear &&
+            selectedCaste &&
             feeStructures.length > 0
         ) {
             const matchingFeeStructures = feeStructures.filter(
@@ -135,8 +137,12 @@ const EditAdmissionPage = ({ params }) => {
                     const selYear = normalizeYear(selectedYear);
                     const matchYear = feeYear === selYear;
                     
-                    // Only match on 3 factors: year, program type, and branch
-                    return matchProgram && matchBranch && matchYear;
+                    const feeCaste = fee.caste?.trim().toLowerCase() || "";
+                    const selCaste = selectedCaste?.trim().toLowerCase() || "";
+                    const matchCaste = feeCaste === selCaste || (feeCaste && selCaste && (feeCaste.includes(selCaste) || selCaste.includes(feeCaste)));
+                    
+                    // Match on all 5 factors: year, program type, branch, caste
+                    return matchProgram && matchBranch && matchYear && matchCaste;
                 }
             );
             
@@ -195,8 +201,12 @@ const EditAdmissionPage = ({ params }) => {
                 const selYear = normalizeYear(selectedYear);
                 const matchYear = feeYear === selYear; 
                 
-                // Only match on 3 factors: year, program type, and branch
-                return matchProgram && matchBranch && matchYear;
+                // Match on all 5 factors: year, program type, branch, caste
+                const feeCaste = fee.caste?.trim().toLowerCase() || "";
+                const selCaste = selectedCaste?.trim().toLowerCase() || "";
+                const matchCaste = feeCaste === selCaste || (feeCaste && selCaste && (feeCaste.includes(selCaste) || selCaste.includes(feeCaste)));
+                
+                return matchProgram && matchBranch && matchYear && matchCaste;
             }
         );
         
@@ -932,7 +942,7 @@ const EditAdmissionPage = ({ params }) => {
                                             Fee Structure Details
                                         </h3>
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year}
+                                            Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year} - {currentFeeStructure.caste} - {currentFeeStructure.category}
                                         </p>
                                     </div>
                                 </div>

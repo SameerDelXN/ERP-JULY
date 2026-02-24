@@ -52,7 +52,7 @@ const studentSchema = new mongoose.Schema(
     },
     admissionId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admission',
+      ref: 'admission', // Fixed: lowercase to match admission model export
       required: true,
       unique: true,
     },
@@ -112,6 +112,6 @@ const studentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-delete mongoose.models.Student
+delete mongoose.models.Student; // Fixed: case sensitivity
 const Student = mongoose.models.Student || mongoose.model('Student', studentSchema);
 export default Student;

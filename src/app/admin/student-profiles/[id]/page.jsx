@@ -235,14 +235,14 @@ const StudentProfile = () => {
                     {editMode ? (
                       <input
                         type="tel"
-                        name="phone"
-                        value={editedStudent?.phone || ''}
+                        name="mobileNumber"
+                        value={editedStudent?.mobileNumber || ''}
                         onChange={handleInputChange}
                         className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter phone number"
                       />
                     ) : (
-                      <p className="text-gray-900">{student.phone || "Not provided"}</p>
+                      <p className="text-gray-900">{student.mobileNumber || "Not provided"}</p>
                     )}
                   </div>
                   <div>
