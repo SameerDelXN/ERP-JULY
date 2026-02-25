@@ -107,34 +107,6 @@ export async function PUT(req, { params }) {
   }
 }
 
-// Helper function to map admission gender to valid Student schema enum
-function mapGenderToValidEnum(gender) {
-  if (!gender) return 'Other';
-  
-  const genderLower = gender.toLowerCase();
-  if (genderLower === 'male' || genderLower === 'm') {
-    return 'Male';
-  } else if (genderLower === 'female' || genderLower === 'f') {
-    return 'Female';
-  } else {
-    return 'Other';
-  }
-}
-
-// Helper function to map admission programType to valid Student schema enum
-function mapProgramTypeToValidEnum(programType) {
-  if (!programType) return 'UG';
-  
-  const programLower = programType.toLowerCase();
-  if (programLower.includes('diploma') || programLower.includes('polytechnic')) {
-    return 'Diploma';
-  } else if (programLower.includes('post') || programLower.includes('master') || programLower.includes('pg') || programLower.includes('m.')) {
-    return 'PG';
-  } else {
-    return 'UG'; // Default to Undergraduate for Engineering and others
-  }
-}
-
 // Helper function to convert admission to student
 async function convertAdmissionToStudent(admission) {
   console.log(`🔄 Starting conversion for admission: ${admission._id}`);
@@ -237,9 +209,9 @@ async function convertAdmissionToStudent(admission) {
       email: admission.email,
       mobileNumber: admission.studentWhatsappNumber?.toString() || "",
       dateOfBirth: admission.dateOfBirth ? new Date(admission.dateOfBirth) : new Date(),
-      gender: mapGenderToValidEnum(admission.gender),
+      gender: admission.gender,
       address: admission.address && admission.address[0] ? admission.address[0] : {},
-      programType: mapProgramTypeToValidEnum(admission.programType),
+      programType: admission.programType,
       branch: admission.branch,
       currentYear: admission.year,
       prn: prn,

@@ -217,11 +217,6 @@ export async function POST(request) {
 
     console.log("Imported file record updated successfully");
 
-    // Handle approved status to create student records
-    if (result.length > 0) {
-      await handleApprovedStatus(result);
-    }
-
     return NextResponse.json({
       message: "Data imported successfully",
       totalRecords: jsonData.length,

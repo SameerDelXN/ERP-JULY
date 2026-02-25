@@ -689,6 +689,46 @@ const AdmissionApplications = () => {
     }
   };
 
+  // Handle status change
+  const handleStatusChange = async (admissionId, newStatus, studentName) => {
+    const confirmMessage = newStatus === 'approved' 
+      ? `Are you sure you want to approve ${studentName}? This will automatically convert them to a student profile.`
+      : `Are you sure you want to change the status of ${studentName} to ${newStatus}?`;
+      
+    if (window.confirm(confirmMessage)) {
+      try {
+        const res = await fetch(`/api/admission/${admissionId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: newStatus }),
+        });
+
+        if (!res.ok) throw new Error("Failed to update status");
+
+        const result = await res.json();
+        
+        // Refresh admissions list
+        await fetchAdmission();
+        
+        toast.success(`Status changed to ${newStatus} for ${studentName}`);
+        
+        // If status changed to approved, show conversion result
+        if (newStatus === 'approved' && result.conversionResult) {
+          if (result.conversionResult.success) {
+            toast.success(`Automatically converted ${studentName} to student profile. Student ID: ${result.conversionResult.studentId}, PRN: ${result.conversionResult.prn}`);
+          } else {
+            toast.error(`Failed to convert ${studentName}: ${result.conversionResult.error}`);
+          }
+        }
+      } catch (err) {
+        console.error("Status change error:", err);
+        toast.error("Failed to update status");
+      }
+    }
+  };
+
   const fetchAdmission = async () => {
     try {
       setLoading(true);
@@ -2031,6 +2071,22 @@ const exportData = [
                         >
                           <Edit2 className="w-4 h-4" />
                         </Link>
+                        {/* Status Change Dropdown - Only for imported files (inProcess status) */}
+                        {console.log('Application status:', application.status, 'Application:', application._id) || application.status === 'inProcess' && (
+                          <div className="relative">
+                            <select
+                              value={application.status}
+                              onChange={(e) => handleStatusChange(application._id, e.target.value, application.fullName)}
+                              className="text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-2 py-1"
+                              title="Change Status (Imported File)"
+                            >
+                              <option value="inProcess">In Process</option>
+                              <option value="approved">Approved</option>
+                              <option value="rejected">Rejected</option>
+                            </select>
+                            <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center" title="Imported File">i</span>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
