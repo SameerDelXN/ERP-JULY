@@ -25,7 +25,16 @@ export async function GET(req, { params }) {
       return NextResponse.json({ message: 'HOD or department not found' }, { status: 404 });
     }
 
-    // Step 2: Use department name to find academic document
+    // Step 2: Get ALL students from Student collection for this department
+    const allDepartmentStudents = await studentSchema.find({ 
+      branch: { $regex: new RegExp(`^${hod.department}$`, 'i') }
+    })
+    .select('fullName studentId email status currentYear division')
+    .lean();
+
+    console.log('All department students from Student collection:', allDepartmentStudents.length);
+
+    // Step 3: Also get academic structure for attendance data
     const academicDoc = await academicSchema.findOne({ department: hod.department })
       .populate({
         path: 'years.divisions.students',
@@ -34,37 +43,85 @@ export async function GET(req, { params }) {
       })
       .lean();
 
-    if (!academicDoc) {
-      return NextResponse.json({ message: 'No academic data found for this department' }, { status: 404 });
-    }
-
-    // Step 3: Fetch attendance records
+    // Step 4: Fetch attendance records
     const attendanceRecords = await attendanceSchema.find({
-      department: academicDoc.department,
+      department: academicDoc?.department || hod.department,
     }).lean();
 
-    // Step 4: Transform data
+    // Step 5: Create comprehensive student data
+    let allStudents = [];
+    
+    if (allDepartmentStudents.length > 0) {
+      // Use students from Student collection (primary source)
+      allStudents = allDepartmentStudents.map(student => ({
+        id: student._id,
+        name: student.fullName || 'Unnamed',
+        roll: student.studentId || 'N/A',
+        email: student.email || '',
+        status: student.status || 'active',
+        currentYear: student.currentYear || '1st Year',
+        division: student.division || 'A',
+        attendance: {} // Will be populated if attendance data exists
+      }));
+    } else if (academicDoc) {
+      // Fallback to academic structure if no students in Student collection
+      allStudents = [];
+      academicDoc.years.forEach((year) => {
+        year.divisions.forEach((division) => {
+          if (division.students && division.students.length > 0) {
+            division.students.forEach((stu) => {
+              allStudents.push({
+                id: stu._id,
+                name: stu.fullName || 'Unnamed',
+                roll: stu.studentId || 'N/A',
+                email: stu.email || '',
+                status: 'active',
+                currentYear: year.year,
+                division: division.name,
+                attendance: buildStudentAttendance(
+                  attendanceRecords,
+                  year.year,
+                  year.semester,
+                  division.name,
+                  stu._id
+                ),
+              });
+            });
+          }
+        });
+      });
+    }
+
+    console.log('Final student count for student management:', allStudents.length);
+
+    // Step 6: Group by year for frontend compatibility
+    const studentsByYear = {};
+    allStudents.forEach(student => {
+      const yearKey = student.currentYear || '1st Year';
+      if (!studentsByYear[yearKey]) {
+        studentsByYear[yearKey] = [];
+      }
+      
+      // Check if division already exists for this year
+      let division = studentsByYear[yearKey].find(d => d.division === student.division);
+      if (!division) {
+        division = {
+          division: student.division,
+          students: []
+        };
+        studentsByYear[yearKey].push(division);
+      }
+      
+      division.students.push(student);
+    });
+
+    // Step 7: Transform data to match expected format
     const transformed = {
-      years: academicDoc.years.map((year) => ({
-        year: year.year,
-        semester: year.semester,
-        divisions: year.divisions.map((division) => ({
-          division: division.name,
-          students: (division.students || []).map((stu) => ({
-            id: stu._id,
-            name: stu.fullName || 'Unnamed',
-            roll: stu.studentId || 'N/A',
-            email: stu.email || '',
-            attendance: buildStudentAttendance(
-              attendanceRecords,
-              year.year,
-              year.semester,
-              division.name,
-              stu._id
-            ),
-          })),
-        })),
-      })),
+      years: Object.keys(studentsByYear).map(year => ({
+        year: year,
+        semester: 'Sem 1', // Default semester
+        divisions: studentsByYear[year]
+      }))
     };
 
     return NextResponse.json(transformed, { status: 200 });

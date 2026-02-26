@@ -44,6 +44,15 @@ export async function GET(req) {
           .lean();
 
         return NextResponse.json(teachers);
+      } else if (listType === 'activeStudents') {
+        const activeStudents = await Student.find({ 
+          branch: { $regex: new RegExp(`^${department}$`, 'i') },
+          status: 'active'
+        })
+          .select('fullName email status studentId')
+          .lean();
+
+        return NextResponse.json(activeStudents);
       }
     }
 
