@@ -23,11 +23,11 @@ export async function GET(req) {
 
     const department = hodUser.department?.trim();
 
-    if (!department) {
-      return NextResponse.json({ error: 'HOD department is not set' }, { status: 400 });
-    }
-
     if (listType) {
+      if (!department) {
+        return NextResponse.json([]);
+      }
+
       if (listType === 'students') {
         const students = await Student.find({ branch: { $regex: new RegExp(`^${department}$`, 'i') } })
           .select('fullName email status studentId')
@@ -45,6 +45,18 @@ export async function GET(req) {
 
         return NextResponse.json(teachers);
       }
+    }
+
+    if (!department) {
+      // Return graceful default data rather than throwing an error 
+      // if the HOD has not yet been assigned a department
+      return NextResponse.json({
+        department: "Unassigned",
+        totalStudents: 0,
+        totalTeachers: 0,
+        activeStudents: 0,
+        attendanceRate: 0,
+      });
     }
 
     // Default dashboard stats

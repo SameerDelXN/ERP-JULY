@@ -16,9 +16,11 @@ const StudentsDashboard = () => {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
+      console.log("Fetching students from API...");
       const res = await fetch('/api/students');
       if (!res.ok) throw new Error("Failed to fetch Students");
       const data = await res.json(); // <-- API returns array directly
+      console.log("Received students data:", data.length, "students");
       setStudents(data);
       setIsLoading(false);
     } catch (err) {

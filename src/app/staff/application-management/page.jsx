@@ -129,7 +129,10 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
           const matchProgram = fee.programType?.trim().toLowerCase() === application.programType?.trim().toLowerCase();
           const matchBranch = fee.departmentName?.trim().toLowerCase() === application.branch?.trim().toLowerCase();
           const matchYear = normalizeYear(fee.year) === normalizeYear(application.year);
-          return matchProgram && matchBranch && matchYear;
+          const matchCaste = fee.caste?.trim().toLowerCase() === (application.casteAsPerLC || "general")?.trim().toLowerCase();
+          const matchCategory = fee.category?.trim().toLowerCase() === (application.feesCategory || "regular")?.trim().toLowerCase();
+          // Match on all 5 factors: program, branch, year, caste, category
+          return matchProgram && matchBranch && matchYear && matchCaste && matchCategory;
         }
       );
       setCurrentFeeStructure(found || null);
@@ -534,7 +537,7 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
                     Fee Structure Details
                     </h3>
                     <p className="text-xs text-gray-500 mt-1">
-                        Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year}
+                        Based on selection: {currentFeeStructure.programType} - {currentFeeStructure.departmentName} - {currentFeeStructure.year} - {currentFeeStructure.caste} - {currentFeeStructure.category}
                     </p>
                 </div>
               </div>
@@ -1164,6 +1167,7 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
       selectedProgramType &&
       selectedBranch &&
       selectedYear &&
+      selectedCaste &&
       feeStructures.length > 0
     ) {
       const matchingFeeStructures = feeStructures.filter(
@@ -1174,8 +1178,12 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
            const selYear = normalizeYear(selectedYear);
            const matchYear = feeYear === selYear;
            
-           // Only match on 3 factors: year, program type, and branch
-           return matchProgram && matchBranch && matchYear;
+           const feeCaste = fee.caste?.trim().toLowerCase() || "";
+           const selCaste = selectedCaste?.trim().toLowerCase() || "";
+           const matchCaste = feeCaste === selCaste || (feeCaste && selCaste && (feeCaste.includes(selCaste) || selCaste.includes(feeCaste)));
+           
+           // Match on all 5 factors: year, program type, branch, caste
+           return matchProgram && matchBranch && matchYear && matchCaste;
         }
       );
       
@@ -1324,8 +1332,11 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
               const selYear = normalizeYear(selectedYear);
               const matchYear = feeYear === selYear; 
               
-              // Only match on 3 factors: year, program type, and branch
-              return matchProgram && matchBranch && matchYear;
+              const feeCaste = fee.caste?.trim().toLowerCase() || "";
+              const selCaste = selectedCaste?.trim().toLowerCase() || "";
+              const matchCaste = feeCaste === selCaste || (feeCaste && selCaste && (feeCaste.includes(selCaste) || selCaste.includes(feeCaste)));
+              
+              return matchProgram && matchBranch && matchYear && matchCaste;
             }
           );
       
@@ -2376,16 +2387,6 @@ const AdmissionApplications = () => {
   //       },
   //       body: JSON.stringify({ status: newStatus }),
   //     });
-
-  //     if (!response.ok) throw new Error("Failed to update status");
-
-  //     const updatedData = await response.json();
-  //     await fetchAdmission()
-  //     // setAdmission(updatedData)
-  //     toast.success(`Application ${newStatus} successfully`);
-  //   } catch (error) {
-  //     console.error("Error updating status:", error);
-  //     toast.error(error.message);
   const handleStatusChange = async (id, newStatus) => {
     try {
       setLoading(true);
@@ -2422,17 +2423,30 @@ const AdmissionApplications = () => {
             method: 'POST',
           });
           
-          if (convertResponse.ok) {
-            const convertResult = await convertResponse.json();
+          const convertResult = await convertResponse.json();
+          
+          if (convertResponse.ok && convertResult.success) {
             console.log("Converted to student:", convertResult);
-            toast.success("Student profile created successfully!");
+            toast.success(`Student profile created successfully! PRN: ${convertResult.prn}`);
           } else {
-            console.error("Conversion failed");
-            toast.warning("Application approved but student creation failed");
+            console.error("Conversion failed:", convertResult);
+            
+            // Handle specific duplicate errors with detailed messages
+            if (convertResult.field === "prn") {
+              toast.error("Failed to generate unique PRN. Please try again.");
+            } else if (convertResult.field === "email") {
+              toast.error(`Email already exists: ${convertResult.details || 'Please use a different email'}`);
+            } else if (convertResult.field === "admissionId") {
+              toast.error(`This admission has already been converted: ${convertResult.details || 'Please refresh the page'}`);
+            } else if (convertResult.field === "studentId") {
+              toast.error("Failed to generate unique Student ID. Please try again.");
+            } else {
+              toast.warning(`Application approved but student creation failed: ${convertResult.details || convertResult.error || 'Unknown error'}`);
+            }
           }
         } catch (convertError) {
           console.error("Conversion error:", convertError);
-          toast.warning("Application approved but student creation failed");
+          toast.warning("Application approved but student creation failed due to network error");
         }
       }
     } catch (error) {
