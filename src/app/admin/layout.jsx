@@ -44,7 +44,7 @@ const Layout = ({ children }) => {
     if (!user) return [];
     const perms = user.roleId?.permissions || [];
 
-    // Strict Mode: Only show items that are explicitly allowed in permissions
+
     const items = adminSidebarItems.filter(item => perms.includes(`sidebar.${item.id}`));
 
     // Inject Blogs for SuperAdmin ONLY (Bypassing permission system)
