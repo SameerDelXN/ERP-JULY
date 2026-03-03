@@ -2404,23 +2404,11 @@ const TimetablePage = () => {
     if (!user?.id || !year || !semester || !division) return;
 
     const checkTimetable = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/hod/${user.id}/timetable?year=${year}&semester=${semester}&division=${division}`
-        );
-        const data = await response.json();
-
-        if (response.ok && data.timetable) {
-          setTimetableExists(true);
-        } else {
-          setTimetableExists(false);
-        }
-      } catch (error) {
-        console.error('Error checking timetable:', error);
+      const hasTimetable = await fetchExistingTimetable();
+      if (!hasTimetable) {
         setTimetableExists(false);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setTimetableExists(true);
       }
     };
 
@@ -2486,10 +2474,19 @@ const TimetablePage = () => {
       );
       const data = await response.json();
 
-      if (response.ok && data.timetable) {
-        const timeSlots = generateTimeSlots();
-        const formattedData = days.map(() =>
-          timeSlots.map((slot) => ({
+      if (response.ok) {
+        if (data.timetable && data.timetable.length === 0) {
+          // Empty timetable - show message to generate one
+          setTimetableData(null);
+          setViewMode('config');
+          setIsLoading(false);
+          return false;
+        }
+
+        if (data.timetable) {
+          const timeSlots = generateTimeSlots();
+          const formattedData = days.map(() => (
+            timeSlots.map((slot) => ({
             type: slot.type === "break" ? "break" : "period",
             subject: slot.type === "break" ? slot.label : "Free Period",
             professor: slot.type === "break" ? "" : "",
@@ -2497,7 +2494,7 @@ const TimetablePage = () => {
             breakType: slot.type === "break" ? slot.breakType : undefined,
             room: "",
           }))
-        );
+          ));
 
         data.timetable.forEach((period) => {
           const dayIndex = days.indexOf(period.day);
@@ -2519,6 +2516,7 @@ const TimetablePage = () => {
         setViewMode("display");
         setIsLoading(false);
         return true;
+        }
       }
 
       setIsLoading(false);

@@ -120,6 +120,14 @@ export async function GET(req, { params }) {
       );
     }
 
+    // Check if timetable exists
+    if (!divisionData.timetable || divisionData.timetable.length === 0) {
+      return NextResponse.json({ 
+        timetable: [],
+        message: "No timetable found. Please generate a timetable first." 
+      }, { status: 200 });
+    }
+
     // Fetch timetable and populate teacher details
     const timetable = divisionData.timetable.map((period) => ({
       day: period.day,

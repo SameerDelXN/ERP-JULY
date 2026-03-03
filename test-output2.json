@@ -1,0 +1,23 @@
+[
+  {
+    "_id": "69a6627f4ee7814e786a9fda",
+    "name": "Admin",
+    "description": "Administrative access with full system control",
+    "permissions": [
+      "sidebar.overview",
+      "sidebar.manage-users",
+      "sidebar.roles",
+      "sidebar.enquiry&leads",
+      "sidebar.admission-applications",
+      "sidebar.student-profiles",
+      "sidebar.academic-configuration",
+      "sidebar.courses",
+      "sidebar.attendance-overview",
+      "sidebar.feeStructure&payments"
+    ],
+    "isSystem": true,
+    "createdAt": "2026-03-03T04:24:31.738Z",
+    "updatedAt": "2026-03-03T04:24:31.738Z",
+    "__v": 0
+  }
+]

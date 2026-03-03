@@ -1,0 +1,20 @@
+[
+  {
+    "_id": "6950ba11d8b0c791cbef65d7",
+    "fullName": "System Administrator",
+    "email": "nilesh@techedu.com",
+    "phone": "8987728372",
+    "password": "$2b$10$siem0V187UJL52R9ucjokOmeoQNTJcWpRxCxAa/AFt7F2EqpiK7Da",
+    "role": "admin",
+    "isVerified": false,
+    "isActive": true,
+    "leaveCount": 0,
+    "createdAt": "2025-12-28T05:03:13.730Z",
+    "joiningDate": "2025-12-28T05:03:13.730Z",
+    "updatedAt": "2026-03-03T04:31:21.953Z",
+    "__v": 0,
+    "lastLogin": "2026-03-03T04:24:51.352Z",
+    "roleId": "69a6627f4ee7814e786a9fda",
+    "sessionToken": "7b55f6b7c99658f7925a4947f524dc907f3aeee14813b6d364036ee831f7d20c"
+  }
+]
