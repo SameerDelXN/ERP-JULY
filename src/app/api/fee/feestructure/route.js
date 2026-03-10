@@ -75,6 +75,122 @@ export async function DELETE(req) {
   }
 }
 
+export async function PUT(req) {
+  try {
+    await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    
+    console.log("PUT request received for ID:", id);
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Fee structure ID is required" },
+        { status: 400 }
+      );
+    }
+
+    let body;
+    try {
+      body = await req.json();
+      console.log("Received update payload:", body);
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+    
+    const {
+      programType,
+      departmentName,
+      year,
+      caste,
+      category,
+      yearWiseFeeStructure,
+      scholarshipParticular,
+      feesFromStudent = [],
+      feesFromSocialWelfare = [],
+    } = body;
+
+    // Validate required fields
+    if (!programType || !departmentName || !year) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate at least one fee item
+    if (feesFromStudent.length === 0 && feesFromSocialWelfare.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "At least one fee item is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate fee items
+    const validateFeeItems = (items, type) =>
+      items.every(
+        (item) =>
+          item.componentName &&
+          typeof item.amount === "number" &&
+          item.amount >= 0
+      );
+
+    if (
+      (feesFromStudent.length > 0 && !validateFeeItems(feesFromStudent, "student")) ||
+      (feesFromSocialWelfare.length > 0 && !validateFeeItems(feesFromSocialWelfare, "welfare"))
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid fee items provided" },
+        { status: 400 }
+      );
+    }
+
+    const updatedFee = await FeeStructure.findByIdAndUpdate(
+      id,
+      {
+        programType,
+        departmentName,
+        year,
+        caste: caste || "general",
+        category: category || "regular",
+        yearWiseFeeStructure: yearWiseFeeStructure || "annual",
+        scholarshipParticular: scholarshipParticular || "none",
+        feesFromStudent,
+        feesFromSocialWelfare,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedFee) {
+      return NextResponse.json(
+        { success: false, error: "Fee structure not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "Fee structure updated successfully", data: updatedFee },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating fee:", error);
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { success: false, error: "Fee structure already exists for this combination" },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req) {
   try {
     await connectToDatabase();

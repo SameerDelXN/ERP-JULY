@@ -48,6 +48,7 @@ const Login = () => {
     { role: "teacher", label: "Teacher", icon: BookOpen },
     { role: "student", label: "Student", icon: GraduationCap },
     { role: "hr", label: "HR", icon: UsersRound },
+    { role: "accountant", label: "Accountant", icon: Database },
   ]);
 
   // Icon mapping for dynamic roles
@@ -59,9 +60,10 @@ const Login = () => {
     teacher: BookOpen,
     student: GraduationCap,
     hr: UsersRound,
+    accountant: Database,
   };
 
-  const PRIORITY_ORDER = ["admin", "superadmin", "hod", "staff", "teacher", "student", "hr"];
+  const PRIORITY_ORDER = ["admin", "superadmin", "hod", "staff", "teacher", "student", "hr", "accountant"];
 
   useEffect(() => {
     const fetchRoles = async () => {

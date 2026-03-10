@@ -242,6 +242,7 @@ async function convertAdmissionToStudent(admission) {
       programType: mapProgramTypeToValidEnum(admission.programType),
       branch: admission.branch,
       currentYear: admission.year,
+      division: admission.division,
       prn: prn,
       counsellorId: admission.counsellorId,
       status: "active",

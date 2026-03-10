@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import mongoose from 'mongoose';
 import { connectToDatabase } from '../../../../lib/mongodb';
 import attendanceSchema from '../../../../models/attendanceSchema';
-import studentSchema from '../../../../models/studentSchema';
+import Student from '../../../../models/studentSchema';
 import teacherSchema from '../../../../models/teacherSchema';
 import academicSchema from '../../../../models/academicSchema';
 import userSchema from '../../../../models/userSchema'; // Assuming HOD is in 'User' model
@@ -26,78 +26,35 @@ export async function GET(req, { params }) {
     }
 
     // Step 2: Get ALL students from Student collection for this department
-    const allDepartmentStudents = await studentSchema.find({ 
-      branch: { $regex: new RegExp(`^${hod.department}$`, 'i') }
+    // Match EXACT department name only - no variations
+    const allDepartmentStudents = await Student.find({ 
+      branch: hod.department 
     })
     .select('fullName studentId email status currentYear division')
     .lean();
 
-    console.log('All department students from Student collection:', allDepartmentStudents.length);
-
-    // Step 3: Also get academic structure for attendance data
-    const academicDoc = await academicSchema.findOne({ department: hod.department })
-      .populate({
-        path: 'years.divisions.students',
-        model: studentSchema,
-        select: 'fullName studentId email',
-      })
-      .lean();
-
-    // Step 4: Fetch attendance records
-    const attendanceRecords = await attendanceSchema.find({
-      department: academicDoc?.department || hod.department,
-    }).lean();
-
-    // Step 5: Create comprehensive student data
-    let allStudents = [];
-    
-    if (allDepartmentStudents.length > 0) {
-      // Use students from Student collection (primary source)
-      allStudents = allDepartmentStudents.map(student => ({
-        id: student._id,
-        name: student.fullName || 'Unnamed',
-        roll: student.studentId || 'N/A',
-        email: student.email || '',
-        status: student.status || 'active',
-        currentYear: student.currentYear || '1st Year',
-        division: student.division || 'A',
-        attendance: {} // Will be populated if attendance data exists
-      }));
-    } else if (academicDoc) {
-      // Fallback to academic structure if no students in Student collection
-      allStudents = [];
-      academicDoc.years.forEach((year) => {
-        year.divisions.forEach((division) => {
-          if (division.students && division.students.length > 0) {
-            division.students.forEach((stu) => {
-              allStudents.push({
-                id: stu._id,
-                name: stu.fullName || 'Unnamed',
-                roll: stu.studentId || 'N/A',
-                email: stu.email || '',
-                status: 'active',
-                currentYear: year.year,
-                division: division.name,
-                attendance: buildStudentAttendance(
-                  attendanceRecords,
-                  year.year,
-                  year.semester,
-                  division.name,
-                  stu._id
-                ),
-              });
-            });
-          }
-        });
-      });
+    // Force use of student data only - no academic fallback
+    if (allDepartmentStudents.length === 0) {
+      return NextResponse.json({ years: [] }, { status: 200 });
     }
 
-    console.log('Final student count for student management:', allStudents.length);
+    // Transform student data
+    const allStudents = allDepartmentStudents.map(student => ({
+      id: student._id,
+      name: student.fullName || 'Unnamed',
+      roll: student.studentId || 'N/A',
+      email: student.email || '',
+      status: student.status || 'active',
+      currentYear: student.currentYear || 'Not Assigned',
+      division: student.division || 'Not Assigned',
+      attendance: {} // Will be populated if attendance data exists
+    }));
 
+    
     // Step 6: Group by year for frontend compatibility
     const studentsByYear = {};
     allStudents.forEach(student => {
-      const yearKey = student.currentYear || '1st Year';
+      const yearKey = student.currentYear || 'Not Assigned';
       if (!studentsByYear[yearKey]) {
         studentsByYear[yearKey] = [];
       }

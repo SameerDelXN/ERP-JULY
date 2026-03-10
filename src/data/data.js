@@ -1,30 +1,45 @@
 import {
-  Users,
-  GraduationCap,
-  BookOpen,
-  TrendingUp,
-  Settings,
   Home,
-  UserCheck,
   FileText,
+  Users,
   CreditCard,
-  FileTextIcon,
-  BookImage,
-  DollarSign,
-  Award,
-  BookOpenCheck,
-  CalendarClock,
-  BookMarked,
-  FileCheck,
+  BookOpen,
+  UserCheck,
   File,
-  MessageSquare,
+  LayoutDashboard,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  Search,
+  Filter,
+  Eye,
+  Download,
   Phone,
+  Mail,
+  MapPin,
+  GraduationCap,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Edit,
+  Save,
+  Lock,
+  Check,
+  Award,
+  BookImage,
+  MessageSquare,
+  Settings,
+  BookOpenCheck,
+  CalendarClock
 } from "lucide-react";
+
 export const adminSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "manage-users", label: "Manage Users", icon: Users },
   { id: "roles", label: "Roles & Permissions", icon: Award },
-  { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
+  { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileText },
   // { id: "application-leads", label: "Application and Leads", icon: UserCheck }, // Removed as per request
   { id: "admission-applications", label: "Admission Applications", icon: BookImage },
   { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
@@ -56,10 +71,11 @@ export const superadminSidebarItems = [
   { id: "testimonials", label: "Testimonials", icon: MessageSquare },
   { id: "contact-info", label: "Contact Info", icon: Phone },
 ];
+
 export const staffSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
-  { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileTextIcon },
-  // { id: "followup-tracker", label: "Follow-up Tracker", icon: FileTextIcon },
+  { id: "enquiry&leads", label: "Enquiries & Leads", icon: FileText },
+  // { id: "followup-tracker", label: "Follow-up Tracker", icon: FileText },
   { id: "application-management", label: "Application Management", icon: BookImage },
   // { id: "admission-test-scheduling", label: "Admission Test Scheduling", icon: BookImage },
   // { id: "communication-logs", label: "Communication Logs (Email/SMS)", icon: BookImage },
@@ -71,15 +87,14 @@ export const studentSidebarItems = [
   { id: "myexams", label: "My Exams", icon: BookOpenCheck },
   // { id: "assignments", label: "Assignments", icon: BookOpen },
   { id: "timetable", label: "My Timetable", icon: CalendarClock },
-  // { id: "studymaterial", label: "Study Material", icon: CalendarClock },
-  // { id: "certificates", label: "Certificates", icon: Award },
-
 ];
+
 //sample
 export const teacherSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "my-classes", label: "My Classes", icon: BookOpen },
-  // {id: "attendance", label: "Mark Attendance", icon: UserCheck},
+  { id: "take-attendance", label: "Take Attendance", icon: UserCheck },
+  { id: "attendance-overview", label: "Attendance Overview", icon: CreditCard },
   { id: "course-plan", label: "Create Course Plan", icon: UserCheck },
   { id: "student-list", label: "Student List", icon: Users },
   // {id: "upload-notes", label: "Upload Notes/Syllabus", icon: BookOpenCheck},
@@ -87,6 +102,11 @@ export const teacherSidebarItems = [
   { id: "exam", label: "All Exam", icon: File },
 ]
 
+export const accountantSidebarItems = [
+  { id: "overview", label: "Overview", icon: Home },
+  { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
+  { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
+];
 
 export const roles = [
   // {
@@ -144,5 +164,13 @@ export const roles = [
     // userCount: 892,
     // permissions: ['View Child Progress', 'Communication', 'Fee Payment', 'Event Information'],
     color: 'bg-yellow-500'
+  },
+  {
+    id: 7,
+    name: 'Accountant',
+    // description: 'Financial management and accounting access',
+    // userCount: 5,
+    // permissions: ['Fee Management', 'Invoice Management', 'Financial Reports', 'Payment Processing'],
+    color: 'bg-emerald-500'
   },
 ];

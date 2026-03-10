@@ -303,6 +303,24 @@ const StudentProfile = () => {
                     )}
                   </div>
                   <div>
+                    <span className="text-sm font-medium text-gray-500">Division</span>
+                    {editMode ? (
+                      <select
+                        name="division"
+                        value={editedStudent?.division || ''}
+                        onChange={handleInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Division</option>
+                        <option value="A">Division A</option>
+                        <option value="B">Division B</option>
+                        <option value="C">Division C</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-900">{student.division || 'Not Assigned'}</p>
+                    )}
+                  </div>
+                  <div>
                     <span className="text-sm font-medium text-gray-500">Status</span>
                     {editMode ? (
                       <select

@@ -217,7 +217,7 @@ export async function POST(req) {
     // Validate role
     // validRoles should include variations or we should normalize before checking. 
     // Normalized check:
-    const validRoles = ["admin", "superadmin", "student", "staff", "parents", "hod", "teacher", "hr"];
+    const validRoles = ["admin", "superadmin", "student", "staff", "parents", "hod", "teacher", "hr", "accountant"];
     const normalizedRole = role.toLowerCase().replace(/\s+/g, '');
 
     if (!validRoles.includes(normalizedRole)) {

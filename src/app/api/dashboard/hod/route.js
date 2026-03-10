@@ -29,15 +29,15 @@ export async function GET(req) {
       }
 
       if (listType === 'students') {
-        const students = await Student.find({ branch: { $regex: new RegExp(`^${department}$`, 'i') } })
+        const students = await Student.find({ branch: department })
           .select('fullName email status studentId')
           .lean();
 
         return NextResponse.json(students);
       } else if (listType === 'teachers') {
-        // Use case-insensitive exact match with regex and ignore null/empty department
+        // Use exact department match
         const teachers = await Teacher.find({
-          department: { $regex: new RegExp(`^${department}$`, 'i') },
+          department: department,
           role: 'teacher',
         })
           .select('teacherId fullName email phone')
@@ -46,7 +46,7 @@ export async function GET(req) {
         return NextResponse.json(teachers);
       } else if (listType === 'activeStudents') {
         const activeStudents = await Student.find({ 
-          branch: { $regex: new RegExp(`^${department}$`, 'i') },
+          branch: department,
           status: 'active'
         })
           .select('fullName email status studentId')
@@ -70,16 +70,16 @@ export async function GET(req) {
 
     // Default dashboard stats
     const totalStudents = await Student.countDocuments({
-      branch: { $regex: new RegExp(`^${department}$`, 'i') },
+      branch: department,
     });
 
     const totalTeachers = await Teacher.countDocuments({
-      department: { $regex: new RegExp(`^${department}$`, 'i') },
+      department: department,
       role: 'teacher',
     });
 
     const activeStudents = await Student.countDocuments({
-      branch: { $regex: new RegExp(`^${department}$`, 'i') },
+      branch: department,
       status: 'active',
     });
 

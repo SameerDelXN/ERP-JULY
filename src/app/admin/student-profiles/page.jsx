@@ -19,9 +19,16 @@ const StudentsDashboard = () => {
       console.log("Fetching students from API...");
       const res = await fetch('/api/students');
       if (!res.ok) throw new Error("Failed to fetch Students");
-      const data = await res.json(); // <-- API returns array directly
-      console.log("Received students data:", data.length, "students");
-      setStudents(data);
+      const data = await res.json(); // <-- API returns { success: true, data: [...] }
+      console.log("Received students data:", data);
+      
+      if (data.success && data.data) {
+        console.log("Setting students:", data.data.length, "students");
+        setStudents(data.data);
+      } else {
+        console.log("No students found or API error");
+        setStudents([]);
+      }
       setIsLoading(false);
     } catch (err) {
       setError(err.message);
@@ -40,9 +47,9 @@ const StudentsDashboard = () => {
   // Get branches based on selected program type
   const getFilteredBranches = () => {
     if (programTypeFilter === "all") {
-      return [...new Set(students.map(s => s.branch))].filter(Boolean);
+      return [...new Set(students.map(s => s.branch).filter(Boolean))];
     }
-    return [...new Set(students.filter(s => s.programType === programTypeFilter).map(s => s.branch))].filter(Boolean);
+    return [...new Set(students.filter(s => s.programType === programTypeFilter).map(s => s.branch).filter(Boolean))];
   };
 
   // Filter students based on search and filters
@@ -50,7 +57,7 @@ const StudentsDashboard = () => {
     const matchesSearch =
       student.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.branch?.toLowerCase().includes(searchTerm.toLowerCase());
+      (student.branch && student.branch.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter === "all" || student.status === statusFilter;
     const matchesCourse = courseFilter === "all" || student.branch === courseFilter;
@@ -113,7 +120,8 @@ const StudentsDashboard = () => {
               "Name": s.fullName || s.name,
               "Email": s.email,
               "Program": s.programType,
-              "Branch": s.branch,
+              "Branch": s.branch || "Not Assigned",
+              "Division": s.division || 'Not Assigned',
               "Status": s.status
             }))}
             filename="Student_Profiles"
@@ -201,6 +209,7 @@ const StudentsDashboard = () => {
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -216,7 +225,17 @@ const StudentsDashboard = () => {
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.email}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.programType || "N/A"}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.branch}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">{student.branch || "Not Assigned"}</td>
+                    <td className="px-3 py-3 whitespace-nowrap text-gray-600 text-sm">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        student.division === 'A' ? 'bg-blue-100 text-blue-800' :
+                        student.division === 'B' ? 'bg-green-100 text-green-800' :
+                        student.division === 'C' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {student.division || 'Not Assigned'}
+                      </span>
+                    </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${student.status === "active"
@@ -255,7 +274,7 @@ const StudentsDashboard = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                     No students found matching your criteria
                   </td>
                 </tr>

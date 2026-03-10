@@ -820,12 +820,32 @@ const AdmissionApplications = () => {
       }
 
       // Define required columns (match your backend expectations)
-      // Define required columns (match your backend expectations)
       const requiredColumns = [
         "DTEApplicationNumber",
-        "FirstName",
+        "FirstName", 
+        "LastName",
+        "Gender", 
         "Email",
         "StudentWhatsappNo",
+        "AdmissionYear",
+        "ProgramType",
+        "Year", 
+        "Branch",
+        "Round",
+        "Quota",
+        "SeatType",
+        "AdmissionCategoryDTE",
+        "CasteAsPerLC",
+        "Domicile",
+        "Nationality",
+        "ReligionAsPerLC",
+        "IsForeignNational",
+        "DateOfBirth",
+        "MotherName",
+        "FamilyIncome",
+        "FatherGuardianWhatsappNo",
+        "MotherMobileNumber",
+        "Address"
       ];
 
       // Get header row (first row)
@@ -1387,7 +1407,7 @@ const exportData = [
                                 Important Notes
                               </h4>
                               <p className="text-sm text-blue-700 mt-1">
-                                • The following fields are mandatory: DTEApplicationNumber, FirstName, LastName, Gender, Email, StudentWhatsappNo.
+                                • The following fields are mandatory: DTEApplicationNumber, FirstName, LastName, Gender, Email, StudentWhatsappNo., AdmissionYear, ProgramType, Year, Branch, Round, Quota, SeatType, AdmissionCategoryDTE, CasteAsPerLC, Domicile, Nationality, ReligionAsPerLC, IsForeignNational, DateOfBirth, MotherName, FamilyIncome, FatherGuardianWhatsappNo, MotherMobileNumber, Address.
                               </p>
                             </div>
                           </div>
