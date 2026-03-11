@@ -9,6 +9,7 @@ const StudentProfile = () => {
   const searchParams = useSearchParams();
   const [student, setStudent] = useState(null);
   const [editedStudent, setEditedStudent] = useState(null);
+  const [attendanceData, setAttendanceData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -20,6 +21,21 @@ const StudentProfile = () => {
       setEditMode(true);
     }
   }, [searchParams]);
+
+  // Fetch student attendance data
+  const fetchAttendance = async () => {
+    try {
+      const res = await fetch(`/api/student-attendance?studentId=${student.studentId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setAttendanceData(data.data || []);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching attendance:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -37,8 +53,17 @@ const StudentProfile = () => {
       }
     };
 
-    if (params.id) fetchStudent();
+    if (params.id) {
+      fetchStudent();
+    }
   }, [params.id]);
+
+  // Fetch attendance after student data is loaded
+  useEffect(() => {
+    if (student && student.studentId) {
+      fetchAttendance();
+    }
+  }, [student]);
 
   // Handle input changes for editing
   const handleInputChange = (e) => {
@@ -391,6 +416,61 @@ const StudentProfile = () => {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Attendance Information */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance Information</h3>
+              {attendanceData.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {attendanceData.map((attendance, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(attendance.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              attendance.status === 'Present' 
+                                ? 'bg-green-100 text-green-800'
+                                : attendance.status === 'Absent'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {attendance.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {attendance.subject || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {attendance.department || 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <div className="text-gray-400 mb-2">
+                    <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500">No attendance records found</p>
+                  <p className="text-sm text-gray-400 mt-1">Attendance will appear here once recorded</p>
+                </div>
+              )}
             </div>
           </div>
 
