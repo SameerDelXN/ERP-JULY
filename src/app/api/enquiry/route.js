@@ -102,6 +102,9 @@ export async function POST(req) {
 
     await newEnquiry.save();
 
+
+    console.log("Enquiry created successfully", newEnquiry);
+
     return NextResponse.json(
       { success: true, message: "Enquiry submitted successfully", enquiry: newEnquiry },
       { status: 201 }

@@ -272,6 +272,8 @@ export async function POST(req) {
 
     await newAdmission.save();
 
+    console.log("newAdmission",newAdmission);
+
     return NextResponse.json(
       {
         success: true,
@@ -385,6 +387,8 @@ export async function PUT(req) {
       );
     }
 
+    console.log("updatedAdmission",updatedAdmission);
+    
     return NextResponse.json(
       { success: true, data: updatedAdmission },
       { status: 200 }

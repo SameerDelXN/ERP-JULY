@@ -186,6 +186,8 @@ export async function PUT(request) {
       new: true
     });
 
+    console.log("updatedEnquiry",updatedEnquiry);
+
     return NextResponse.json(updatedEnquiry);
   } catch (error) {
     console.error('Error updating enquiry:', error);

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export async function GET(req, { params }) {
   try {
     await connectToDatabase();
-    const { id } = params; // Extract ID from params
+    const { id } = await params; // Extract ID from params
     
     // If an ID is provided, fetch specific subject
     if (id) {  
