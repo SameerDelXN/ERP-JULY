@@ -9,7 +9,7 @@ import Admission from "@/app/models/admissionSchema";
 import User from "@/app/models/userSchema";
 
 import Student from "@/app/models/studentSchema"; // Assuming this model exists
-
+import academicSchema from '@/app/models/academicSchema';
 import bcrypt from "bcryptjs";
 
 
@@ -25,11 +25,8 @@ export async function POST(req, { params }) {
         await connectToDatabase();
 
         console.log("✅ Database connected successfully");
-
         
-
-        const { id } = params;
-
+        const { id } = await params;
         console.log("📋 Processing admission ID:", id);
 
         
@@ -38,8 +35,8 @@ export async function POST(req, { params }) {
 
         console.log("📋 Found admission:", admission ? "Yes" : "No");
 
-
-
+        console.log("admission",admission);
+        
         // Check if admission exists and if already converted
 
         if (!admission) {
@@ -372,7 +369,54 @@ export async function POST(req, { params }) {
 
             console.log("✅ Student created successfully with ID:", newStudent[0]._id);
 
-
+            // 4.5. Assign Student to an Academic Division
+            let assignedDivisionName = "";
+            
+            // Find the academic record for the department (branch) and programType
+            const academicDoc = await academicSchema.findOne({ 
+                department: admission.branch,
+                // We don't have mapProgramTypeToValidEnum here, but we can reuse admission.programType 
+                // Alternatively, let's map it similarly:
+                programType: admission.programType?.toLowerCase().includes('diploma') || admission.programType?.toLowerCase().includes('polytechnic') ? 'Diploma' : (admission.programType?.toLowerCase().includes('post') || admission.programType?.toLowerCase().includes('master') || admission.programType?.toLowerCase().includes('pg') || admission.programType?.toLowerCase().includes('m.') ? 'PG' : 'UG')
+            }).session(session);
+        
+            if (academicDoc) {
+                const yearObj = academicDoc.years.find((y) => y.year === admission.year);
+                if (yearObj) {
+                // Find or create a division with < 50 students
+                let assignedDivision = yearObj.divisions.find((div) => div.students.length < 50);
+        
+                if (!assignedDivision) {
+                    // No division with available space, create a new one
+                    const nextDivisionLetter = String.fromCharCode(65 + yearObj.divisions.length); // 65 = 'A'
+                    assignedDivision = {
+                    name: nextDivisionLetter,
+                    students: [],
+                    subjects: [],
+                    timetable: [],
+                    exams: [],
+                    attendance: [],
+                    };
+                    yearObj.divisions.push(assignedDivision);
+                }
+        
+                // Add user ID to the division (academicSchema stores User/_id or Student/_id, using Student _id)
+                assignedDivision.students.push(newStudent[0]._id);
+                await academicDoc.save({ session });
+                
+                assignedDivisionName = assignedDivision.name;
+                
+                // Update Student with division name
+                newStudent[0].division = assignedDivisionName;
+                await newStudent[0].save({ session });
+                
+                console.log(`✅ Student assigned to Division ${assignedDivisionName}`);
+                } else {
+                console.log(`⚠️ Academic year ${admission.year} not found. Skipping division assignment.`);
+                }
+            } else {
+                console.log(`⚠️ Academic department ${admission.branch} not found. Skipping division assignment.`);
+            }
 
             // Update Admission Status within transaction
 

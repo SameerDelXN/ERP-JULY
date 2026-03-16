@@ -5,6 +5,7 @@ import User from '@/app/models/userSchema';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import academicSchema from '@/app/models/academicSchema';
 
 export async function PUT(req, { params }) {
   try {
@@ -44,6 +45,9 @@ export async function PUT(req, { params }) {
       );
     }
 
+    console.log("updatedAdmission",updatedAdmission);
+    console.log("updateData",updateData);
+
     // Check if status is being changed to 'approved' and trigger automatic conversion
     let conversionResult = null;
     if (updateData.status === 'approved') {
@@ -61,6 +65,10 @@ export async function PUT(req, { params }) {
       }
     }
 
+    console.log("updatedAdmission",updatedAdmission);
+    
+    console.log("conversionResult",conversionResult);
+    
     return Response.json(
       {
         success: true,
@@ -268,6 +276,53 @@ async function convertAdmissionToStudent(admission) {
       totalFees: admission.totalFees
     }], { session });
 
+    // 4.5. Assign Student to an Academic Division
+    let assignedDivisionName = "";
+    
+    // Find the academic record for the department (branch) and programType
+    const academicDoc = await academicSchema.findOne({ 
+      department: admission.branch,
+      programType: mapProgramTypeToValidEnum(admission.programType)
+    }).session(session);
+
+    if (academicDoc) {
+      const yearObj = academicDoc.years.find((y) => y.year === admission.year);
+      if (yearObj) {
+        // Find or create a division with < 50 students
+        let assignedDivision = yearObj.divisions.find((div) => div.students.length < 50);
+
+        if (!assignedDivision) {
+          // No division with available space, create a new one
+          const nextDivisionLetter = String.fromCharCode(65 + yearObj.divisions.length); // 65 = 'A'
+          assignedDivision = {
+            name: nextDivisionLetter,
+            students: [],
+            subjects: [],
+            timetable: [],
+            exams: [],
+            attendance: [],
+          };
+          yearObj.divisions.push(assignedDivision);
+        }
+
+        // Add user ID to the division (academicSchema stores User/_id or Student/_id, using Student _id)
+        assignedDivision.students.push(newStudent[0]._id);
+        await academicDoc.save({ session });
+        
+        assignedDivisionName = assignedDivision.name;
+        
+        // Update Student with division name
+        newStudent[0].division = assignedDivisionName;
+        await newStudent[0].save({ session });
+        
+        console.log(`✅ Student assigned to Division ${assignedDivisionName}`);
+      } else {
+        console.log(`⚠️ Academic year ${admission.year} not found. Skipping division assignment.`);
+      }
+    } else {
+      console.log(`⚠️ Academic department ${admission.branch} not found. Skipping division assignment.`);
+    }
+
     // Update Admission Status within transaction
     await Admission.findByIdAndUpdate(admission._id, {
       status: "approved",
@@ -306,7 +361,7 @@ async function convertAdmissionToStudent(admission) {
 export async function DELETE(req, { params }) {
   try {
     await connectToDatabase();
-    const { id: admissionId } = params;
+    const { id: admissionId } = await params;
 
     // Validate admission ID
     if (!mongoose.Types.ObjectId.isValid(admissionId)) {
@@ -369,7 +424,7 @@ export async function DELETE(req, { params }) {
 export async function GET(request, { params }) {
   try {
     await connectToDatabase();
-    const {id}  = params;
+    const {id}  = await params;
 
     console.log("From ID page",id);
     

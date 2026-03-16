@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req) {
   try {
     const data = await req.formData();
-    const file = data.get('file');
+    const file = data.get('file') || data.get('files');
 
     if (!file) {
       return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
@@ -22,7 +22,7 @@ export async function POST(req) {
     await writeFile(path, buffer);
 
     const url = `/uploads/${filename}`;
-    return NextResponse.json({ url, message: "File uploaded successfully" }, { status: 201 });
+    return NextResponse.json({ url, documentUrl: url, message: "File uploaded successfully" }, { status: 201 });
 
   } catch (error) {
     console.error("Error uploading file:", error);

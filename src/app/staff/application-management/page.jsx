@@ -4888,67 +4888,36 @@ const AdmissionApplications = () => {
 
 
       // If approved, convert to student profile
-
       if (newStatus === "approved") {
-
         try {
-
           const convertResponse = await fetch(`/api/admission/${id}/convert`, {
-
             method: 'POST',
-
           });
-
           
-
           const convertResult = await convertResponse.json();
-
           
-
           if (convertResponse.ok && convertResult.success) {
-
             console.log("Converted to student:", convertResult);
-
             toast.success(`Student profile created successfully! PRN: ${convertResult.prn}`);
-
           } else {
-
             console.error("Conversion failed:", convertResult);
-
             
-
             // Handle specific duplicate errors with detailed messages
-
             if (convertResult.field === "prn") {
-
               toast.error("Failed to generate unique PRN. Please try again.");
-
             } else if (convertResult.field === "email") {
-
               toast.error(`Email already exists: ${convertResult.details || 'Please use a different email'}`);
-
             } else if (convertResult.field === "admissionId") {
-
               toast.error(`This admission has already been converted: ${convertResult.details || 'Please refresh the page'}`);
-
             } else if (convertResult.field === "studentId") {
-
               toast.error("Failed to generate unique Student ID. Please try again.");
-
             } else {
-
               toast.warning(`Application approved but student creation failed: ${convertResult.details || convertResult.error || 'Unknown error'}`);
-
             }
-
           }
-
         } catch (convertError) {
-
           console.error("Conversion error:", convertError);
-
           toast.warning("Application approved but student creation failed due to network error");
-
         }
 
       }
