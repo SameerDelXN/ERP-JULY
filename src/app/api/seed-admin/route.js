@@ -4,7 +4,7 @@ import { connectToDatabase } from '@/app/lib/mongodb';
 import Role from '@/models/Role';
 import User from '@/models/user';
 import { adminSidebarItems } from '@/data/data';
-
+//sample
 export async function GET() {
     try {
         await connectToDatabase();
