@@ -111,7 +111,7 @@ const FormField = ({
                                 className={`w-full px-3 py-2 border ${error ? "border-red-500" : "border-gray-300"
                                     } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                                 placeholder={placeholder}
-                                pattern={pattern}
+                                pattern={pattern?.value instanceof RegExp ? pattern.value.source : pattern?.value || pattern}
                                 {...inputProps}
                             />
                             {icon && (

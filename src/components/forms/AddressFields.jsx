@@ -24,10 +24,6 @@ const AddressFields = ({ control, errors, index }) => (
                 alphaOnly={true}
                 error={errors.address?.[index]?.city}
                 maxLength={50}
-                pattern={{
-                    value: /^[a-zA-Z\s]*$/,
-                    message: "Only alphabets are allowed",
-                }}
             />
             <FormField
                 control={control}
@@ -37,24 +33,17 @@ const AddressFields = ({ control, errors, index }) => (
                 alphaOnly={true}
                 error={errors.address?.[index]?.state}
                 maxLength={50}
-                pattern={{
-                    value: /^[a-zA-Z\s]*$/,
-                    message: "Only alphabets are allowed",
-                }}
             />
             <FormField
                 control={control}
                 name={`address[${index}].pincode`}
                 label="Pincode"
-                type="number"
+                type="text"
                 error={errors.address?.[index]?.pincode}
                 numericOnly={true}
                 minLength={6}
                 maxLength={6}
-                pattern={{
-                    value: /^[0-9]{6}$/,
-                    message: "Must be a valid 6-digit pincode",
-                }}
+                pattern="^[0-9]{6}$"
             />
             <FormField
                 control={control}
@@ -64,10 +53,6 @@ const AddressFields = ({ control, errors, index }) => (
                 alphaOnly={true}
                 error={errors.address?.[index]?.country}
                 maxLength={50}
-                pattern={{
-                    value: /^[a-zA-Z\s]*$/,
-                    message: "Only alphabets are allowed",
-                }}
             />
         </div>
     </div>
