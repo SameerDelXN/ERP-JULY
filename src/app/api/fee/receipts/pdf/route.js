@@ -4,6 +4,7 @@ import { FeeReceipt } from "@/models/feeReceipt";
 import Student from "@/app/models/studentSchema";
 import FeeStructure from "@/app/models/feeStructureSchema";
 import { generateFeeReceiptPDF } from "@/utils/generateFeeReceiptPdf";
+import { generateFeeReceiptPDFDual } from "@/utils/generateFeeReceiptPdfDual";
 
 export async function GET(req) {
   try {
@@ -92,16 +93,16 @@ export async function POST(req) {
       });
     }
 
-    console.log('Generating PDF for receipt data:', receipt);
+    console.log('Generating DUAL PDF for receipt data:', receipt);
 
-    // Get PDF buffer from utility
-    const pdfBuffer = await generateFeeReceiptPDF(receipt);
+    // Get PDF buffer from dual utility
+    const pdfBuffer = await generateFeeReceiptPDFDual(receipt);
 
     return new Response(pdfBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="receipt-${receipt.receiptNumber || 'unknown'}.pdf"`,
+        'Content-Disposition': `attachment; filename="receipt-${receipt.receiptNumber || 'unknown'}-dual.pdf"`,
         'Content-Length': pdfBuffer.length.toString(),
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -110,7 +111,7 @@ export async function POST(req) {
     });
 
   } catch (error) {
-    console.error('Error in PDF POST route:', error);
+    console.error('Error in DUAL PDF POST route:', error);
     return new Response(JSON.stringify({ 
       error: 'Failed to generate PDF: ' + error.message 
     }), {
