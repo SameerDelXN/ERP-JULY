@@ -36,16 +36,17 @@ export default function AccountantStudentProfiles() {
       const response = await fetch("/api/students");
       const data = await response.json();
       if (data.success) {
-        setStudents(data.data);
+        setStudents(data.students || data.data || []);
       }
     } catch (error) {
       console.error("Error fetching students:", error);
+      setStudents([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = (students || []).filter((student) => {
     const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.studentId?.toLowerCase().includes(searchTerm.toLowerCase());
