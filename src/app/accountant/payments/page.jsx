@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
-import { 
-  Search, 
-  User, 
-  CreditCard, 
-  Receipt, 
+import {
+  Search,
+  User,
+  CreditCard,
+  Receipt,
   Download,
   IndianRupee,
   BookOpen,
@@ -22,7 +22,7 @@ export default function PaymentPage() {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentFeeStructure, setStudentFeeStructure] = useState(null);
-  
+
   // Payment form state
   const [paymentData, setPaymentData] = useState({
     amountPaid: '',
@@ -65,10 +65,10 @@ export default function PaymentPage() {
   const allocatePayment = (totalAmount, feeStructure) => {
     const allocation = [];
     let remainingAmount = parseFloat(totalAmount);
-    
+
     // Priority order: Tuition Fees first, then other fees
     const allFees = [];
-    
+
     // Add student fees (Tuition fees have priority)
     if (feeStructure.feesFromStudent) {
       feeStructure.feesFromStudent.forEach(fee => {
@@ -79,7 +79,7 @@ export default function PaymentPage() {
         });
       });
     }
-    
+
     // Add welfare fees (lower priority)
     if (feeStructure.feesFromSocialWelfare) {
       feeStructure.feesFromSocialWelfare.forEach(fee => {
@@ -90,16 +90,16 @@ export default function PaymentPage() {
         });
       });
     }
-    
+
     // Sort by priority
     allFees.sort((a, b) => a.priority - b.priority);
-    
+
     // Allocate payment
     allFees.forEach(fee => {
       const feeAmount = parseFloat(fee.amount);
       const paidAmount = Math.min(remainingAmount, feeAmount);
       const balanceAmount = feeAmount - paidAmount;
-      
+
       allocation.push({
         componentName: fee.componentName,
         totalAmount: feeAmount,
@@ -108,16 +108,16 @@ export default function PaymentPage() {
         isWelfare: fee.isWelfare,
         status: paidAmount === 0 ? 'Unpaid' : paidAmount === feeAmount ? 'Paid' : 'Partial'
       });
-      
+
       remainingAmount -= paidAmount;
     });
-    
+
     return allocation;
   };
   // Handle payment amount change
   const handlePaymentAmountChange = (amount) => {
     setPaymentData(prev => ({ ...prev, amountPaid: amount }));
-    
+
     // Auto-allocate payment when amount changes
     if (amount && parseFloat(amount) > 0 && studentFeeStructure) {
       const allocation = allocatePayment(amount, studentFeeStructure);
@@ -137,11 +137,11 @@ export default function PaymentPage() {
       if (data.success && data.feeStructure) {
         setStudentFeeStructure(data.feeStructure);
         console.log('Fee structure loaded:', data.feeStructure);
-        
+
         // Calculate total fees
         const totalFees = data.feeStructure.totalFees || 0;
         console.log('Total fees:', totalFees);
-        
+
         // Clear previous allocation
         setPaymentAllocation([]);
         setPaymentData(prev => ({ ...prev, amountPaid: '' }));
@@ -201,7 +201,7 @@ export default function PaymentPage() {
       alert('Please select a student');
       return;
     }
-    
+
     const amountPaid = parseFloat(paymentData.amountPaid);
     if (!amountPaid || amountPaid <= 0) {
       alert('Please enter a valid payment amount');
@@ -210,7 +210,7 @@ export default function PaymentPage() {
 
     try {
       setIsLoading(true);
-      
+
       // Create component payments from allocation
       const componentPayments = {};
       paymentAllocation.forEach(allocation => {
@@ -218,7 +218,7 @@ export default function PaymentPage() {
           componentPayments[allocation.componentName] = allocation.paidAmount;
         }
       });
-      
+
       // Create receipt
       const receiptResponse = await fetch('/api/fee/receipts', {
         method: 'POST',
@@ -232,9 +232,9 @@ export default function PaymentPage() {
           feeStructure: studentFeeStructure
         })
       });
-      
+
       const receiptData = await receiptResponse.json();
-      
+
       if (receiptData.success) {
         // Generate PDF
         const pdfResponse = await fetch('/api/fee/receipts/pdf', {
@@ -242,7 +242,7 @@ export default function PaymentPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ receipt: receiptData.receipt })
         });
-        
+
         if (pdfResponse.ok) {
           const blob = await pdfResponse.blob();
           const url = window.URL.createObjectURL(blob);
@@ -253,14 +253,14 @@ export default function PaymentPage() {
           a.click();
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
-          
+
           alert('Payment processed successfully! Receipt downloaded.');
-          
+
           // Refresh payment history
           if (selectedStudent) {
             fetchPaymentHistory(selectedStudent);
           }
-          
+
           // Reset form
           setPaymentData({ amountPaid: '', paymentMode: 'Cash', remarks: '' });
           setPaymentAllocation([]);
@@ -311,7 +311,7 @@ export default function PaymentPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              
+
               {/* Student Dropdown */}
               {students.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-10">
@@ -351,7 +351,7 @@ export default function PaymentPage() {
               </label>
               <div className="bg-gray-50 rounded-lg p-3 space-y-2">
                 <div className="text-sm font-medium text-gray-800">Total Fees: ₹{studentFeeStructure.totalFees || 0}</div>
-                
+
                 {/* Student Fees */}
                 {studentFeeStructure.feesFromStudent?.map((fee, index) => (
                   <div key={index} className="flex justify-between items-center text-sm">
@@ -359,7 +359,7 @@ export default function PaymentPage() {
                     <span className="font-medium">₹{fee.amount}</span>
                   </div>
                 ))}
-                
+
                 {/* Welfare Fees */}
                 {studentFeeStructure.feesFromSocialWelfare?.map((fee, index) => (
                   <div key={`welfare-${index}`} className="flex justify-between items-center text-sm">
@@ -493,7 +493,7 @@ export default function PaymentPage() {
               {paymentAllocation.length > 0 && (
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-gray-700">Payment Allocation</h3>
-                  
+
                   {paymentAllocation.map((allocation, index) => (
                     <div key={index} className="flex justify-between items-center p-2 border-b border-gray-100">
                       <span className="text-sm text-gray-700">
@@ -521,7 +521,7 @@ export default function PaymentPage() {
               {/* Component Summary */}
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-gray-700">Fee Breakdown</h3>
-                
+
                 {studentFeeStructure.feesFromStudent?.map((fee, index) => {
                   const allocation = paymentAllocation.find(a => a.componentName === fee.componentName);
                   return (
@@ -530,20 +530,19 @@ export default function PaymentPage() {
                       <div className="text-right">
                         <div className="text-sm font-medium">₹{fee.amount}</div>
                         {allocation && (
-                          <div className={`text-xs ${
-                            allocation.status === 'Paid' ? 'text-green-600' : 
-                            allocation.status === 'Partial' ? 'text-orange-500' : 'text-red-500'
-                          }`}>
-                            {allocation.status === 'Paid' ? 'Paid' : 
-                             allocation.status === 'Partial' ? `Paid: ₹${allocation.paidAmount}` : 
-                             'Unpaid'}
+                          <div className={`text-xs ${allocation.status === 'Paid' ? 'text-green-600' :
+                              allocation.status === 'Partial' ? 'text-orange-500' : 'text-red-500'
+                            }`}>
+                            {allocation.status === 'Paid' ? 'Paid' :
+                              allocation.status === 'Partial' ? `Paid: ₹${allocation.paidAmount}` :
+                                'Unpaid'}
                           </div>
                         )}
                       </div>
                     </div>
                   );
                 })}
-                
+
                 {studentFeeStructure.feesFromSocialWelfare?.map((fee, index) => {
                   const allocation = paymentAllocation.find(a => a.componentName === fee.componentName);
                   return (
@@ -552,13 +551,12 @@ export default function PaymentPage() {
                       <div className="text-right">
                         <div className="text-sm font-medium text-green-600">₹{fee.amount}</div>
                         {allocation && (
-                          <div className={`text-xs ${
-                            allocation.status === 'Paid' ? 'text-green-600' : 
-                            allocation.status === 'Partial' ? 'text-orange-500' : 'text-red-500'
-                          }`}>
-                            {allocation.status === 'Paid' ? 'Paid' : 
-                             allocation.status === 'Partial' ? `Paid: ₹${allocation.paidAmount}` : 
-                             'Unpaid'}
+                          <div className={`text-xs ${allocation.status === 'Paid' ? 'text-green-600' :
+                              allocation.status === 'Partial' ? 'text-orange-500' : 'text-red-500'
+                            }`}>
+                            {allocation.status === 'Paid' ? 'Paid' :
+                              allocation.status === 'Partial' ? `Paid: ₹${allocation.paidAmount}` :
+                                'Unpaid'}
                           </div>
                         )}
                       </div>
