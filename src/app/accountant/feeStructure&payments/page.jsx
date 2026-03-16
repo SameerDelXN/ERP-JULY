@@ -16,7 +16,8 @@ import {
   Users,
   AlertCircle,
   Lock,
-  Edit
+  Edit,
+  Download
 } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 import Card from "@/components/Card";
@@ -36,6 +37,7 @@ export default function AccountantFeeStructurePage() {
   const [filterDepartment, setFilterDepartment] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [receiptAmounts, setReceiptAmounts] = useState({});
 
   // Data States
   const [existingFeeStructures, setExistingFeeStructures] = useState([]);
@@ -82,10 +84,10 @@ export default function AccountantFeeStructurePage() {
   const fetchFeeStructures = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/fee-structure");
+      const response = await fetch("/api/fee/feestructure");
       const data = await response.json();
       if (data.success) {
-        setExistingFeeStructures(data.data);
+        setExistingFeeStructures(data.feeStructures || []);
       }
     } catch (error) {
       console.error("Error fetching fee structures:", error);
@@ -113,10 +115,16 @@ export default function AccountantFeeStructurePage() {
 
   const fetchYears = async () => {
     try {
-      const response = await fetch("/api/academic-years");
+      const response = await fetch("/api/fee/feestructure");
       const data = await response.json();
-      if (data.success) {
-        setYearList(data.data);
+      if (data.success && data.feeStructures) {
+        // Extract unique years from fee structures
+        const uniqueYears = [...new Set(data.feeStructures.map(structure => structure.year).filter(Boolean))];
+        const yearData = uniqueYears.map((year, index) => ({
+          _id: `year-${index}`,
+          year: year
+        }));
+        setYearList(yearData);
       }
     } catch (error) {
       console.error("Error fetching years:", error);
@@ -142,13 +150,32 @@ export default function AccountantFeeStructurePage() {
     e.preventDefault();
     try {
       setIsLoading(true);
+      
+      // Use the correct API endpoint for fee structures
       const url = editingStructure
-        ? `/api/fee-structure/${editingStructure._id}`
-        : "/api/fee-structure";
+        ? `/api/fee/feestructure?id=${editingStructure._id}`
+        : "/api/fee/feestructure";
       const method = editingStructure ? "PUT" : "POST";
 
-      // Transform form data to match API format
-      const apiData = transformFormDataForAPI(formData);
+      // Transform form data to match the new API format
+      const apiData = {
+        programType: "B.E.",
+        departmentName: formData.department,
+        year: formData.year,
+        caste: "general",
+        category: formData.feeType || "regular",
+        yearWiseFeeStructure: "annual",
+        scholarshipParticular: "none",
+        feesFromStudent: [
+          {
+            componentName: formData.feeType || "Tuition Fee",
+            amount: parseFloat(formData.amount) || 0,
+            collectionOrder: 1,
+            displayOrder: 1
+          }
+        ],
+        feesFromSocialWelfare: []
+      };
 
       const response = await fetch(url, {
         method,
@@ -159,6 +186,7 @@ export default function AccountantFeeStructurePage() {
       const data = await response.json();
       if (data.success) {
         fetchFeeStructures();
+        fetchYears(); // Refresh years after adding new structure
         setShowAddForm(false);
         setShowEditForm(false);
         setEditingStructure(null);
@@ -186,11 +214,11 @@ export default function AccountantFeeStructurePage() {
     setEditingStructure(structure);
     // Transform API data back to form format
     setFormData({
-      department: structure.department || "",
-      year: structure.class || "",
-      semester: structure.class || "",
+      department: structure.departmentName || "",
+      year: structure.year || "",
+      semester: structure.year || "",
       feeType: structure.category || "",
-      amount: structure.fee?.tuitionFee?.toString() || "0",
+      amount: structure.feesFromStudent?.[0]?.amount?.toString() || "0",
       dueDate: "", // API doesn't have due date
       description: "", // API doesn't have description
     });
@@ -200,14 +228,15 @@ export default function AccountantFeeStructurePage() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this fee structure?")) return;
     try {
-      const response = await fetch(`/api/fee-structure/${id}`, {
+      const response = await fetch(`/api/fee/feestructure?id=${id}`, {
         method: "DELETE",
       });
       const data = await response.json();
       if (data.success) {
         fetchFeeStructures();
+        fetchYears(); // Refresh years after deletion
       } else {
-        alert(data.message || "Delete failed");
+        alert(data.error || "Delete failed");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -215,11 +244,124 @@ export default function AccountantFeeStructurePage() {
     }
   };
 
+  const downloadReceipt = async (payment) => {
+    try {
+      console.log('Starting receipt download for payment:', payment);
+      
+      // Get the custom amount for this specific payment
+      const customAmount = receiptAmounts[payment._id];
+      const amountToUse = customAmount && customAmount.trim() !== '' ? parseFloat(customAmount) : null;
+      
+      if (amountToUse && (isNaN(amountToUse) || amountToUse <= 0)) {
+        alert('Please enter a valid amount greater than 0');
+        return;
+      }
+      
+      // Prevent double downloads with stronger protection
+      const downloadKey = `downloading_${payment._id}`;
+      if (window[downloadKey]) {
+        console.log('Download already in progress for payment:', payment._id);
+        return;
+      }
+      
+      window[downloadKey] = true;
+      
+      // First create a receipt for this payment
+      const receiptResponse = await fetch('/api/fee/receipts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: payment._id,
+          paymentMode: 'Cash', // Default payment mode
+          remarks: amountToUse ? `Partial payment receipt - ₹${amountToUse}` : 'Full fee payment receipt',
+          amountPaid: amountToUse
+        })
+      });
+      
+      const receiptData = await receiptResponse.json();
+      console.log('Receipt creation response:', receiptData);
+      
+      if (receiptData.success) {
+        // Create download link with full URL
+        const downloadUrl = `http://localhost:3000/api/fee/receipts/pdf?receiptId=${receiptData.receipt._id}`;
+        console.log('Download URL:', downloadUrl);
+        
+        // Single download approach - fetch and create blob
+        try {
+          const response = await fetch(downloadUrl);
+          const blob = await response.blob();
+            
+          // Create download link with blob for direct download only
+          const link = document.createElement('a');
+          const url = window.URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `Receipt-${receiptData.receipt.receiptNumber}.pdf`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+            
+          // Clean up and clear flag with delay
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            // Clear download flag after successful download
+            delete window[downloadKey];
+          }, 200);
+          
+          // Auto-clear flag after 5 seconds as backup
+          setTimeout(() => {
+            delete window[downloadKey];
+          }, 5000);
+            
+        } catch (blobError) {
+          console.error('Download failed:', blobError);
+          // Clear download flag on error
+          delete window[downloadKey];
+          alert('Failed to download receipt');
+        }
+          
+      } else {
+        // Clear download flag on error
+        delete window[downloadKey];
+        alert('Failed to generate receipt: ' + (receiptData.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      // Clear download flag on exception
+      delete window[downloadKey];
+      alert('Failed to download receipt');
+    }
+  };
+
+  const handlePaymentStatusChange = async (payment, newStatus) => {
+    try {
+      // Update the payment status in the local state first for immediate UI feedback
+      const updatedPayments = paymentRecords.map(p => 
+        p._id === payment._id ? { ...p, status: newStatus } : p
+      );
+      setPaymentRecords(updatedPayments);
+
+      // No automatic receipt generation - just update the status
+      console.log(`Payment status updated to ${newStatus} for ${payment.studentName}`);
+      
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      alert('Failed to update payment status');
+      // Revert status on error
+      const revertedPayments = paymentRecords.map(p => 
+        p._id === payment._id ? { ...p, status: payment.status } : p
+      );
+      setPaymentRecords(revertedPayments);
+    }
+  };
+
   const filteredStructures = existingFeeStructures.filter((structure) => {
     const matchesSearch = structure.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         structure.department?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = !filterDepartment || structure.department === filterDepartment;
-    const matchesYear = !filterYear || structure.class === filterYear;
+                         structure.departmentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         structure.programType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         structure.year?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = !filterDepartment || structure.departmentName === filterDepartment;
+    const matchesYear = !filterYear || structure.year === filterYear;
     return matchesSearch && matchesDepartment && matchesYear;
   });
 
@@ -308,12 +450,13 @@ export default function AccountantFeeStructurePage() {
               </button>
               <ExportButton
                 data={filteredStructures.map(s => ({
-                  Department: s.department,
-                  Class: s.class,
-                  Category: s.category,
-                  TuitionFee: s.fee?.tuitionFee || 0,
-                  TotalFee: s.totalFee || 0,
-                  Course: s.course
+                  Department: s.departmentName,
+                  Program: s.programType,
+                  Year: s.year,
+                  Category: s.category || 'General',
+                  StudentFees: s.totalStudentFees || 0,
+                  WelfareFees: s.totalSocialWelfareFees || 0,
+                  TotalFees: s.totalFees || 0
                 }))}
                 filename="Fee_Structures"
               />
@@ -327,10 +470,12 @@ export default function AccountantFeeStructurePage() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Department</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Class</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Program</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Year</th>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Category</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Tuition Fee</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Total Fee</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Student Fees</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Welfare Fees</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Total Fees</th>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -338,19 +483,25 @@ export default function AccountantFeeStructurePage() {
                   {filteredStructures.map((structure) => (
                     <tr key={structure._id} className="hover:bg-gray-50">
                       <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.department}</span>
+                        <span className="text-sm text-gray-800">{structure.departmentName}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.class}</span>
+                        <span className="text-sm text-gray-800">{structure.programType}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.category}</span>
+                        <span className="text-sm text-gray-800">{structure.year}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm font-medium text-gray-800">₹{structure.fee?.tuitionFee || 0}</span>
+                        <span className="text-sm text-gray-800">{structure.category || 'General'}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm font-medium text-gray-800">₹{structure.totalFee || 0}</span>
+                        <span className="text-sm font-medium text-gray-800">₹{structure.totalStudentFees || 0}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm font-medium text-gray-800">₹{structure.totalSocialWelfareFees || 0}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm font-bold text-blue-600">₹{structure.totalFees || 0}</span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex gap-2">
@@ -416,6 +567,8 @@ export default function AccountantFeeStructurePage() {
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Payment Date</th>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Status</th>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Transaction ID</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Receipt Amount</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -434,8 +587,10 @@ export default function AccountantFeeStructurePage() {
                         <span className="text-sm text-gray-800">{payment.paymentDate}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                        <select
+                          value={payment.status}
+                          onChange={(e) => handlePaymentStatusChange(payment, e.target.value)}
+                          className={`px-3 py-1 text-xs rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-blue-500 ${
                             payment.status === "Paid"
                               ? "bg-green-100 text-green-700"
                               : payment.status === "Pending"
@@ -443,11 +598,49 @@ export default function AccountantFeeStructurePage() {
                               : "bg-red-100 text-red-700"
                           }`}
                         >
-                          {payment.status}
-                        </span>
+                          <option value="Pending">Pending</option>
+                          <option value="Paid">Paid</option>
+                          <option value="Failed">Failed</option>
+                        </select>
                       </td>
                       <td className="py-4 px-6">
                         <span className="text-sm text-gray-600">{payment.transactionId}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="number"
+                            placeholder="Enter amount"
+                            value={receiptAmounts[payment._id] || ''}
+                            onChange={(e) => setReceiptAmounts(prev => ({
+                              ...prev,
+                              [payment._id]: e.target.value
+                            }))}
+                            className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                            min="0"
+                            step="0.01"
+                          />
+                          {receiptAmounts[payment._id] && (
+                            <span className="text-xs text-gray-500">
+                              Remaining: ₹{Math.max(0, (payment.amount || 0) - parseFloat(receiptAmounts[payment._id]))}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        {payment.status === "Paid" && (
+                          <button
+                            onClick={() => downloadReceipt(payment)}
+                            className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                            title="Download Receipt"
+                          >
+                            <Download size={16} />
+                            <span className="text-xs">Receipt</span>
+                          </button>
+                        )}
+                        {payment.status !== "Paid" && (
+                          <span className="text-gray-400 text-xs">Not Available</span>
+                        )}
                       </td>
                     </tr>
                   ))}
