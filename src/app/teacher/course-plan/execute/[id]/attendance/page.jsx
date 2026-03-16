@@ -106,7 +106,7 @@ const moduleId = searchParams.get('moduleId') || null;
       const res = await fetch(`/api/teachers/${user.id}/students`);
       if (!res.ok) throw new Error("Failed to fetch students");
       const data = await res.json();
-
+      console.log("Data = ",data)
       const studentsData = data.students.filter(
         (student) => student.year === year
       );
@@ -124,7 +124,7 @@ const moduleId = searchParams.get('moduleId') || null;
       toast.error("Failed to load student data");
     }
   };
-
+  console.log("STds = ",students)
   const toggleAttendance = (studentId) => {
     setAttendance((prev) => {
       const updatedStudents = prev.students.map((student) =>

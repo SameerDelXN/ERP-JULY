@@ -28,7 +28,7 @@ export async function GET(req, { params }) {
     if (!academicRecords || academicRecords.length === 0) {
       return NextResponse.json({ message: "No students found for this teacher" }, { status: 404 })
     }
-
+    // console.log("Acaded = ",academicRecords)
     const studentsByTeacher = []
 
     academicRecords.forEach((program) => {
@@ -40,7 +40,7 @@ export async function GET(req, { params }) {
         if (semesterFilter && year.semester !== semesterFilter) {
           return
         }
-
+        
         year.divisions.forEach((division) => {
           const subjectsTaught = division.subjects.filter((subject) => subject.teacher.toString() === teacherId)
 
