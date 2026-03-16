@@ -105,6 +105,7 @@ export const teacherSidebarItems = [
 export const accountantSidebarItems = [
   { id: "overview", label: "Overview", icon: Home },
   { id: "feeStructure&payments", label: "Fee Structure & Payments", icon: FileText },
+  { id: "payments", label: "Payment Processing", icon: CreditCard },
   { id: "student-profiles", label: "Student Profiles", icon: GraduationCap },
 ];
 

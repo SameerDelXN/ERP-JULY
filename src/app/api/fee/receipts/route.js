@@ -1,56 +1,195 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongoose';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import { FeeReceipt } from '@/models/feeReceipt';
-import  Student  from '@/models/student';
-import  {FeeStructure}  from '@/models/feeStructure';
+import Student from '@/app/models/studentSchema';
+import FeeStructure from '@/app/models/feeStructureSchema';
+import PaymentTracking from '@/app/models/paymentTrackingSchema';
 
 export async function POST(req) {
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
 
-  const { studentId, paymentMode, remarks } = await req.json();
+    const { studentId, paymentMode, remarks, amountPaid, componentPayments, feeStructure } = await req.json();
 
-  // Validate student
-  const student = await Student.findById(studentId);
-  console.log(student);
-  if (!student) {
-    return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+    // Validate student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+    }
+
+    // Debug: Log student data to understand what we're working with
+    console.log('Student data:', {
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      course: student.course,
+      branch: student.branch,
+      department: student.department,
+      class: student.class,
+      year: student.year,
+      category: student.category,
+      rollNumber: student.rollNumber,
+      enrollmentNumber: student.enrollmentNumber,
+      phone: student.phone,
+      address: student.address
+    });
+
+    // Use provided fee structure or find one
+    let actualFeeStructure = feeStructure;
+    
+    if (!actualFeeStructure) {
+      // Try multiple approaches to find fee structure
+      actualFeeStructure = await FeeStructure.findOne({
+        programType: student.course,
+        departmentName: student.branch || student.department,
+        year: student.class || student.year,
+        category: student.category
+      });
+
+      // If not found, try with defaults
+      if (!actualFeeStructure) {
+        console.log('Trying with default values...');
+        actualFeeStructure = await FeeStructure.findOne({
+          programType: 'B.E.',
+          departmentName: 'Computer Science',
+          year: '1st Year',
+          category: 'regular'
+        });
+      }
+
+      // If still not found, try any matching record
+      if (!actualFeeStructure) {
+        console.log('Trying to find any fee structure...');
+        actualFeeStructure = await FeeStructure.findOne({});
+      }
+    }
+
+    if (!actualFeeStructure) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Fee structure not found. Please ensure fee structures are created in the system.', 
+        details: {
+          studentCourse: student.course,
+          studentDepartment: student.branch || student.department,
+          studentYear: student.class || student.year,
+          studentCategory: student.category
+        }
+      }, { status: 404 });
+    }
+
+    console.log('Found fee structure:', actualFeeStructure);
+
+    // Calculate total payable fee from the fee structure
+    const totalFees = actualFeeStructure.totalFees || 0;
+    const actualAmountPaid = amountPaid ? parseFloat(amountPaid) : totalFees;
+    
+    if (!actualAmountPaid || actualAmountPaid < 0) {
+        return NextResponse.json({ success: false, error: "Invalid amount calculation" }, { status: 400 });
+    }
+
+    // Generate a unique receipt number (simple logic)
+    const count = await FeeReceipt.countDocuments();
+    const receiptNumber = `REC2025-${String(count + 1).padStart(4, '0')}`;
+
+    // Create receipt with fee structure data included
+    const newReceipt = await FeeReceipt.create({
+      student: student._id,
+      receiptNumber,
+      amountPaid: actualAmountPaid,
+      paymentMode,
+      remarks,
+      academicYear: student.academicYear || '2025-2026'
+    });
+
+    // Populate the receipt with student data only
+    const populatedReceipt = await FeeReceipt.findById(newReceipt._id)
+      .populate('student');
+
+    console.log('Populated receipt data:', populatedReceipt);
+    console.log('Student data in receipt:', populatedReceipt.student);
+
+    // Add fee structure data and component payments to the response for PDF generation
+    const responseReceipt = {
+      ...populatedReceipt.toObject(),
+      feeStructure: actualFeeStructure, // Include fee structure data for PDF generation
+      componentPayments: componentPayments || {} // Include component payments for PDF generation
+    };
+
+    console.log('Final receipt response:', responseReceipt);
+
+    // Save payment tracking data
+    if (componentPayments && Object.keys(componentPayments).length > 0) {
+      try {
+        // Build payment components array
+        const paymentComponents = [];
+        
+        // Process student fees
+        if (actualFeeStructure.feesFromStudent) {
+          actualFeeStructure.feesFromStudent.forEach(fee => {
+            const paidAmount = componentPayments[fee.componentName] || 0;
+            const balanceAmount = fee.amount - paidAmount;
+            const status = paidAmount === 0 ? 'Unpaid' : paidAmount === fee.amount ? 'Paid' : 'Partial';
+            
+            paymentComponents.push({
+              componentName: fee.componentName,
+              totalAmount: fee.amount,
+              paidAmount: paidAmount,
+              balanceAmount: balanceAmount,
+              status: status,
+              isWelfare: false
+            });
+          });
+        }
+        
+        // Process welfare fees
+        if (actualFeeStructure.feesFromSocialWelfare) {
+          actualFeeStructure.feesFromSocialWelfare.forEach(fee => {
+            const paidAmount = componentPayments[fee.componentName] || 0;
+            const balanceAmount = fee.amount - paidAmount;
+            const status = paidAmount === 0 ? 'Unpaid' : paidAmount === fee.amount ? 'Paid' : 'Partial';
+            
+            paymentComponents.push({
+              componentName: fee.componentName,
+              totalAmount: fee.amount,
+              paidAmount: paidAmount,
+              balanceAmount: balanceAmount,
+              status: status,
+              isWelfare: true
+            });
+          });
+        }
+
+        // Create payment tracking record
+        const paymentTracking = await PaymentTracking.create({
+          student: student._id,
+          receiptNumber: receiptNumber,
+          feeStructure: actualFeeStructure._id,
+          paymentComponents: paymentComponents,
+          totalFees: totalFees,
+          totalPaid: actualAmountPaid,
+          totalBalance: totalFees - actualAmountPaid,
+          paymentMode: paymentMode,
+          remarks: remarks || `Payment of ₹${actualAmountPaid}`,
+          academicYear: student.academicYear || '2025-2026',
+          status: actualAmountPaid === totalFees ? 'Paid' : 'Partial',
+          transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`,
+          createdBy: student._id // TODO: Update with actual user ID from session
+        });
+
+        console.log('Payment tracking saved:', paymentTracking);
+      } catch (trackingError) {
+        console.error('Error saving payment tracking:', trackingError);
+        // Don't fail the receipt creation if tracking fails
+      }
+    }
+
+    return NextResponse.json({ success: true, receipt: responseReceipt });
+
+  } catch (error) {
+    console.error('Error creating receipt:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Internal server error: ' + error.message 
+    }, { status: 500 });
   }
-
-  // Find fee structure by course and category
-  const feeStructure = await FeeStructure.findOne({
-    course: student.course,
-    class: student.class, // FE, SE, TE
-    category: student.category,
-    // academicYear: student.academicYear || '2025-2026',
-  });
-
-  if (!feeStructure) {
-    return NextResponse.json({ success: false, error: 'Fee structure not found' }, { status: 404 });
-  }
-
-  // Calculate total payable fee
-  const total = feeStructure.total;
-  //const discount = student.discount || 0;
-  //const scholarship = student.scholarship || 0;
-  const amountPaid = total //- discount - scholarship;
-  if (!amountPaid || amountPaid < 0) {
-      return NextResponse.json({ success: false, error: "Invalid amount calculation" }, { status: 400 });
-  }
-
-  
-  // Generate a unique receipt number (simple logic)
-  const count = await FeeReceipt.countDocuments();
-  const receiptNumber = `REC2025-${String(count + 1).padStart(4, '0')}`;
-
-  // Create receipt
-  const newReceipt = await FeeReceipt.create({
-    student: student._id,
-    receiptNumber,
-    amountPaid,
-    paymentMode,
-    remarks,
-    academicYear: student.academicYear || '2025-2026'
-  });
-
-  return NextResponse.json({ success: true, receipt: newReceipt });
 }

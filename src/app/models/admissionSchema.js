@@ -352,8 +352,6 @@ const admissionSchema = new mongoose.Schema(
 
       type: String, 
 
-      enum: ['A', 'B', 'C'],
-
       default: null 
 
     },

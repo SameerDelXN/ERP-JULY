@@ -83,6 +83,20 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error("Error creating course plan:", error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return NextResponse.json(
+        { 
+          success: false,
+          message: "Validation failed",
+          errors: errors
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to create course plan" },
       { status: 500 }

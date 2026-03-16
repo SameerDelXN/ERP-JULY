@@ -1749,9 +1749,14 @@ export default function FeeStructurePage() {
 
   const loadFeeStructures = async () => {
     try {
-      const res = await fetch("/api/fee/feestructure");
+      console.log('Loading fee structures...');
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const res = await fetch(`/api/fee/feestructure?t=${timestamp}`);
       const data = await res.json();
+      console.log('Fee structures loaded:', data);
       if (data.success && data.feeStructures) {
+        console.log('Setting existing fee structures:', data.feeStructures);
         setExistingFeeStructures(data.feeStructures);
       }
     } catch (err) {
@@ -1824,7 +1829,7 @@ export default function FeeStructurePage() {
       ...prev,
       feesFromStudent: updatedFees,
       totalStudentFees: studentTotal,
-      totalFees: studentTotal + prev.totalSocialWelfareFees,
+      totalFees: studentTotal + (prev.totalSocialWelfareFees || 0),
     }));
 
     setStudentFeeItem({
@@ -1862,7 +1867,7 @@ export default function FeeStructurePage() {
       ...prev,
       feesFromSocialWelfare: updatedFees,
       totalSocialWelfareFees: welfareTotal,
-      totalFees: prev.totalStudentFees + welfareTotal,
+      totalFees: (prev.totalStudentFees || 0) + welfareTotal,
     }));
 
     setWelfareFeeItem({
@@ -1981,6 +1986,7 @@ export default function FeeStructurePage() {
       if (data.success) {
         alert("Fee structure updated successfully!");
         closeEditForm();
+        console.log('Edit successful, calling loadFeeStructures...');
         loadFeeStructures();
       } else {
         alert(data.error || "Failed to update fee structure");

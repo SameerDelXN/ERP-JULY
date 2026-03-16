@@ -1,12 +1,67 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
 import FeeStructure from "@/app/models/feeStructureSchema";
+import Student from "@/app/models/studentSchema";
 import academic from "@/app/models/academicSchema";
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectToDatabase();
-    // Fetch dropdown values
+    
+    const { searchParams } = new URL(req.url);
+    const studentId = searchParams.get('studentId');
+    
+    // If studentId is provided, find specific fee structure for that student
+    if (studentId) {
+      // Get student details
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return NextResponse.json({
+          success: false,
+          error: 'Student not found'
+        }, { status: 404 });
+      }
+
+      // Find fee structure for this student
+      let feeStructure = await FeeStructure.findOne({
+        programType: student.programType,
+        departmentName: student.branch,
+        year: student.currentYear,
+        category: student.feesCategory || 'general'
+      });
+
+      // If not found, try with defaults
+      if (!feeStructure) {
+        feeStructure = await FeeStructure.findOne({
+          programType: student.programType,
+          departmentName: student.branch,
+          year: student.currentYear,
+          category: 'general'
+        });
+      }
+
+      // If still not found, try any matching record
+      if (!feeStructure) {
+        feeStructure = await FeeStructure.findOne({
+          programType: student.programType,
+          departmentName: student.branch
+        });
+      }
+
+      if (!feeStructure) {
+        return NextResponse.json({
+          success: false,
+          error: 'Fee structure not found for this student'
+        }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        feeStructure: feeStructure
+      });
+    }
+    
+    // Original logic for dropdown values
     const academics = await academic.find({ isActive: true }).lean();
     const programTypes = [
       ...new Set(academics.map((a) => a.programType).filter(Boolean)),
@@ -149,6 +204,25 @@ export async function PUT(req) {
       );
     }
 
+    // Calculate totals automatically
+    const calculatedStudentTotal = feesFromStudent.reduce(
+      (sum, item) => sum + parseFloat(item.amount || 0),
+      0
+    );
+    
+    const calculatedWelfareTotal = feesFromSocialWelfare.reduce(
+      (sum, item) => sum + parseFloat(item.amount || 0),
+      0
+    );
+    
+    const calculatedTotal = calculatedStudentTotal + calculatedWelfareTotal;
+    
+    console.log('Calculated totals:', {
+      studentTotal: calculatedStudentTotal,
+      welfareTotal: calculatedWelfareTotal,
+      total: calculatedTotal
+    });
+
     const updatedFee = await FeeStructure.findByIdAndUpdate(
       id,
       {
@@ -161,6 +235,9 @@ export async function PUT(req) {
         scholarshipParticular: scholarshipParticular || "none",
         feesFromStudent,
         feesFromSocialWelfare,
+        totalStudentFees: calculatedStudentTotal, // Use calculated value
+        totalSocialWelfareFees: calculatedWelfareTotal, // Use calculated value
+        totalFees: calculatedTotal, // Use calculated value
       },
       { new: true, runValidators: true }
     );
@@ -243,6 +320,25 @@ export async function POST(req) {
       );
     }
 
+    // Calculate totals automatically for new fee structure
+    const calculatedStudentTotal = feesFromStudent.reduce(
+      (sum, item) => sum + parseFloat(item.amount || 0),
+      0
+    );
+    
+    const calculatedWelfareTotal = feesFromSocialWelfare.reduce(
+      (sum, item) => sum + parseFloat(item.amount || 0),
+      0
+    );
+    
+    const calculatedTotal = calculatedStudentTotal + calculatedWelfareTotal;
+    
+    console.log('New fee structure totals:', {
+      studentTotal: calculatedStudentTotal,
+      welfareTotal: calculatedWelfareTotal,
+      total: calculatedTotal
+    });
+
     const newFee = await FeeStructure.create({
       programType,
       departmentName,
@@ -253,6 +349,9 @@ export async function POST(req) {
       scholarshipParticular: scholarshipParticular || "none",
       feesFromStudent,
       feesFromSocialWelfare,
+      totalStudentFees: calculatedStudentTotal, // Use calculated value
+      totalSocialWelfareFees: calculatedWelfareTotal, // Use calculated value
+      totalFees: calculatedTotal, // Use calculated value
     });
 
     return NextResponse.json(
