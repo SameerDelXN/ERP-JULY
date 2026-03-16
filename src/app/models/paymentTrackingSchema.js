@@ -113,7 +113,6 @@ paymentTrackingSchema.pre('save', function(next) {
 
 // Index for efficient queries
 paymentTrackingSchema.index({ student: 1, academicYear: 1 });
-paymentTrackingSchema.index({ receiptNumber: 1 });
 paymentTrackingSchema.index({ status: 1 });
 paymentTrackingSchema.index({ createdAt: -1 });
 
