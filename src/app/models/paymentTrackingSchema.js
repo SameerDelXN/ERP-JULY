@@ -93,12 +93,12 @@ const paymentTrackingSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to calculate totals
-paymentTrackingSchema.pre('save', function(next) {
+paymentTrackingSchema.pre('save', function (next) {
   if (this.isModified('paymentComponents')) {
     // Calculate total paid and balance
     this.totalPaid = this.paymentComponents.reduce((sum, component) => sum + component.paidAmount, 0);
     this.totalBalance = this.totalFees - this.totalPaid;
-    
+
     // Update overall status
     if (this.totalBalance === 0) {
       this.status = 'Paid';
@@ -115,7 +115,7 @@ paymentTrackingSchema.pre('save', function(next) {
 paymentTrackingSchema.index({ student: 1, academicYear: 1 });
 paymentTrackingSchema.index({ status: 1 });
 paymentTrackingSchema.index({ createdAt: -1 });
-
+delete mongoose.models.PaymentTracking
 const PaymentTracking = mongoose.models.PaymentTracking || mongoose.model('PaymentTracking', paymentTrackingSchema);
 
 export default PaymentTracking;
