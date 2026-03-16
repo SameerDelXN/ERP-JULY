@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { generateReceiptPdf } from "@/utils/generatePdfClient";
 import { useSession } from "@/context/SessionContext";
 import { 
   Search, 
@@ -236,46 +237,34 @@ export default function PaymentPage() {
       const receiptData = await receiptResponse.json();
       
       if (receiptData.success) {
-        // Generate PDF
-        const pdfResponse = await fetch('/api/fee/receipts/pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ receipt: receiptData.receipt })
+        // Generate PDF using Vercel-compatible function
+        const pdfResult = await generateReceiptPdf(receiptData.receipt, {
+          filename: `receipt-${receiptData.receipt.receiptNumber}-dual.pdf`
         });
         
-        if (pdfResponse.ok) {
-          const blob = await pdfResponse.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `receipt-${receiptData.receipt.receiptNumber}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          
+        if (pdfResult.success) {
+          console.log('PDF generated successfully:', pdfResult.message);
           alert('Payment processed successfully! Receipt downloaded.');
-          
-          // Refresh payment history
-          if (selectedStudent) {
-            fetchPaymentHistory(selectedStudent);
-          }
-          
-          // Reset form
-          setPaymentData({ amountPaid: '', paymentMode: 'Cash', remarks: '' });
-          setPaymentAllocation([]);
-          setSelectedStudent(null);
-          setSearchTerm('');
-          setStudentFeeStructure(null);
         } else {
-          alert('Payment recorded but failed to generate receipt');
+          console.error('PDF generation failed:', pdfResult.error);
+          alert('Payment processed successfully! PDF generation failed: ' + pdfResult.error);
         }
+          
+        // Refresh payment history
+        if (selectedStudent) {
+          fetchPaymentHistory(selectedStudent);
+        }
+          
+        // Reset form
+        setPaymentData({ amountPaid: '', paymentMode: 'Cash', remarks: '' });
+        setPaymentAllocation([]);
+        setSelectedStudent(null);
       } else {
-        alert(receiptData.error || 'Failed to process payment');
+        alert('Failed to save receipt: ' + receiptData.message);
       }
     } catch (error) {
       console.error('Payment processing error:', error);
-      alert('Failed to process payment');
+      alert('Payment processing failed: ' + error.message);
     } finally {
       setIsLoading(false);
     }
