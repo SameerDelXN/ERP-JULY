@@ -22,9 +22,9 @@ const StudentsDashboard = () => {
       const data = await res.json(); // <-- API returns { success: true, data: [...] }
       console.log("Received students data:", data);
       
-      if (data.success && data.data) {
-        console.log("Setting students:", data.data.length, "students");
-        setStudents(data.data);
+      if (data.success && data.students) {
+        console.log("Setting students:", data.students.length, "students");
+        setStudents(data.students);
       } else {
         console.log("No students found or API error");
         setStudents([]);

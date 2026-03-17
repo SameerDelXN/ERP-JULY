@@ -53,13 +53,6 @@ export async function generatePdfWithJsPDF(htmlContent, filename) {
   }
 }
 
-// Function to detect if we're on Vercel deployment
-export function isVercelDeployment() {
-  return typeof window !== 'undefined' && 
-         (window.location.hostname.includes('vercel.app') || 
-          window.location.hostname.includes('.vercel.app'));
-}
-
 // Main function that chooses appropriate PDF generation method
 export async function generateReceiptPdf(receiptData, options = {}) {
   const { filename = 'receipt.html' } = options;
