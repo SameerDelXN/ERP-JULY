@@ -428,11 +428,11 @@ const admissionSchema = new mongoose.Schema(
 
     // Contact details
 
-    studentWhatsappNumber: { type: Number },
+    studentWhatsappNumber: { type: String },
 
-    fatherGuardianWhatsappNumber: { type: Number },
+    fatherGuardianWhatsappNumber: { type: String },
 
-    motherMobileNumber: { type: Number, },
+    motherMobileNumber: { type: String },
 
 
 
@@ -509,10 +509,10 @@ const admissionSchema = new mongoose.Schema(
 // Avoid overwrite issues in dev
 
 delete mongoose.models.admission;
+delete mongoose.models.Admission; // Also delete capitalized version
 
 const admission =
-
-  mongoose.models.admission || mongoose.model("admission", admissionSchema);
+  mongoose.models.Admission || mongoose.model("Admission", admissionSchema); // Use capitalized name
 
 
 

@@ -20,9 +20,9 @@ export default function PaymentPage() {
   const { user } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [studentFeeStructure, setStudentFeeStructure] = useState(null);
+  const [admissions, setAdmissions] = useState([]);
+  const [selectedAdmission, setSelectedAdmission] = useState(null);
+  const [admissionFeeStructure, setAdmissionFeeStructure] = useState(null);
 
   // Payment form state
   const [paymentData, setPaymentData] = useState({
@@ -39,26 +39,26 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (searchTerm.length >= 2) {
-      searchStudents();
+      searchAdmissions();
     } else {
-      setStudents([]);
+      setAdmissions([]);
     }
   }, [searchTerm]);
 
-  const searchStudents = async () => {
+  const searchAdmissions = async () => {
     try {
-      console.log('Searching for students with term:', searchTerm);
-      const response = await fetch(`/api/students?search=${searchTerm}`);
+      console.log('Searching for admissions with term:', searchTerm);
+      const response = await fetch(`/api/admission?search=${searchTerm}`);
       const data = await response.json();
       console.log('Search response:', data);
       if (data.success) {
-        setStudents(data.students || []);
-        console.log('Found students:', data.students?.length || 0);
+        setAdmissions(data.data || []);
+        console.log('Found admissions:', data.data?.length || 0);
       } else {
         console.error('Search failed:', data.message);
       }
     } catch (error) {
-      console.error("Error searching students:", error);
+      console.error("Error searching admissions:", error);
     }
   };
 
@@ -120,23 +120,23 @@ export default function PaymentPage() {
     setPaymentData(prev => ({ ...prev, amountPaid: amount }));
 
     // Auto-allocate payment when amount changes
-    if (amount && parseFloat(amount) > 0 && studentFeeStructure) {
-      const allocation = allocatePayment(amount, studentFeeStructure);
+    if (amount && parseFloat(amount) > 0 && admissionFeeStructure) {
+      const allocation = allocatePayment(amount, admissionFeeStructure);
       setPaymentAllocation(allocation);
       console.log('Payment allocation:', allocation);
     } else {
       setPaymentAllocation([]);
     }
   };
-  const fetchStudentFeeStructure = async (student) => {
+  const fetchAdmissionFeeStructure = async (admission) => {
     try {
       setIsLoading(true);
-      console.log('Fetching fee structure for student:', student._id);
-      const response = await fetch(`/api/fee/feestructure?studentId=${student._id}`);
+      console.log('Fetching fee structure for admission:', admission._id);
+      const response = await fetch(`/api/fee/feestructure?branch=${admission.branch}&programType=${admission.programType}&year=${admission.year}`);
       const data = await response.json();
       console.log('Fee structure response:', data);
       if (data.success && data.feeStructure) {
-        setStudentFeeStructure(data.feeStructure);
+        setAdmissionFeeStructure(data.feeStructure);
         console.log('Fee structure loaded:', data.feeStructure);
 
         // Calculate total fees
@@ -148,7 +148,7 @@ export default function PaymentPage() {
         setPaymentData(prev => ({ ...prev, amountPaid: '' }));
       } else {
         console.error('Fee structure error:', data.error);
-        alert('No fee structure found for this student: ' + (data.error || 'Unknown error'));
+        alert('No fee structure found for this admission: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       console.error("Error fetching fee structure:", error);
@@ -158,9 +158,9 @@ export default function PaymentPage() {
     }
   };
 
-  const fetchPaymentHistory = async (student) => {
+  const fetchPaymentHistory = async (admission) => {
     try {
-      const response = await fetch(`/api/payments/tracking?studentId=${student._id}`);
+      const response = await fetch(`/api/payments/tracking?admissionId=${admission._id}`);
       const data = await response.json();
       if (data.success) {
         setPaymentHistory(data.paymentRecords || []);
@@ -173,12 +173,12 @@ export default function PaymentPage() {
     }
   };
 
-  const handleStudentSelect = (student) => {
-    setSelectedStudent(student);
-    setSearchTerm(student.fullName || student.name);
-    setStudents([]);
-    fetchStudentFeeStructure(student);
-    fetchPaymentHistory(student);
+  const handleAdmissionSelect = (admission) => {
+    setSelectedAdmission(admission);
+    setSearchTerm(admission.fullName || admission.name);
+    setAdmissions([]);
+    fetchAdmissionFeeStructure(admission);
+    fetchPaymentHistory(admission);
   };
 
   const handleComponentPayment = (componentName, amount) => {
@@ -198,8 +198,8 @@ export default function PaymentPage() {
   };
 
   const handleSubmitPayment = async () => {
-    if (!selectedStudent || !studentFeeStructure) {
-      alert('Please select a student');
+    if (!selectedAdmission || !admissionFeeStructure) {
+      alert('Please select an admission');
       return;
     }
 
@@ -225,12 +225,13 @@ export default function PaymentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentId: selectedStudent._id,
+          studentId: selectedAdmission._id,
+          admissionId: selectedAdmission._id, // Add admissionId for linking
           paymentMode: paymentData.paymentMode,
           remarks: paymentData.remarks || `Payment of ₹${amountPaid}`,
           amountPaid: amountPaid,
           componentPayments: componentPayments,
-          feeStructure: studentFeeStructure
+          feeStructure: admissionFeeStructure
         })
       });
 
@@ -251,14 +252,14 @@ export default function PaymentPage() {
         }
 
         // Refresh payment history
-        if (selectedStudent) {
-          fetchPaymentHistory(selectedStudent);
+        if (selectedAdmission) {
+          fetchPaymentHistory(selectedAdmission);
         }
 
         // Reset form
         setPaymentData({ amountPaid: '', paymentMode: 'Cash', remarks: '' });
         setPaymentAllocation([]);
-        setSelectedStudent(null);
+        setSelectedAdmission(null);
       } else {
         alert('Failed to save receipt: ' + receiptData.message);
       }
@@ -285,33 +286,33 @@ export default function PaymentPage() {
             <h2 className="text-lg font-semibold text-gray-800">Payment Details</h2>
           </div>
 
-          {/* Student Search */}
+          {/* Admission Search */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <User size={16} className="inline mr-1" />
-              Search Student
+              Search Admission
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter student name or ID..."
+                placeholder="Enter admission name or DTE number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
 
-              {/* Student Dropdown */}
-              {students.length > 0 && (
+              {/* Admission Dropdown */}
+              {admissions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-10">
-                  {students.map((student) => (
+                  {admissions.map((admission) => (
                     <div
-                      key={student._id}
-                      onClick={() => handleStudentSelect(student)}
+                      key={admission._id}
+                      onClick={() => handleAdmissionSelect(admission)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                     >
-                      <div className="font-medium text-gray-800">{student.fullName || student.name}</div>
-                      <div className="text-xs text-gray-500">ID: {student.studentId}</div>
+                      <div className="font-medium text-gray-800">{admission.fullName || admission.name}</div>
+                      <div className="text-xs text-gray-500">DTE: {admission.dteApplicationNumber} | {admission.branch}</div>
                     </div>
                   ))}
                 </div>
@@ -319,30 +320,30 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* Selected Student Info */}
-          {selectedStudent && (
+          {/* Selected Admission Info */}
+          {selectedAdmission && (
             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
               <div className="text-sm font-medium text-blue-800">
-                {selectedStudent.fullName || selectedStudent.name}
+                {selectedAdmission.fullName || selectedAdmission.name}
               </div>
               <div className="text-xs text-blue-600">
-                ID: {selectedStudent.studentId} • {selectedStudent.branch || selectedStudent.department}
+                DTE: {selectedAdmission.dteApplicationNumber} • {selectedAdmission.branch} • {selectedAdmission.programType}
               </div>
             </div>
           )}
 
           {/* Fee Structure Display */}
-          {studentFeeStructure && (
+          {admissionFeeStructure && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <BookOpen size={16} className="inline mr-1" />
                 Fee Structure
               </label>
               <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                <div className="text-sm font-medium text-gray-800">Total Fees: ₹{studentFeeStructure.totalFees || 0}</div>
+                <div className="text-sm font-medium text-gray-800">Total Fees: ₹{admissionFeeStructure.totalFees || 0}</div>
 
                 {/* Student Fees */}
-                {studentFeeStructure.feesFromStudent?.map((fee, index) => (
+                {admissionFeeStructure.feesFromStudent?.map((fee, index) => (
                   <div key={index} className="flex justify-between items-center text-sm">
                     <span className="text-gray-700">{fee.componentName}:</span>
                     <span className="font-medium">₹{fee.amount}</span>
@@ -350,7 +351,7 @@ export default function PaymentPage() {
                 ))}
 
                 {/* Welfare Fees */}
-                {studentFeeStructure.feesFromSocialWelfare?.map((fee, index) => (
+                {admissionFeeStructure.feesFromSocialWelfare?.map((fee, index) => (
                   <div key={`welfare-${index}`} className="flex justify-between items-center text-sm">
                     <span className="text-gray-700">{fee.componentName} (Welfare):</span>
                     <span className="font-medium text-green-600">₹{fee.amount}</span>
@@ -361,7 +362,7 @@ export default function PaymentPage() {
           )}
 
           {/* Payment Amount */}
-          {studentFeeStructure && (
+          {admissionFeeStructure && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <DollarSign size={16} className="inline mr-1" />
@@ -377,7 +378,7 @@ export default function PaymentPage() {
                 step="0.01"
               />
               <div className="text-xs text-gray-500 mt-1">
-                Total Fees: ₹{studentFeeStructure.totalFees || 0}
+                Total Fees: ₹{admissionFeeStructure.totalFees || 0}
               </div>
             </div>
           )}
@@ -416,7 +417,7 @@ export default function PaymentPage() {
           </div>
 
           {/* Payment History Toggle */}
-          {selectedStudent && paymentHistory.length > 0 && (
+          {selectedAdmission && paymentHistory.length > 0 && (
             <div className="mb-4">
               <button
                 onClick={() => setShowHistory(!showHistory)}
@@ -454,7 +455,7 @@ export default function PaymentPage() {
           {/* Submit Button */}
           <button
             onClick={handleSubmitPayment}
-            disabled={isLoading || !selectedStudent || !paymentData.amountPaid || parseFloat(paymentData.amountPaid) <= 0}
+            disabled={isLoading || !selectedAdmission || !paymentData.amountPaid || parseFloat(paymentData.amountPaid) <= 0}
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
           >
             {isLoading ? "Processing..." : `Process Payment ₹${paymentData.amountPaid || 0}`}
@@ -468,13 +469,13 @@ export default function PaymentPage() {
             <h2 className="text-lg font-semibold text-gray-800">Fee Summary</h2>
           </div>
 
-          {studentFeeStructure ? (
+          {admissionFeeStructure ? (
             <div className="space-y-4">
               {/* Total Fees */}
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="text-sm text-gray-600">Total Fees</div>
                 <div className="text-2xl font-bold text-gray-800">
-                  ₹{studentFeeStructure.totalFees || 0}
+                  ₹{admissionFeeStructure.totalFees || 0}
                 </div>
               </div>
 
@@ -511,7 +512,7 @@ export default function PaymentPage() {
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-gray-700">Fee Breakdown</h3>
 
-                {studentFeeStructure.feesFromStudent?.map((fee, index) => {
+                {admissionFeeStructure.feesFromStudent?.map((fee, index) => {
                   const allocation = paymentAllocation.find(a => a.componentName === fee.componentName);
                   return (
                     <div key={index} className="flex justify-between items-center p-2 border-b border-gray-100">
@@ -532,7 +533,7 @@ export default function PaymentPage() {
                   );
                 })}
 
-                {studentFeeStructure.feesFromSocialWelfare?.map((fee, index) => {
+                {admissionFeeStructure.feesFromSocialWelfare?.map((fee, index) => {
                   const allocation = paymentAllocation.find(a => a.componentName === fee.componentName);
                   return (
                     <div key={`welfare-${index}`} className="flex justify-between items-center p-2 border-b border-gray-100">
@@ -564,7 +565,7 @@ export default function PaymentPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Total Balance:</span>
                     <span className="text-lg font-semibold text-red-600">
-                      ₹{Math.max(0, (studentFeeStructure.totalFees || 0) - parseFloat(paymentData.amountPaid))}
+                      ₹{Math.max(0, (admissionFeeStructure.totalFees || 0) - parseFloat(paymentData.amountPaid))}
                     </span>
                   </div>
                 </div>
@@ -573,7 +574,7 @@ export default function PaymentPage() {
           ) : (
             <div className="text-center py-8">
               <Users className="text-gray-400 mx-auto mb-3" size={48} />
-              <p className="text-gray-500">Select a student to view fee structure</p>
+              <p className="text-gray-500">Select an admission to view fee structure</p>
             </div>
           )}
         </div>

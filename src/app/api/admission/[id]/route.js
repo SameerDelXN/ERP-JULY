@@ -2,6 +2,7 @@ import { connectToDatabase } from '@/lib/mongoose';
 import Admission from '@/app/models/admissionSchema';
 import Student from '@/app/models/studentSchema';
 import User from '@/app/models/userSchema';
+import PaymentTracking from '@/app/models/paymentTrackingSchema';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
@@ -51,7 +52,26 @@ export async function PUT(req, { params }) {
     // Check if status is being changed to 'approved' and trigger automatic conversion
     let conversionResult = null;
     if (updateData.status === 'approved') {
-      console.log(` Status changed to approved, triggering automatic conversion for admission: ${admissionId}`);
+      console.log(` Status changed to approved, checking payment status for admission: ${admissionId}`);
+      
+      // Check if student has paid partial fees before allowing approval
+      const paymentTracking = await PaymentTracking.findOne({
+        admissionId: admissionId // Search by admissionId instead of student
+      }).sort({ createdAt: -1 });
+      
+      if (!paymentTracking || paymentTracking.totalPaid <= 0) {
+        return Response.json(
+          { 
+            success: false, 
+            message: 'Cannot approve admission. Student must pay partial fees before approval.',
+            requiresPayment: true,
+            paymentStatus: paymentTracking ? 'No payment found' : 'No payment record'
+          },
+          { status: 400 }
+        );
+      }
+      
+      console.log(` Payment verified. Amount paid: ₹${paymentTracking.totalPaid}`);
       
       try {
         conversionResult = await convertAdmissionToStudent(updatedAdmission);

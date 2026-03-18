@@ -4,8 +4,13 @@ import mongoose from 'mongoose';
 const feeReceiptSchema = new mongoose.Schema({
   student: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Student',
+    ref: 'Admission', // Changed from Student to Admission
     required: true
+  },
+  admission: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admission',
+    required: false // Make optional for backward compatibility
   },
   receiptNumber: {
     type: String,

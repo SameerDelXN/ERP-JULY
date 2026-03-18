@@ -4,46 +4,48 @@ import { FeeReceipt } from '@/models/feeReceipt';
 import Student from '@/app/models/studentSchema';
 import FeeStructure from '@/app/models/feeStructureSchema';
 import PaymentTracking from '@/app/models/paymentTrackingSchema';
+import Admission from '@/app/models/admissionSchema';
 
 export async function POST(req) {
   try {
     await connectToDatabase();
 
-    const { studentId, paymentMode, remarks, amountPaid, componentPayments, feeStructure } = await req.json();
+    const { studentId, admissionId, paymentMode, remarks, amountPaid, componentPayments, feeStructure } = await req.json();
 
-    // Validate student
-    const student = await Student.findById(studentId);
-    if (!student) {
-      return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+    // Validate admission (primary check)
+    let admission = null;
+    if (admissionId) {
+      admission = await Admission.findById(admissionId);
+    } else if (studentId) {
+      // Try to find admission by studentId as fallback
+      admission = await Admission.findById(studentId);
+    }
+    
+    if (!admission) {
+      return NextResponse.json({ success: false, error: 'Admission not found' }, { status: 404 });
     }
 
-    // Debug: Log student data to understand what we're working with
-    console.log('Student data:', {
-      _id: student._id,
-      name: student.name,
-      email: student.email,
-      course: student.course,
-      branch: student.branch,
-      department: student.department,
-      class: student.class,
-      year: student.year,
-      category: student.category,
-      rollNumber: student.rollNumber,
-      enrollmentNumber: student.enrollmentNumber,
-      phone: student.phone,
-      address: student.address
+    // Debug: Log admission data
+    console.log('Admission data:', {
+      _id: admission._id,
+      fullName: admission.fullName,
+      email: admission.email,
+      programType: admission.programType,
+      branch: admission.branch,
+      year: admission.year,
+      dteApplicationNumber: admission.dteApplicationNumber
     });
 
     // Use provided fee structure or find one
     let actualFeeStructure = feeStructure;
     
     if (!actualFeeStructure) {
-      // Try multiple approaches to find fee structure
+      // Find fee structure for this admission
       actualFeeStructure = await FeeStructure.findOne({
-        programType: student.course,
-        departmentName: student.branch || student.department,
-        year: student.class || student.year,
-        category: student.category
+        programType: admission.programType,
+        departmentName: admission.branch,
+        year: admission.year,
+        category: 'general'
       });
 
       // If not found, try with defaults
@@ -69,10 +71,9 @@ export async function POST(req) {
         success: false, 
         error: 'Fee structure not found. Please ensure fee structures are created in the system.', 
         details: {
-          studentCourse: student.course,
-          studentDepartment: student.branch || student.department,
-          studentYear: student.class || student.year,
-          studentCategory: student.category
+          admissionProgramType: admission.programType,
+          admissionBranch: admission.branch,
+          admissionYear: admission.year
         }
       }, { status: 404 });
     }
@@ -91,19 +92,29 @@ export async function POST(req) {
     const count = await FeeReceipt.countDocuments();
     const receiptNumber = `REC2025-${String(count + 1).padStart(4, '0')}`;
 
-    // Create receipt with fee structure data included
+    // Create receipt with admission data included
     const newReceipt = await FeeReceipt.create({
-      student: student._id,
+      student: admission._id, // Keep as student for compatibility
+      admission: admission._id, // Add admission reference
       receiptNumber,
       amountPaid: actualAmountPaid,
       paymentMode,
       remarks,
-      academicYear: student.academicYear || '2025-2026'
+      academicYear: admission.admissionYear || '2025-2026'
     });
 
-    // Populate the receipt with student data only
-    const populatedReceipt = await FeeReceipt.findById(newReceipt._id)
-      .populate('student');
+    // Populate the receipt with admission data
+    let populatedReceipt;
+    try {
+      populatedReceipt = await FeeReceipt.findById(newReceipt._id)
+        .populate('student')
+        .populate('admission');
+    } catch (populateError) {
+      console.log('Populate error, trying without admission field:', populateError);
+      // Fallback: populate only student field
+      populatedReceipt = await FeeReceipt.findById(newReceipt._id)
+        .populate('student');
+    }
 
     console.log('Populated receipt data:', populatedReceipt);
     console.log('Student data in receipt:', populatedReceipt.student);
@@ -161,7 +172,8 @@ export async function POST(req) {
 
         // Create payment tracking record
         const paymentTracking = await PaymentTracking.create({
-          student: student._id,
+          student: admission._id, // Keep as student for compatibility
+          admissionId: admission._id, // Link to admission
           receiptNumber: receiptNumber,
           feeStructure: actualFeeStructure._id,
           paymentComponents: paymentComponents,
@@ -170,10 +182,10 @@ export async function POST(req) {
           totalBalance: totalFees - actualAmountPaid,
           paymentMode: paymentMode,
           remarks: remarks || `Payment of ₹${actualAmountPaid}`,
-          academicYear: student.academicYear || '2025-2026',
+          academicYear: admission.admissionYear || '2025-2026',
           status: actualAmountPaid === totalFees ? 'Paid' : 'Partial',
           transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`,
-          createdBy: student._id // TODO: Update with actual user ID from session
+          createdBy: admission._id // TODO: Update with actual user ID from session
         });
 
         console.log('Payment tracking saved:', paymentTracking);

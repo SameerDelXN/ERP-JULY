@@ -93,25 +93,92 @@ export async function POST(req) {
       });
     }
 
-    console.log('Generating DUAL PDF for receipt data:', receipt);
+    console.log('Generating PDF for receipt data:', receipt);
 
-    // Get PDF buffer from dual utility
-    const pdfBuffer = await generateFeeReceiptPDFDual(receipt);
+    // Detect if we're on Vercel
+    const isVercel = process.env.VERCEL || 
+                    req.headers.get('host')?.includes('vercel.app') ||
+                    process.env.NODE_ENV === 'production';
 
-    return new Response(pdfBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="receipt-${receipt.receiptNumber || 'unknown'}-dual.pdf"`,
-        'Content-Length': pdfBuffer.length.toString(),
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      },
-    });
+    console.log('Environment detection - isVercel:', isVercel);
+
+    if (isVercel) {
+      // Use Vercel-compatible HTML generation
+      try {
+        const pdfData = await generateFeeReceiptPDFVercel(receipt);
+        
+        return new Response(JSON.stringify({ 
+          success: true,
+          html: pdfData.html,
+          filename: pdfData.filename,
+          message: 'HTML generated successfully for client-side PDF generation'
+        }), {
+          status: 200,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+        });
+      } catch (vercelError) {
+        console.error('Vercel PDF generation failed:', vercelError);
+        return new Response(JSON.stringify({ 
+          error: 'Failed to generate PDF: ' + vercelError.message 
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      // Use server-side Puppeteer generation (for local development)
+      try {
+        const pdfBuffer = await generateFeeReceiptPDFDual(receipt);
+
+        return new Response(pdfBuffer, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="receipt-${receipt.receiptNumber || 'unknown'}-dual.pdf"`,
+            'Content-Length': pdfBuffer.length.toString(),
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+        });
+      } catch (puppeteerError) {
+        console.error('Puppeteer PDF generation failed:', puppeteerError);
+        // Fallback to Vercel method
+        try {
+          const pdfData = await generateFeeReceiptPDFVercel(receipt);
+          
+          return new Response(JSON.stringify({ 
+            success: true,
+            html: pdfData.html,
+            filename: pdfData.filename,
+            message: 'Puppeteer failed, using HTML fallback'
+          }), {
+            status: 200,
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            },
+          });
+        } catch (fallbackError) {
+          return new Response(JSON.stringify({ 
+            error: 'Failed to generate PDF: ' + fallbackError.message 
+          }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    }
 
   } catch (error) {
-    console.error('Error in DUAL PDF POST route:', error);
+    console.error('Error in PDF POST route:', error);
     return new Response(JSON.stringify({ 
       error: 'Failed to generate PDF: ' + error.message 
     }), {
