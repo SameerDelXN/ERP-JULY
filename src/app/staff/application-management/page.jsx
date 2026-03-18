@@ -72,6 +72,8 @@ import {
 
   IndianRupee,
 
+  AlertCircle,
+
   Tent,
 
   ShieldCheck,
@@ -4709,7 +4711,7 @@ const AdmissionApplications = () => {
 
   const [error, setError] = useState(null);
 
-  const [admission, setAdmission] = useState([]);
+  const [admissions, setAdmissions] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -4727,13 +4729,15 @@ const AdmissionApplications = () => {
 
     const sectionWeights = {
 
-      personal: 30, // 30% of total
+      personal: 25, // 25% of total
 
-      family: 15, // 15% of total
+      family: 12.5, // 12.5% of total
 
-      academic: 35, // 35% of total
+      academic: 30, // 30% of total
 
-      background: 20, // 20% of total
+      background: 17.5, // 17.5% of total
+
+      payment: 15, // 15% for payment
 
     };
 
@@ -4743,59 +4747,69 @@ const AdmissionApplications = () => {
 
 
 
-    // Personal Details (5 fields = 6% each)
+    // Personal Details (5 fields = 5% each)
 
-    if (admission.fullName) completion += 6;
+    if (admission.fullName) completion += 5;
 
-    if (admission.dateOfBirth) completion += 6;
+    if (admission.dateOfBirth) completion += 5;
 
-    if (admission.gender) completion += 6;
+    if (admission.gender) completion += 5;
 
-    if (admission.email) completion += 6;
+    if (admission.email) completion += 5;
 
-    if (admission.studentWhatsappNumber) completion += 6;
-
-
-
-    // Family Details (4 fields = 3.75% each)
-
-    if (admission.motherName) completion += 3.75;
-
-    if (admission.fatherGuardianWhatsappNumber) completion += 3.75;
-
-    if (admission.motherMobileNumber) completion += 3.75;
-
-    if (admission.familyIncome !== undefined) completion += 3.75;
+    if (admission.studentWhatsappNumber) completion += 5;
 
 
 
-    // Academic Details (7 fields = 5% each)
+    // Family Details (4 fields = 3.125% each)
 
-    if (admission.admissionYear) completion += 5;
+    if (admission.motherName) completion += 3.125;
 
-    if (admission.programType) completion += 5;
+    if (admission.fatherGuardianWhatsappNumber) completion += 3.125;
 
-    if (admission.branch) completion += 5;
+    if (admission.motherMobileNumber) completion += 3.125;
 
-    if (admission.year) completion += 5;
-
-    if (admission.round) completion += 5;
-
-    if (admission.seatType) completion += 5;
-
-    if (admission.admissionCategoryDTE) completion += 5;
+    if (admission.familyIncome !== undefined) completion += 3.125;
 
 
 
-    // Background Details (4 fields = 5% each)
+    // Academic Details (7 fields = 4.285% each)
 
-    if (admission.casteAsPerLC) completion += 5;
+    if (admission.admissionYear) completion += 4.285;
 
-    if (admission.domicile) completion += 5;
+    if (admission.programType) completion += 4.285;
 
-    if (admission.nationality) completion += 5;
+    if (admission.branch) completion += 4.285;
 
-    if (admission.religionAsPerLC) completion += 5;
+    if (admission.year) completion += 4.285;
+
+    if (admission.round) completion += 4.285;
+
+    if (admission.seatType) completion += 4.285;
+
+    if (admission.admissionCategoryDTE) completion += 4.285;
+
+
+
+    // Background Details (4 fields = 4.375% each)
+
+    if (admission.casteAsPerLC) completion += 4.375;
+
+    if (admission.domicile) completion += 4.375;
+
+    if (admission.nationality) completion += 4.375;
+
+    if (admission.religionAsPerLC) completion += 4.375;
+
+
+
+    // Payment Status (15% - NEW REQUIREMENT)
+
+    if (admission.paymentStatus?.hasPayment) {
+
+      completion += 15;
+
+    }
 
 
 
@@ -4807,223 +4821,155 @@ const AdmissionApplications = () => {
 
 
 
-  // const handleStatusChange = async (id, newStatus) => {
-
-  //   try {
-
-  //     setLoading(true);
-
-
-
-  //     const response = await fetch(`/api/admission/${id}`, {
-
-  //       method: "PUT",
-
-  //       headers: {
-
-  //         "Content-Type": "application/json",
-
-  //       },
-
-  //       body: JSON.stringify({ status: newStatus }),
-
-  //     });
-
   const handleStatusChange = async (id, newStatus) => {
-
     try {
-
       setLoading(true);
 
-
-
-      // Only send the fields we want to update
-
-      const response = await fetch(`/api/admission/${id}`, {
-
-        method: "PUT",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          status: newStatus,
-
-          isPrnGenerated: newStatus === "approved" ? true : undefined,
-
-        }),
-
-      });
-
-
-
-      if (!response.ok) {
-
-        const errorData = await response.json();
-
-        throw new Error(errorData.message || "Failed to update status");
-
+      // Check if trying to approve without payment
+      if (newStatus === 'approved') {
+        // Get the current admission state safely
+        const currentAdmissions = admissions || [];
+        const admissionRecord = currentAdmissions.find(app => app._id === id);
+        if (!admissionRecord?.paymentStatus?.hasPayment) {
+          toast.error(`Cannot approve admission. Student must pay partial fees before approval.`);
+          return;
+        }
       }
 
+      // Only send the fields we want to update
+      const response = await fetch(`/api/admission/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          isPrnGenerated: newStatus === "approved" ? true : undefined,
+        }),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update status");
+      }
 
       const updatedData = await response.json();
 
-
-
       // Refresh the admission list
-
       await fetchAdmission();
 
-
-
       // Show success message
-
       toast.success(`Application ${newStatus} successfully`);
 
-
-
       // If approved, convert to student profile
-
       if (newStatus === "approved") {
-
         try {
-
           const convertResponse = await fetch(`/api/admission/${id}/convert`, {
-
             method: 'POST',
-
           });
-
-          
 
           const convertResult = await convertResponse.json();
 
-          
-
           if (convertResponse.ok && convertResult.success) {
-
             console.log("Converted to student:", convertResult);
-
             toast.success(`Student profile created successfully! PRN: ${convertResult.prn}`);
-
           } else {
-
             console.error("Conversion failed:", convertResult);
-
-            
-
             // Handle specific duplicate errors with detailed messages
-
             if (convertResult.field === "prn") {
-
               toast.error("Failed to generate unique PRN. Please try again.");
-
             } else if (convertResult.field === "email") {
-
               toast.error(`Email already exists: ${convertResult.details || 'Please use a different email'}`);
-
             } else if (convertResult.field === "admissionId") {
-
               toast.error(`This admission has already been converted: ${convertResult.details || 'Please refresh the page'}`);
-
             } else if (convertResult.field === "studentId") {
-
               toast.error("Failed to generate unique Student ID. Please try again.");
-
             } else {
-
               toast.warning(`Application approved but student creation failed: ${convertResult.details || convertResult.error || 'Unknown error'}`);
-
             }
-
           }
-
         } catch (convertError) {
-
           console.error("Conversion error:", convertError);
-
           toast.warning("Application approved but student creation failed due to network error");
-
         }
-
       }
-
     } catch (error) {
-
       console.error("Error updating status:", error);
-
       toast.error(error.message);
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
 
 
   const fetchAdmission = async () => {
-
     try {
-
       setLoading(true);
-
       const res = await fetch("/api/admission");
-
       if (!res.ok) throw new Error("Failed to fetch Admissions");
-
       const admissionData = await res.json();
-
       const specificAdmissions = admissionData.data.filter(
-
         (ad) => ad.counsellorId === user.id
-
       );
-
-
-
       console.log(specificAdmissions);
-
-
-
+      
       // Sort by createdAt date in descending order (newest first)
-
       const sortedAdmissions = specificAdmissions.sort((a, b) => {
-
         return new Date(b.createdAt) - new Date(a.createdAt);
-
       });
 
+      // Fetch payment status for each admission
+      const admissionsWithPayment = await Promise.all(
+        sortedAdmissions.map(async (adm) => {
+          try {
+            console.log('Fetching payment for admission:', adm._id);
+            const paymentRes = await fetch(`/api/payments/tracking?admissionId=${adm._id}`);
+            const paymentData = await paymentRes.json();
+            console.log('Payment data for admission', adm._id, ':', paymentData);
+            
+            return {
+              ...adm,
+              paymentStatus: paymentData.success && paymentData.paymentRecords?.length > 0 
+                ? {
+                    hasPayment: true,
+                    totalPaid: paymentData.paymentRecords.reduce((sum, record) => sum + record.totalPaid, 0),
+                    lastPayment: paymentData.paymentRecords[0]?.createdAt || null
+                  }
+                : {
+                    hasPayment: false,
+                    totalPaid: 0,
+                    lastPayment: null
+                  }
+            };
+          } catch (error) {
+            console.error(`Error fetching payment for admission ${adm._id}:`, error);
+            return {
+              ...adm,
+              paymentStatus: {
+                hasPayment: false,
+                totalPaid: 0,
+                lastPayment: null
+              }
+            };
+          }
+        })
+      );
 
-
-      setAdmission(sortedAdmissions);
-
+      console.log('Admissions with payment:', admissionsWithPayment);
+      setAdmissions(admissionsWithPayment);
     } catch (error) {
-
       setError(error.message);
-
       console.error("Failed to fetch admissions:", error);
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   useEffect(() => {
-
     fetchAdmission();
-
   }, []);
+
 
 
 
@@ -5069,7 +5015,7 @@ const AdmissionApplications = () => {
 
 
 
-  const filteredApplications = admission?.filter((app) => {
+  const filteredApplications = admissions?.filter((app) => {
 
     const matchesSearch =
 
@@ -5123,7 +5069,7 @@ const AdmissionApplications = () => {
 
   const handleExportToExcel = () => {
 
-    if (!admission || admission.length === 0) {
+    if (!admissions || admissions.length === 0) {
 
       toast.error("No data to export");
 
@@ -5133,7 +5079,7 @@ const AdmissionApplications = () => {
 
 
 
-    const exportData = admission.map((app) => ({
+    const exportData = admissions.map((app) => ({
 
       DTEApplicationNumber: app.dteApplicationNumber || "",
 
@@ -5343,7 +5289,7 @@ const AdmissionApplications = () => {
 
                 <p className="text-2xl font-bold text-gray-900">
 
-                  {admission.length}
+                  {admissions.length}
 
                 </p>
 
@@ -5375,7 +5321,7 @@ const AdmissionApplications = () => {
 
                 <p className="text-2xl font-bold text-yellow-600">
 
-                  {admission.filter((a) => a?.status === "inProcess").length}
+                  {admissions.filter((a) => a?.status === "inProcess").length}
 
                 </p>
 
@@ -5403,7 +5349,7 @@ const AdmissionApplications = () => {
 
                 <p className="text-2xl font-bold text-green-600">
 
-                  {admission.filter((a) => a?.status === "approved").length}
+                  {admissions.filter((a) => a?.status === "approved").length}
 
                 </p>
 
@@ -5431,7 +5377,7 @@ const AdmissionApplications = () => {
 
                 <p className="text-2xl font-bold text-red-600">
 
-                  {admission.filter((a) => a?.status === "rejected").length}
+                  {admissions.filter((a) => a?.status === "rejected").length}
 
                 </p>
 
@@ -5539,6 +5485,12 @@ const AdmissionApplications = () => {
 
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 
+                    Payment Status
+
+                  </th>
+
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
                     Submitted
 
                   </th>
@@ -5634,27 +5586,39 @@ const AdmissionApplications = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
 
                         <span
-
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}
-
                         >
-
                           <config.icon className="w-3 h-3 mr-1" />
-
                           {config.label}
-
                         </span>
 
                       </td>
 
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {application.paymentStatus?.hasPayment ? (
+                          <div className="flex flex-col">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <IndianRupee className="w-3 h-3 mr-1" />
+                              Paid: ₹{application.paymentStatus.totalPaid.toLocaleString()}
+                            </span>
+                            {application.paymentStatus.lastPayment && (
+                              <span className="text-xs text-gray-500 mt-1">
+                                {new Date(application.paymentStatus.lastPayment).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            No Payment
+                          </span>
+                        )}
+                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-
                         {application.createdAt
-
                           ? new Date(application.createdAt).toLocaleDateString()
-
                           : "N/A"}
-
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -5939,7 +5903,7 @@ const AdmissionApplications = () => {
 
           admissionId={selectedAdmissionId}
 
-          admission={admission}
+          admission={admissions}
 
           onClose={() => {
 
@@ -5967,7 +5931,7 @@ const AdmissionApplications = () => {
 
               // Update existing admission
 
-              setAdmission((prev) =>
+              setAdmissions((prev) =>
 
                 prev.map((app) =>
 
@@ -5981,7 +5945,7 @@ const AdmissionApplications = () => {
 
               // Add new admission
 
-              setAdmission((prev) => [updatedData, ...prev]);
+              setAdmissions((prev) => [updatedData, ...prev]);
 
             }
 
@@ -9806,7 +9770,7 @@ export default AdmissionApplications;
 
 //   const [error, setError] = useState(null);
 
-//   const [admission, setAdmission] = useState([]);
+//   const [admission, setAdmissions] = useState([]);
 
 //   const [currentPage, setCurrentPage] = useState(1);
 
@@ -9936,7 +9900,7 @@ export default AdmissionApplications;
 
 //   //     await fetchAdmission()
 
-//   //     // setAdmission(updatedData)
+//   //     // setAdmissions(updatedData)
 
 //   //     toast.success(`Application ${newStatus} successfully`);
 
@@ -10072,7 +10036,7 @@ export default AdmissionApplications;
 
 
 
-//       setAdmission(sortedAdmissions);
+//       setAdmissions(sortedAdmissions);
 
 //     } catch (error) {
 
@@ -10138,7 +10102,7 @@ export default AdmissionApplications;
 
 
 
-//   const filteredApplications = admission?.filter((app) => {
+//   const filteredApplications = admissions?.filter((app) => {
 
 //     const matchesSearch =
 
@@ -10192,7 +10156,7 @@ export default AdmissionApplications;
 
 //   const handleExportToExcel = () => {
 
-//     if (!admission || admission.length === 0) {
+//     if (!admission || admissions.length === 0) {
 
 //       toast.error("No data to export");
 
@@ -10412,7 +10376,7 @@ export default AdmissionApplications;
 
 //                 <p className="text-2xl font-bold text-gray-900">
 
-//                   {admission.length}
+//                   {admissions.length}
 
 //                 </p>
 
@@ -10444,7 +10408,7 @@ export default AdmissionApplications;
 
 //                 <p className="text-2xl font-bold text-yellow-600">
 
-//                   {admission.filter((a) => a?.status === "inProcess").length}
+//                   {admissions.filter((a) => a?.status === "inProcess").length}
 
 //                 </p>
 
@@ -10472,7 +10436,7 @@ export default AdmissionApplications;
 
 //                 <p className="text-2xl font-bold text-green-600">
 
-//                   {admission.filter((a) => a?.status === "approved").length}
+//                   {admissions.filter((a) => a?.status === "approved").length}
 
 //                 </p>
 
@@ -10500,7 +10464,7 @@ export default AdmissionApplications;
 
 //                 <p className="text-2xl font-bold text-red-600">
 
-//                   {admission.filter((a) => a?.status === "rejected").length}
+//                   {admissions.filter((a) => a?.status === "rejected").length}
 
 //                 </p>
 
@@ -11036,7 +11000,7 @@ export default AdmissionApplications;
 
 //               // Update existing admission
 
-//               setAdmission((prev) =>
+//               setAdmissions((prev) =>
 
 //                 prev.map((app) =>
 
@@ -11050,7 +11014,7 @@ export default AdmissionApplications;
 
 //               // Add new admission
 
-//               setAdmission((prev) => [updatedData, ...prev]);
+//               setAdmissions((prev) => [updatedData, ...prev]);
 
 //             }
 

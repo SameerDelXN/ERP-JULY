@@ -10,51 +10,48 @@ export async function GET(req) {
     
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get('studentId');
+    const branch = searchParams.get('branch');
+    const programType = searchParams.get('programType');
+    const year = searchParams.get('year');
     
     // If studentId is provided, find specific fee structure for that student
     if (studentId) {
-      // Get student details
-      const student = await Student.findById(studentId);
-      if (!student) {
-        return NextResponse.json({
-          success: false,
-          error: 'Student not found'
-        }, { status: 404 });
-      }
-
-      // Find fee structure for this student
+      // For now, we don't have Student model active, so return error
+      return NextResponse.json({
+        success: false,
+        error: 'Student functionality not available. Please use branch, programType, and year parameters instead.'
+      }, { status: 400 });
+    }
+    
+    // If branch, programType, and year are provided (for enquiries)
+    if (branch && programType && year) {
+      console.log('Searching fee structure for enquiry:', { branch, programType, year });
+      
+      // Find fee structure for this enquiry
       let feeStructure = await FeeStructure.findOne({
-        programType: student.programType,
-        departmentName: student.branch,
-        year: student.currentYear,
-        category: student.feesCategory || 'general'
+        programType: programType,
+        departmentName: branch,
+        year: year,
+        category: 'general'
       });
 
-      // If not found, try with defaults
+      // If not found, try any matching record
       if (!feeStructure) {
         feeStructure = await FeeStructure.findOne({
-          programType: student.programType,
-          departmentName: student.branch,
-          year: student.currentYear,
-          category: 'general'
-        });
-      }
-
-      // If still not found, try any matching record
-      if (!feeStructure) {
-        feeStructure = await FeeStructure.findOne({
-          programType: student.programType,
-          departmentName: student.branch
+          programType: programType,
+          departmentName: branch
         });
       }
 
       if (!feeStructure) {
+        console.log('No fee structure found for:', { branch, programType, year });
         return NextResponse.json({
           success: false,
-          error: 'Fee structure not found for this student'
+          error: 'Fee structure not found for this enquiry'
         }, { status: 404 });
       }
 
+      console.log('Found fee structure:', feeStructure);
       return NextResponse.json({
         success: true,
         feeStructure: feeStructure

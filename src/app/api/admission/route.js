@@ -336,12 +336,29 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectToDatabase();
 
-    // Fetch all admissions
-    const admissions = await Admission.find({}).lean();
+    const { searchParams } = new URL(req.url);
+    const searchTerm = searchParams.get('search');
+
+    let query = {};
+    
+    // If search term provided, add search criteria
+    if (searchTerm) {
+      query = {
+        $or: [
+          { fullName: { $regex: searchTerm, $options: 'i' } },
+          { email: { $regex: searchTerm, $options: 'i' } },
+          { dteApplicationNumber: { $regex: searchTerm, $options: 'i' } },
+          { studentWhatsappNumber: { $regex: searchTerm, $options: 'i' } }
+        ]
+      };
+    }
+
+    // Fetch admissions with optional search
+    const admissions = await Admission.find(query).lean();
 
     return NextResponse.json({
       success: true,

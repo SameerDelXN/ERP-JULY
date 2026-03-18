@@ -9,12 +9,16 @@ export async function GET(req) {
     
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get('studentId');
+    const admissionId = searchParams.get('admissionId');
     const academicYear = searchParams.get('academicYear');
     
     // Build query
     let query = {};
     if (studentId) {
       query.student = studentId;
+    }
+    if (admissionId) {
+      query.admissionId = admissionId;
     }
     if (academicYear) {
       query.academicYear = academicYear;

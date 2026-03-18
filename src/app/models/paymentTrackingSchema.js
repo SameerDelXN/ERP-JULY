@@ -33,7 +33,12 @@ const paymentComponentSchema = new mongoose.Schema({
 const paymentTrackingSchema = new mongoose.Schema({
   student: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Student',
+    ref: 'Admission', // Changed from Student to Admission
+    required: true
+  },
+  admissionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admission',
     required: true
   },
   receiptNumber: {

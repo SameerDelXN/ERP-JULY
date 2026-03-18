@@ -204,44 +204,59 @@ export async function POST(req, { params }) {
 
 
 
-        // 3. Check for existing conflicts
-
+        // 3. Check for existing conflicts with improved logic
         console.log("🔍 Checking for existing conflicts...");
-
         
-
         const existingEmailUser = await User.findOne({ email: admission.email });
-
         const existingEmailStudent = await Student.findOne({ email: admission.email });
-
         
-
         console.log("📊 Conflict check results:", {
-
             emailUser: !!existingEmailUser,
-
             emailStudent: !!existingEmailStudent,
-
         });
-
         
-
+        // Enhanced conflict resolution logic
         if (existingEmailUser || existingEmailStudent) {
-
-            console.log("❌ Email conflict detected");
-
-            return NextResponse.json({ 
-
-                success: false, 
-
-                message: "Duplicate value error", 
-
-                field: "email",
-
-                details: "A user with this email already exists"
-
-            }, { status: 400 });
-
+            console.log("⚠️ Email conflict detected, checking for resolution...");
+            
+            // Check if the existing record is from the same admission (retry scenario)
+            const existingStudentFromSameAdmission = existingEmailStudent && 
+                existingEmailStudent.admissionId && 
+                existingEmailStudent.admissionId.toString() === admission._id.toString();
+            
+            // Check if the existing user is from a failed conversion attempt
+            const isOrphanedUser = existingEmailUser && 
+                !existingEmailStudent && 
+                existingEmailUser.role === "student" &&
+                existingEmailUser.username.startsWith("STU");
+            
+            // Allow conversion if:
+            // 1. The existing student is from the same admission (retry scenario)
+            // 2. The existing user is orphaned (no corresponding student record)
+            // 3. The existing user was created from a failed conversion attempt
+            if (existingStudentFromSameAdmission) {
+                console.log("✅ Found existing student from same admission, returning existing record");
+                return NextResponse.json({
+                    success: true,
+                    message: "Student profile already exists",
+                    studentId: existingEmailStudent.studentId,
+                    prn: existingEmailStudent.prn,
+                    userId: existingEmailUser ? existingEmailUser._id : null
+                });
+            } else if (isOrphanedUser) {
+                console.log("🧹 Found orphaned user, cleaning up and proceeding...");
+                // Clean up the orphaned user record
+                await User.findByIdAndDelete(existingEmailUser._id);
+                console.log("✅ Orphaned user cleaned up, proceeding with conversion");
+            } else {
+                console.log("❌ Email conflict cannot be resolved automatically");
+                return NextResponse.json({ 
+                    success: false, 
+                    message: "Duplicate value error", 
+                    field: "email",
+                    details: "A user with this email already exists. Please contact administrator to resolve the conflict."
+                }, { status: 400 });
+            }
         }
 
 
