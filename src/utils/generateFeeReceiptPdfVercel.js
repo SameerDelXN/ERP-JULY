@@ -68,8 +68,8 @@ export async function generateFeeReceiptPDFVercel(receiptData) {
       const templatePath = path.join(process.cwd(), 'src', 'templates', 'feeReceiptDual.html');
       templateContent = fs.readFileSync(templatePath, 'utf8');
     } catch (error) {
-      console.error('Error reading template file:', error);
-      throw new Error('Template file not found or inaccessible');
+      console.error('Template file not found, using fallback HTML template');
+      templateContent = getFallbackTemplate();
     }
     
     console.log('Template content length:', templateContent.length);
@@ -238,4 +238,189 @@ function numberToWords(num) {
   }
   
   return num.toString();
+}
+
+// Fallback template for Vercel when file system is not available
+function getFallbackTemplate() {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Fee Receipt - Dual Copy</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #fff;
+        }
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border: 2px solid #333;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .header h2 { 
+            margin: 0; 
+            color: #333;
+            font-size: 24px;
+        }
+        .receipt-info { 
+            margin-bottom: 15px; 
+            display: flex;
+            justify-content: space-between;
+        }
+        .student-info { 
+            margin-bottom: 15px; 
+        }
+        .fee-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 15px; 
+        }
+        .fee-table th, .fee-table td { 
+            border: 1px solid #333; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        .fee-table th { 
+            background-color: #f2f2f2; 
+            font-weight: bold;
+        }
+        .amount { 
+            text-align: right; 
+            font-weight: bold;
+        }
+        .total { 
+            font-weight: bold; 
+            background-color: #f2f2f2;
+        }
+        .footer { 
+            margin-top: 20px; 
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+        .copy-separator {
+            border-top: 3px dashed #333;
+            margin: 30px 0;
+            padding-top: 20px;
+        }
+        .copy-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <!-- Copy 1 -->
+        <div class="copy-label">OFFICE COPY</div>
+        <div class="header">
+            <h2>FEE RECEIPT</h2>
+        </div>
+        
+        <div class="receipt-info">
+            <div>
+                <p><strong>Receipt Number:</strong> {{receiptNumber}}</p>
+                <p><strong>Date:</strong> {{date}}</p>
+                <p><strong>Payment Mode:</strong> {{paymentMode}}</p>
+            </div>
+            <div>
+                <p><strong>Student ID:</strong> {{student.studentId}}</p>
+                <p><strong>PRN:</strong> {{student.prn}}</p>
+            </div>
+        </div>
+        
+        <div class="student-info">
+            <p><strong>Student Name:</strong> {{student.fullName}}</p>
+            <p><strong>Program:</strong> {{student.programType}} - {{student.branch}}</p>
+            <p><strong>Year:</strong> {{student.currentYear}}</p>
+        </div>
+        
+        <table class="fee-table">
+            <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Particulars</th>
+                    <th class="amount">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- FEE_ROWS_PLACEHOLDER -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="total">Total Amount Paid:</td>
+                    <td class="amount total">₹<!-- TOTAL_FEES_PLACEHOLDER --></td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <div class="footer">
+            <p><strong>Amount in Words:</strong> {{amountInWords}} Rupees Only</p>
+            <p><strong>Remarks:</strong> {{remarks}}</p>
+        </div>
+        
+        <!-- Copy 2 -->
+        <div class="copy-separator"></div>
+        <div class="copy-label">STUDENT COPY</div>
+        <div class="header">
+            <h2>FEE RECEIPT</h2>
+        </div>
+        
+        <div class="receipt-info">
+            <div>
+                <p><strong>Receipt Number:</strong> {{receiptNumber}}</p>
+                <p><strong>Date:</strong> {{date}}</p>
+                <p><strong>Payment Mode:</strong> {{paymentMode}}</p>
+            </div>
+            <div>
+                <p><strong>Student ID:</strong> {{student.studentId}}</p>
+                <p><strong>PRN:</strong> {{student.prn}}</p>
+            </div>
+        </div>
+        
+        <div class="student-info">
+            <p><strong>Student Name:</strong> {{student.fullName}}</p>
+            <p><strong>Program:</strong> {{student.programType}} - {{student.branch}}</p>
+            <p><strong>Year:</strong> {{student.currentYear}}</p>
+        </div>
+        
+        <table class="fee-table">
+            <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Particulars</th>
+                    <th class="amount">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- FEE_ROWS_PLACEHOLDER -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="total">Total Amount Paid:</td>
+                    <td class="amount total">₹<!-- TOTAL_FEES_PLACEHOLDER --></td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <div class="footer">
+            <p><strong>Amount in Words:</strong> {{amountInWords}} Rupees Only</p>
+            <p><strong>Remarks:</strong> {{remarks}}</p>
+        </div>
+    </div>
+</body>
+</html>
+  `;
 }
