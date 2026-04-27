@@ -429,14 +429,6 @@ const UserManagementPage = () => {
         }));
         return;
       }
-      // Special validation for Department (only letters and spaces)
-      if (name === "department" && value && !/^[a-zA-Z\s]*$/.test(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "Only alphabetic characters are allowed",
-        }));
-        return;
-      }
 
       // Special handling for phone (only numbers, max 10 digits)
       if (name === "phone") {
@@ -868,14 +860,6 @@ const UserManagementPage = () => {
         return;
       }
 
-      // Special validation for department (only letters and spaces)
-      if (name === "department" && value && !/^[a-zA-Z\s]*$/.test(value)) {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "Only alphabetic characters are allowed",
-        }));
-        return;
-      }
 
       // Special handling for phone (only numbers, max 10 digits)
       if (name === "phone") {
