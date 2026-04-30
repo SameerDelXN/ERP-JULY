@@ -43,7 +43,8 @@ export async function generateFeeReceiptPDFDual(receiptData) {
         feesCategory: receiptData.student?.feesCategory || 'N/A',
         division: receiptData.student?.division || 'N/A'
       },
-      feeStructure: receiptData.feeStructure || null
+      feeStructure: receiptData.feeStructure || null,
+      instituteName: receiptData.instituteName || 'Dnyaneshwari Primary and Secondary School'
     };
     
     console.log('Formatted data for template:', JSON.stringify(formattedData, null, 2));

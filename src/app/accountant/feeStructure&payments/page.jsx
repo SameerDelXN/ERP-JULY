@@ -47,6 +47,7 @@ export default function AccountantFeeStructurePage() {
 
   // Form States
   const [formData, setFormData] = useState({
+    programType: "",
     department: "",
     year: "",
     semester: "",
@@ -55,6 +56,8 @@ export default function AccountantFeeStructurePage() {
     dueDate: "",
     description: "",
   });
+
+  const [programTypes, setProgramTypes] = useState([]);
 
   // For API compatibility - transform form data
   const transformFormDataForAPI = (formData) => {
@@ -75,11 +78,23 @@ export default function AccountantFeeStructurePage() {
   useEffect(() => {
     fetchFeeStructures();
     fetchDepartments();
-    fetchYears();
+    fetchProgramTypes();
     if (activeTab === "payments") {
       fetchPaymentRecords();
     }
   }, [activeTab]);
+
+  const fetchProgramTypes = async () => {
+    try {
+      const response = await fetch("/api/program-types");
+      const data = await response.json();
+      if (data.success) {
+        setProgramTypes(data.programTypes || []);
+      }
+    } catch (error) {
+      console.error("Error fetching program types:", error);
+    }
+  };
 
   const fetchFeeStructures = async () => {
     try {
@@ -101,17 +116,28 @@ export default function AccountantFeeStructurePage() {
       const response = await fetch("/api/department");
       const data = await response.json();
       if (data.departments) {
-        // Transform department data to match expected format
-        const transformedDepartments = data.departments.map(dept => ({
-          _id: dept._id,
-          name: dept.department
-        }));
-        setDepartmentData(transformedDepartments);
+        setDepartmentData(data.departments);
       }
     } catch (error) {
       console.error("Error fetching departments:", error);
     }
   };
+
+  const filteredDepartments = formData.programType
+    ? departmentData.filter(dept => dept.programType === formData.programType)
+    : [];
+
+  // Update year list when department changes
+  useEffect(() => {
+    if (formData.department) {
+      const dept = departmentData.find(d => d.department === formData.department);
+      if (dept) {
+        setYearList(dept.years || []);
+      }
+    } else {
+      setYearList([]);
+    }
+  }, [formData.department, departmentData]);
 
   const fetchYears = async () => {
     try {
@@ -159,7 +185,7 @@ export default function AccountantFeeStructurePage() {
 
       // Transform form data to match the new API format
       const apiData = {
-        programType: "B.E.",
+        programType: formData.programType,
         departmentName: formData.department,
         year: formData.year,
         caste: "general",
@@ -191,6 +217,7 @@ export default function AccountantFeeStructurePage() {
         setShowEditForm(false);
         setEditingStructure(null);
         setFormData({
+          programType: "",
           department: "",
           year: "",
           semester: "",
@@ -214,6 +241,7 @@ export default function AccountantFeeStructurePage() {
     setEditingStructure(structure);
     // Transform API data back to form format
     setFormData({
+      programType: structure.programType || "",
       department: structure.departmentName || "",
       year: structure.year || "",
       semester: structure.year || "",
@@ -662,17 +690,34 @@ export default function AccountantFeeStructurePage() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Program Type</label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={formData.programType}
+                  onChange={(e) => setFormData({ ...formData, programType: e.target.value, department: "", year: "" })}
+                  required
+                >
+                  <option value="">Select Program Type</option>
+                  {programTypes.map((pt) => (
+                    <option key={pt._id} value={pt.name}>
+                      {pt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value, year: "" })}
+                  disabled={!formData.programType}
                   required
                 >
-                  <option value="">Select Department</option>
-                  {departmentData.map((dept) => (
-                    <option key={dept._id} value={dept.name}>
-                      {dept.name}
+                  <option value="">{formData.programType ? "Select Department" : "Select Program Type first"}</option>
+                  {filteredDepartments.map((dept) => (
+                    <option key={dept._id} value={dept.department}>
+                      {dept.department}
                     </option>
                   ))}
                 </select>
@@ -683,11 +728,12 @@ export default function AccountantFeeStructurePage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  disabled={!formData.department}
                   required
                 >
-                  <option value="">Select Year</option>
-                  {yearList.map((year) => (
-                    <option key={year._id} value={year.year}>
+                  <option value="">{formData.department ? "Select Year" : "Select Department first"}</option>
+                  {yearList.map((year, index) => (
+                    <option key={index} value={year.year}>
                       {year.year}
                     </option>
                   ))}

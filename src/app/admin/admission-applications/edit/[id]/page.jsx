@@ -202,6 +202,8 @@ const EditAdmissionPage = ({ params }) => {
 
             ],
 
+            division: "",
+
         },
 
     });
@@ -217,6 +219,8 @@ const EditAdmissionPage = ({ params }) => {
     const selectedCaste = watch("casteAsPerLC");
 
     const selectedFeesCategory = watch("feesCategory");
+
+    const selectedDivision = watch("division");
 
 
 
@@ -794,15 +798,37 @@ const EditAdmissionPage = ({ params }) => {
 
     ];
 
-
-
     // Branch options based on selected program type
-
     const filteredCourses = selectedProgramType
-
         ? courses.filter((course) => course.programType === selectedProgramType)
-
         : [];
+    
+    const selectedCourse = courses.find(c => c.name === selectedBranch);
+
+    const yearOptions = [
+        { value: "", label: selectedBranch ? "Select Year" : "First select Branch" },
+        ...(selectedCourse?.years || []).map(y => ({
+            value: y.year,
+            label: y.year.includes("Year") ? y.year : `${y.year} Year`
+        }))
+    ];
+
+    const selectedYearObj = selectedCourse?.years?.find(y => y.year === selectedYear);
+
+    const divisionOptions = [
+        { 
+            value: "", 
+            label: selectedYear 
+                ? (selectedYearObj?.divisions?.length > 0 ? "Select Division" : "No Divisions Found") 
+                : "First select Year" 
+        },
+        ...(selectedYearObj?.divisions || []).map(d => ({
+            value: d.name,
+            label: `Division ${d.name}`
+        }))
+    ];
+
+
 
     const branchOptions = [
 
@@ -1586,23 +1612,31 @@ const EditAdmissionPage = ({ params }) => {
 
                                     type="select"
 
-                                    options={[
-
-                                        { value: "", label: "Select Year" },
-
-                                        { value: "1st", label: "1st Year" },
-
-                                        { value: "2nd", label: "2nd Year" },
-
-                                        { value: "3rd", label: "3rd Year" },
-
-                                        { value: "4th", label: "4th Year" },
-
-                                    ]}
+                                    options={yearOptions}
 
                                     error={errors?.year}
 
                                     required
+
+                                    disabled={!selectedBranch}
+
+                                />
+
+                                <FormField
+
+                                    control={control}
+
+                                    name="division"
+
+                                    label="Division"
+
+                                    type="select"
+
+                                    options={divisionOptions}
+
+                                    error={errors?.division}
+
+                                    disabled={!selectedYear}
 
                                 />
 

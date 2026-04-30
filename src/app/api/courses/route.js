@@ -1,31 +1,33 @@
-// app/api/admin/courses/route.js
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Academic from "../../models/academicSchema";
 import { NextResponse } from "next/server";
 import CoursePlan from "@/app/models/coursePlanSchema"
+import ProgramType from "@/models/programType";
 
 export async function GET() {
   try {
     await connectToDatabase();
     
-    // Fetch only active academics and select department and programType
+    // Fetch all dynamic program types
+    const dbProgramTypes = await ProgramType.find({}).lean();
+    const programTypes = dbProgramTypes.map(pt => pt.name);
+
+    // Fetch only active academics and select department, programType, and years
     const academics = await Academic.find({ isActive: true })
-      .select('department programType')
-      .lean(); // Convert to plain JavaScript objects
+      .select('department programType years')
+      .lean(); 
     
-    // Create courses array with name (department) and programType from database
+    // Create courses array with name (department), programType, and years
     const courses = academics.map(academic => ({
       name: academic.department,
-      programType: academic.programType || 'UG' // Use programType from database, fallback to UG
+      programType: academic.programType,
+      years: academic.years || []
     }));
     
     // Filter out any entries with missing values
     const filteredCourses = courses.filter(
       course => course.name && course.programType
     );
-    
-    // Extract unique program types
-    const programTypes = [...new Set(filteredCourses.map(course => course.programType))];
     
     // Return the data in the requested structure
     return NextResponse.json({

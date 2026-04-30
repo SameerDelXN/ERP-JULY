@@ -42,7 +42,8 @@ export async function generateFeeReceiptPDFVercel(receiptData) {
         feesCategory: receiptData.student?.feesCategory || 'N/A',
         division: receiptData.student?.division || 'N/A'
       },
-      feeStructure: receiptData.feeStructure || null
+      feeStructure: receiptData.feeStructure || null,
+      instituteName: receiptData.instituteName || 'Dnyaneshwari Primary and Secondary School'
     };
     
     console.log('Formatted data for template:', JSON.stringify(formattedData, null, 2));
@@ -189,6 +190,14 @@ export async function generateFeeReceiptPDFVercel(receiptData) {
     // Compile template with data (for other replacements)
     const template = Handlebars.compile(html);
     html = template(formattedDataWithStatus);
+    
+    // Add A5 page size styling for Vercel/Browser printing
+    html = html.replace('</head>', `<style>
+        @page {
+            size: A5;
+            margin: 0;
+        }
+    </style></head>`);
     
     // For Vercel, we'll return HTML and let the frontend handle PDF generation
     // or use a service like Puppeteer Cloud

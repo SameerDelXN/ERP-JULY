@@ -388,6 +388,8 @@ import {
   Clipboard,
   Phone,
   Bookmark,
+  Settings,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 
@@ -399,6 +401,10 @@ const HodDashboard = () => {
   const [error, setError] = useState(null);
   const [popupData, setPopupData] = useState(null);
   const [listLoading, setListLoading] = useState(false);
+  const [academicYears, setAcademicYears] = useState([]);
+  const [newYearName, setNewYearName] = useState("");
+  const [newYearLabel, setNewYearLabel] = useState("");
+  const [showYearManager, setShowYearManager] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -431,11 +437,64 @@ const HodDashboard = () => {
     };
 
     loadData();
+    fetchAcademicYears();
 
     return () => {
       isMounted = false;
     };
   }, [user?.id]);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await fetch("/api/academic-years");
+      const data = await response.json();
+      if (data.success) {
+        setAcademicYears(data.years || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch academic years:", err);
+    }
+  };
+
+  const handleAddYear = async (e) => {
+    e.preventDefault();
+    if (!newYearName.trim()) return;
+
+    try {
+      const response = await fetch("/api/academic-years", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          name: newYearName.trim(),
+          label: newYearLabel.trim() || `${newYearName.trim()} Year`
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setNewYearName("");
+        setNewYearLabel("");
+        fetchAcademicYears();
+      }
+    } catch (err) {
+      console.error("Failed to add academic year:", err);
+    }
+  };
+
+  const handleDeleteYear = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this year?")) return;
+
+    try {
+      const response = await fetch(`/api/academic-years?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchAcademicYears();
+      }
+    } catch (err) {
+      console.error("Failed to delete academic year:", err);
+    }
+  };
 
   const fetchListData = async (type) => {
     if (!user?.id) return;
@@ -629,7 +688,66 @@ const HodDashboard = () => {
           </h2>
           <p className="text-gray-600 text-sm mt-1">Academic Year: 2023-2024</p>
         </div>
+        <button
+          onClick={() => setShowYearManager(!showYearManager)}
+          className="flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium"
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          {showYearManager ? "Close Year Manager" : "Manage Academic Years"}
+        </button>
       </div>
+
+      {showYearManager && (
+        <div className="mb-8 p-6 bg-white rounded-xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <Settings className="mr-2 h-5 w-5 text-indigo-600" />
+            Master Entry: Academic Years
+          </h2>
+          <form onSubmit={handleAddYear} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <input
+              type="text"
+              value={newYearName}
+              onChange={(e) => setNewYearName(e.target.value)}
+              placeholder="Year (e.g. 1st, 2nd)"
+              className="px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+              required
+            />
+            <input
+              type="text"
+              value={newYearLabel}
+              onChange={(e) => setNewYearLabel(e.target.value)}
+              placeholder="Label (e.g. 1st Year)"
+              className="px-4 py-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center font-medium"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Academic Year
+            </button>
+          </form>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {academicYears.map((year) => (
+              <div
+                key={year._id}
+                className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 group hover:border-indigo-200 hover:bg-indigo-50 transition-all"
+              >
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{year.name}</p>
+                  <p className="text-[10px] text-gray-500">{year.label}</p>
+                </div>
+                <button
+                  onClick={() => handleDeleteYear(year._id)}
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">

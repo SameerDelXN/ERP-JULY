@@ -1,7 +1,7 @@
 import { Menu } from "lucide-react";
 import React from "react";
 
-const Header = ({ title, onMenuClick, children }) => {
+const Header = ({ title, onMenuClick, instituteName, children }) => {
   return (
     <header className="bg-white border-b border-gray-100">
       <div className="flex items-center h-16 px-6">
@@ -21,10 +21,10 @@ const Header = ({ title, onMenuClick, children }) => {
           </div>
         </div>
 
-        {/* Center Section - School Name */}
+        {/* Center Section - Institute Name */}
         <div className="hidden lg:flex flex-1 items-center justify-center px-4">
           <h2 className="text-xl font-bold bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 bg-clip-text text-transparent tracking-tight whitespace-nowrap drop-shadow-sm font-sans">
-            Dnyaneshwari Primary and Secondary School
+            {instituteName || "Education ERP"}
           </h2>
         </div>
 

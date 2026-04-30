@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import { FeeReceipt } from "@/models/feeReceipt";
 import Student from "@/app/models/studentSchema";
 import FeeStructure from "@/app/models/feeStructureSchema";
+import SystemSetting from "@/models/systemSetting";
 import { generateFeeReceiptPDFVercel } from "@/utils/generateFeeReceiptPdfVercel";
 
 export async function POST(req) {
@@ -19,7 +20,16 @@ export async function POST(req) {
       });
     }
 
-    console.log('Generating VERCEL PDF for receipt data:', receipt);
+    // Get system settings for college name
+    const settings = await SystemSetting.findOne({});
+    const instituteName = settings?.systemConfig?.collegeName || "Dnyaneshwari School";
+
+    const receiptWithInstitute = {
+      ...receipt,
+      instituteName: instituteName
+    };
+
+    console.log('Generating VERCEL PDF for receipt data:', receiptWithInstitute);
 
     // For Vercel deployment, we have multiple options:
     // Option 1: Return HTML for client-side PDF generation
@@ -28,7 +38,7 @@ export async function POST(req) {
 
     try {
       // Try to generate HTML content
-      const pdfData = await generateFeeReceiptPDFVercel(receipt);
+      const pdfData = await generateFeeReceiptPDFVercel(receiptWithInstitute);
       
       // Return HTML content that can be converted to PDF on client side
       return new Response(JSON.stringify({ 
@@ -92,10 +102,19 @@ export async function PUT(req) {
       });
     }
 
-    console.log('Generating PDF using external service for receipt data:', receipt);
+    // Get system settings for college name
+    const settings = await SystemSetting.findOne({});
+    const instituteName = settings?.systemConfig?.collegeName || "Dnyaneshwari School";
+
+    const receiptWithInstitute = {
+      ...receipt,
+      instituteName: instituteName
+    };
+
+    console.log('Generating PDF using external service for receipt data:', receiptWithInstitute);
 
     // Generate HTML content
-    const pdfData = await generateFeeReceiptPDFVercel(receipt);
+    const pdfData = await generateFeeReceiptPDFVercel(receiptWithInstitute);
     
     // Use external PDF service (like HTMLtoPDF API)
     // This is a placeholder - you would need to integrate with a real service

@@ -1662,6 +1662,7 @@ export default function FeeStructurePage() {
   // Data States
   const [existingFeeStructures, setExistingFeeStructures] = useState([]);
   const [departmentData, setDepartmentData] = useState([]);
+  const [programTypes, setProgramTypes] = useState([]);
   const [yearList, setYearList] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({ totalCollections: 0, activeStructures: 0, totalStructureValue: 0, pendingFees: 0 });
 
@@ -1745,7 +1746,20 @@ export default function FeeStructurePage() {
   useEffect(() => {
     loadFeeStructures();
     loadDepartments();
+    loadProgramTypes();
   }, []);
+
+  const loadProgramTypes = async () => {
+    try {
+      const res = await fetch("/api/program-types");
+      const data = await res.json();
+      if (data.success) {
+        setProgramTypes(data.programTypes || []);
+      }
+    } catch (err) {
+      console.error("Error loading program types:", err);
+    }
+  };
 
   const loadFeeStructures = async () => {
     try {
@@ -2082,8 +2096,10 @@ export default function FeeStructurePage() {
     }
   };
 
-  // Unique Program Types from departments
-  const uniqueProgramTypes = [...new Set(departmentData.map(d => d.programType).filter(Boolean))];
+  // Unique Program Types from departments or master entry
+  const uniqueProgramTypes = programTypes.length > 0 
+    ? programTypes.map(pt => pt.name)
+    : [...new Set(departmentData.map(d => d.programType).filter(Boolean))];
 
   // Departments filtered by selected program type in form
   const filteredDepartmentsForForm = formData.programType
@@ -2527,9 +2543,10 @@ export default function FeeStructurePage() {
                     name="year"
                     value={formData.year}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                    disabled={!formData.departmentName}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Select Year</option>
+                    <option value="">{formData.departmentName ? "Select Year" : "Select Department first"}</option>
                     {yearList.map((y, index) => (
                       <option key={index} value={y.year}>{y.year}</option>
                     ))}
@@ -2921,9 +2938,10 @@ export default function FeeStructurePage() {
                     name="year"
                     value={formData.year}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50"
+                    disabled={!formData.departmentName}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Select Year</option>
+                    <option value="">{formData.departmentName ? "Select Year" : "Select Department first"}</option>
                     {yearList.map((y, index) => (
                       <option key={index} value={y.year}>{y.year}</option>
                     ))}

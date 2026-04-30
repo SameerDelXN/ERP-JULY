@@ -13,6 +13,8 @@ import {
   Phone,
   Mail,
   MapPin,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 
@@ -25,6 +27,7 @@ export default function AccountantStudentProfiles() {
   const [filterYear, setFilterYear] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "table"
 
   useEffect(() => {
     fetchStudents();
@@ -110,6 +113,22 @@ export default function AccountantStudentProfiles() {
             <option value="3rd Year">3rd Year</option>
             <option value="4th Year">4th Year</option>
           </select>
+          <div className="flex bg-white border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 ${viewMode === "grid" ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:bg-gray-50"}`}
+              title="Grid View"
+            >
+              <LayoutGrid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 border-l border-gray-300 ${viewMode === "table" ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:bg-gray-50"}`}
+              title="Table View"
+            >
+              <List size={20} />
+            </button>
+          </div>
           <ExportButton
             data={filteredStudents.map(s => ({
               Name: s.name,
@@ -126,76 +145,153 @@ export default function AccountantStudentProfiles() {
         </div>
       </div>
 
-      {/* Students Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredStudents.map((student) => (
-          <div
-            key={student._id}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
-                    {student.name?.charAt(0) || "S"}
+      {/* Students View */}
+      {viewMode === "grid" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStudents.map((student) => (
+            <div
+              key={student._id}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
+            >
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                      {student.name?.charAt(0) || "S"}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{student.name}</h3>
+                      <p className="text-sm text-gray-500">{student.studentId}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{student.name}</h3>
-                    <p className="text-sm text-gray-500">{student.studentId}</p>
-                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      student.feeStatus === "Paid"
+                        ? "bg-green-100 text-green-700"
+                        : student.feeStatus === "Pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {student.feeStatus || "Unknown"}
+                  </span>
                 </div>
-                <span
-                  className={`px-2 py-1 text-xs rounded-full ${
-                    student.feeStatus === "Paid"
-                      ? "bg-green-100 text-green-700"
-                      : student.feeStatus === "Pending"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {student.feeStatus || "Unknown"}
-                </span>
-              </div>
 
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                  {student.email}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                  {student.phone}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
-                  {student.department} - {student.year}
-                </div>
-                {student.outstandingAmount > 0 && (
-                  <div className="flex items-center text-sm text-red-600 font-medium">
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Outstanding: ₹{student.outstandingAmount.toLocaleString()}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                    {student.email}
                   </div>
-                )}
-              </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                    {student.phone}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
+                    {student.department} - {student.year}
+                  </div>
+                  {student.outstandingAmount > 0 && (
+                    <div className="flex items-center text-sm text-red-600 font-medium">
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Outstanding: ₹{student.outstandingAmount.toLocaleString()}
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleViewDetails(student)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
-                >
-                  <Eye size={16} />
-                  View Details
-                </button>
-                <button
-                  className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm"
-                >
-                  <Download size={16} />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleViewDetails(student)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    <Eye size={16} />
+                    View Details
+                  </button>
+                  <button
+                    className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    <Download size={16} />
+                  </button>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700">Student Name</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700">Student ID</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700">Department</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700">Year</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700">Fee Status</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700">Outstanding</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.map((student) => (
+                  <tr key={student._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs mr-3">
+                          {student.name?.charAt(0) || "S"}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{student.name}</p>
+                          <p className="text-xs text-gray-500">{student.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{student.studentId}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{student.department}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{student.year}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          student.feeStatus === "Paid"
+                            ? "bg-green-100 text-green-700"
+                            : student.feeStatus === "Pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {student.feeStatus || "Unknown"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {student.outstandingAmount > 0 ? (
+                        <span className="text-red-600 font-medium">₹{student.outstandingAmount.toLocaleString()}</span>
+                      ) : (
+                        <span className="text-gray-400">None</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleViewDetails(student)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          className="p-1.5 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                          title="Download"
+                        >
+                          <Download size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Student Details Modal */}
       {showDetailsModal && selectedStudent && (

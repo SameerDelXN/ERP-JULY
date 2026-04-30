@@ -16,8 +16,9 @@ import {
   Save,
   ChevronDown
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
@@ -39,6 +40,30 @@ export default function SettingsPage() {
     }
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/system/settings');
+        const data = await res.json();
+        if (data.success && data.settings?.systemConfig) {
+          setFormData(prev => ({
+            ...prev,
+            instituteName: data.settings.systemConfig.collegeName || '',
+            // Mapping other fields if needed, relying on defaults for now
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        toast.error('Failed to load settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -57,10 +82,29 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Save settings logic here
-    console.log('Settings saved:', formData);
+    try {
+      const res = await fetch('/api/system/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instituteName: formData.instituteName,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Settings saved successfully');
+        // If we want to reflect it immediately in Header without reload, we could trigger a context update or force reload.
+        // For now, a reload ensures all layouts get the new name.
+        window.location.reload();
+      } else {
+        toast.error(data.error || 'Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('An error occurred while saving');
+    }
   };
 
   return (

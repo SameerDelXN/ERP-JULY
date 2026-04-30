@@ -1,37 +1,66 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongoose';
-import Student from '@/app/models/studentSchema';
+import { connectToDatabase } from '@/app/lib/mongodb';
+import AcademicYear from '@/models/academicYear';
 
 export async function GET() {
   try {
     await connectToDatabase();
+    const years = await AcademicYear.find({}).sort({ order: 1, createdAt: 1 });
+    return NextResponse.json({ success: true, years });
+  } catch (error) {
+    console.error('Error fetching academic years:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
 
-    // Get unique years from student records
-    const students = await Student.find({}).select('admissionYear currentYear').lean();
-    
-    // Extract unique years
-    const uniqueYears = [...new Set(
-      students
-        .map(student => student.admissionYear || student.currentYear)
-        .filter(year => year) // Remove null/undefined
-    )];
+export async function POST(req) {
+  try {
+    await connectToDatabase();
+    const { name, label, order } = await req.json();
 
-    // Transform to expected format
-    const yearData = uniqueYears.map(year => ({
-      _id: year,
-      year: year
-    }));
+    if (!name || !name.trim()) {
+      return NextResponse.json({ success: false, error: 'Year name is required' }, { status: 400 });
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: yearData
+    const existing = await AcademicYear.findOne({ name: name.trim() });
+    if (existing) {
+      return NextResponse.json({ success: false, error: 'Academic year already exists' }, { status: 400 });
+    }
+
+    // Auto-generate label if not provided
+    const yearLabel = label || `${name.trim()} Year`;
+
+    // Auto-calculate order if not provided
+    const count = await AcademicYear.countDocuments();
+    const yearOrder = order !== undefined ? order : count + 1;
+
+    const year = await AcademicYear.create({
+      name: name.trim(),
+      label: yearLabel,
+      order: yearOrder
     });
 
+    return NextResponse.json({ success: true, year });
   } catch (error) {
-    console.error('[GET_ACADEMIC_YEARS_ERROR]', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: 'Internal Server Error' 
-    }, { status: 500 });
+    console.error('Error creating academic year:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Academic year ID is required' }, { status: 400 });
+    }
+
+    await AcademicYear.findByIdAndDelete(id);
+    return NextResponse.json({ success: true, message: 'Academic year deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting academic year:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

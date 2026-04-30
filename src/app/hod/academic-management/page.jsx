@@ -33,6 +33,7 @@ const AcademicManagement = () => {
   const [error, setError] = useState(null);
   const [teachers, setTeachers] = useState([]);
   const [department, setDepartment] = useState('');
+  const [dynamicYears, setDynamicYears] = useState([]);
 
   // Modal states
   const [showYearModal, setShowYearModal] = useState(false);
@@ -100,8 +101,21 @@ const AcademicManagement = () => {
   useEffect(() => {
     if (user) {
       fetchAcademicData();
+      fetchDynamicYears();
     }
   }, [user]);
+
+  const fetchDynamicYears = async () => {
+    try {
+      const response = await fetch("/api/academic-years");
+      const data = await response.json();
+      if (data.success) {
+        setDynamicYears(data.years || []);
+      }
+    } catch (err) {
+      console.error("Error fetching dynamic years:", err);
+    }
+  };
 
   // API Functions
   const fetchAcademicData = async () => {
@@ -1169,10 +1183,11 @@ const AcademicManagement = () => {
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select Year</option>
-              <option value="1st">1st Year</option>
-              <option value="2nd">2nd Year</option>
-              <option value="3rd">3rd Year</option>
-              <option value="4th">4th Year</option>
+              {dynamicYears.map((year) => (
+                <option key={year._id} value={year.name}>
+                  {year.label}
+                </option>
+              ))}
             </select>
           </div>
 

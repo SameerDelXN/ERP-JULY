@@ -50,7 +50,24 @@ const HodLayout = ({ children }) => {
 
   //-------------------------------------------------
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [instituteName, setInstituteName] = useState("");
   //-------------------------------------------------
+
+  // Fetch institute name
+  useEffect(() => {
+    const fetchInstituteName = async () => {
+      try {
+        const res = await fetch('/api/system/settings');
+        const data = await res.json();
+        if (data.success && data.settings?.systemConfig?.collegeName) {
+          setInstituteName(data.settings.systemConfig.collegeName);
+        }
+      } catch (err) {
+        console.error('Error fetching institute name:', err);
+      }
+    };
+    fetchInstituteName();
+  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -119,7 +136,7 @@ const HodLayout = ({ children }) => {
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Header */}
         <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 lg:ml-64 h-16 shadow-sm">
-          <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)}>
+          <Header title={getTitle()} onMenuClick={() => setSidebarOpen(true)} instituteName={instituteName}>
             {/* Notification Button */}
             <button className="relative p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200 group">
               <Bell className="w-5 h-5" />

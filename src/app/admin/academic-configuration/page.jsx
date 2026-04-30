@@ -10,6 +10,7 @@ import {
   ChevronUp,
   MoreVertical,
   Check,
+  Settings,
 } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 import toast, { Toaster } from "react-hot-toast";
@@ -31,11 +32,69 @@ export default function DepartmentManagement() {
   const [expandedDepartment, setExpandedDepartment] = useState(null);
   const [showDropdown, setShowDropdown] = useState(null);
   const [editingDepartment, setEditingDepartment] = useState(null);
+  const [dynamicProgramTypes, setDynamicProgramTypes] = useState([]);
+  const [newProgramType, setNewProgramType] = useState("");
+  const [showProgramTypeManager, setShowProgramTypeManager] = useState(false);
 
   useEffect(() => {
     fetchDepartments();
     fetchTeachers();
+    fetchProgramTypes();
   }, []);
+
+  const fetchProgramTypes = async () => {
+    try {
+      const response = await fetch("/api/program-types");
+      const data = await response.json();
+      if (data.success) {
+        setDynamicProgramTypes(data.programTypes || []);
+      }
+    } catch (err) {
+      console.error("Error fetching program types:", err);
+    }
+  };
+
+  const handleAddProgramType = async (e) => {
+    e.preventDefault();
+    if (!newProgramType.trim()) return;
+
+    try {
+      const response = await fetch("/api/program-types", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newProgramType.trim() }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Program type added");
+        setNewProgramType("");
+        fetchProgramTypes();
+      } else {
+        toast.error(data.error);
+      }
+    } catch (err) {
+      toast.error("Failed to add program type");
+    }
+  };
+
+  const handleDeleteProgramType = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this program type?")) return;
+
+    try {
+      const response = await fetch(`/api/program-types?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Program type deleted");
+        fetchProgramTypes();
+      } else {
+        toast.error(data.error);
+      }
+    } catch (err) {
+      toast.error("Failed to delete program type");
+    }
+  };
 
   const fetchDepartments = async () => {
     try {
@@ -190,7 +249,7 @@ export default function DepartmentManagement() {
     setShowDropdown(null);
   };
 
-  const programTypes = ["Diploma", "UG", "PG"];
+  // const programTypes = ["Diploma", "UG", "PG"];
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -206,6 +265,13 @@ export default function DepartmentManagement() {
           Department Management
         </h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowProgramTypeManager(!showProgramTypeManager)}
+            className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Manage Program Types
+          </button>
           <ExportButton
             data={departments.map(d => ({
               "Department": d.department,
@@ -225,6 +291,47 @@ export default function DepartmentManagement() {
           </button>
         </div>
       </div>
+
+      {showProgramTypeManager && (
+        <div className="mb-8 p-6 bg-purple-50 rounded-xl border border-purple-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          <h2 className="text-xl font-bold text-purple-900 mb-4 flex items-center">
+            <Settings className="mr-2 h-5 w-5" />
+            Master Entry: Program Types
+          </h2>
+          <form onSubmit={handleAddProgramType} className="flex gap-2 mb-6">
+            <input
+              type="text"
+              value={newProgramType}
+              onChange={(e) => setNewProgramType(e.target.value)}
+              placeholder="Enter program type (e.g. Diploma, UG, PG)"
+              className="flex-1 px-4 py-2 rounded-lg border border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Type
+            </button>
+          </form>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {dynamicProgramTypes.map((type) => (
+              <div
+                key={type._id}
+                className="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-100 shadow-sm group hover:border-purple-300 transition-all"
+              >
+                <span className="text-sm font-medium text-gray-700">{type.name}</span>
+                <button
+                  onClick={() => handleDeleteProgramType(type._id)}
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -443,27 +550,31 @@ export default function DepartmentManagement() {
                   Program Type <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {programTypes.map((type) => (
-                    <div key={type} className="flex items-center">
-                      <input
-                        id={`program-${type}`}
-                        type="radio"
-                        name="programType"
-                        checked={formData.programType === type}
-                        onChange={() =>
-                          setFormData({ ...formData, programType: type })
-                        }
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                        required
-                      />
-                      <label
-                        htmlFor={`program-${type}`}
-                        className="ml-2 block text-sm text-gray-700"
-                      >
-                        {type}
-                      </label>
-                    </div>
-                  ))}
+                  {dynamicProgramTypes.length === 0 ? (
+                    <p className="text-xs text-amber-600 col-span-3">Please add program types in the manager above first.</p>
+                  ) : (
+                    dynamicProgramTypes.map((type) => (
+                      <div key={type._id} className="flex items-center">
+                        <input
+                          id={`program-${type.name}`}
+                          type="radio"
+                          name="programType"
+                          checked={formData.programType === type.name}
+                          onChange={() =>
+                            setFormData({ ...formData, programType: type.name })
+                          }
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                          required
+                        />
+                        <label
+                          htmlFor={`program-${type.name}`}
+                          className="ml-2 block text-sm text-gray-700"
+                        >
+                          {type.name}
+                        </label>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

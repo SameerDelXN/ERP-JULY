@@ -2210,8 +2210,6 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
   const [currentFeeStructure, setCurrentFeeStructure] = useState(null);
 
-  const [divisions, setDivisions] = useState([]);
-
   // Watch fields to trigger fee structure matching and caste filtering
 
   const selectedProgramType = watch("programType");
@@ -2345,33 +2343,6 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
     }
 
   }, [selectedCaste, castes]);
-
-  // Fetch divisions when department, year, and program type are selected
-  useEffect(() => {
-    if (selectedBranch && selectedYear && selectedProgramType) {
-      fetchDivisions(selectedBranch, selectedYear, selectedProgramType);
-    } else {
-      setDivisions([]);
-    }
-  }, [selectedBranch, selectedYear, selectedProgramType]);
-
-  const fetchDivisions = async (department, year, programType) => {
-    try {
-      const response = await fetch(`/api/divisions?department=${encodeURIComponent(department)}&year=${encodeURIComponent(year)}&programType=${encodeURIComponent(programType)}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setDivisions(data.divisions.map(division => ({
-            value: division.value || division,
-            label: division.label || division
-          })));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching divisions:', error);
-      setDivisions([]);
-    }
-  };
 
 
 
@@ -2654,19 +2625,14 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
 
   // Year options
+  const selectedCourse = coursesData.find(c => c.name === selectedBranch);
 
   const yearOptions = [
-
-    { value: "", label: "Select Year" },
-
-    { value: "1st", label: "1st Year" },
-
-    { value: "2nd", label: "2nd Year" },
-
-    { value: "3rd", label: "3rd Year" },
-
-    { value: "4th", label: "4th Year" },
-
+    { value: "", label: selectedBranch ? "Select Year" : "First select Branch" },
+    ...(selectedCourse?.years || []).map(y => ({
+      value: y.year,
+      label: y.year.includes("Year") ? y.year : `${y.year} Year`
+    }))
   ];
 
 
@@ -2794,13 +2760,19 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
   ];
 
   // Division options for select
+  const selectedYearObj = selectedCourse?.years?.find(y => y.year === selectedYear);
 
   const divisionOptions = [
-
-    { value: "", label: selectedBranch && selectedYear && selectedProgramType ? "Select Division" : "First select Program Type, Branch and Year" },
-
-    ...divisions,
-
+    { 
+      value: "", 
+      label: selectedYear 
+        ? (selectedYearObj?.divisions?.length > 0 ? "Select Division" : "No Divisions Found") 
+        : "First select Year" 
+    },
+    ...(selectedYearObj?.divisions || []).map(d => ({
+      value: d.name,
+      label: `Division ${d.name}`
+    }))
   ];
 
 

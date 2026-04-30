@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import { FeeReceipt } from "@/models/feeReceipt";
 import Student from "@/app/models/studentSchema";
 import FeeStructure from "@/app/models/feeStructureSchema";
+import SystemSetting from "@/models/systemSetting";
 import { generateFeeReceiptPDF } from "@/utils/generateFeeReceiptPdf";
 import { generateFeeReceiptPDFDual } from "@/utils/generateFeeReceiptPdfDual";
 
@@ -18,6 +19,10 @@ export async function GET(req) {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Get system settings for college name
+    const settings = await SystemSetting.findOne({});
+    const instituteName = settings?.systemConfig?.collegeName || "Dnyaneshwari School";
 
     // Get receipt with student data
     const receipt = await FeeReceipt.findById(receiptId).populate('student');
@@ -48,7 +53,8 @@ export async function GET(req) {
     // Create complete receipt data with fee structure
     const completeReceiptData = {
       ...receipt.toObject(),
-      feeStructure: feeStructure
+      feeStructure: feeStructure,
+      instituteName: instituteName
     };
 
     console.log('Complete receipt data for PDF:', completeReceiptData);
@@ -93,6 +99,15 @@ export async function POST(req) {
       });
     }
 
+    // Get system settings for college name
+    const settings = await SystemSetting.findOne({});
+    const instituteName = settings?.systemConfig?.collegeName || "Dnyaneshwari School";
+
+    const receiptWithInstitute = {
+      ...receipt,
+      instituteName: instituteName
+    };
+
     console.log('Generating PDF for receipt data:', receipt);
 
     // Detect if we're on Vercel
@@ -105,7 +120,7 @@ export async function POST(req) {
     if (isVercel) {
       // Use Vercel-compatible HTML generation
       try {
-        const pdfData = await generateFeeReceiptPDFVercel(receipt);
+        const pdfData = await generateFeeReceiptPDFVercel(receiptWithInstitute);
         
         return new Response(JSON.stringify({ 
           success: true,
@@ -133,7 +148,7 @@ export async function POST(req) {
     } else {
       // Use server-side Puppeteer generation (for local development)
       try {
-        const pdfBuffer = await generateFeeReceiptPDFDual(receipt);
+        const pdfBuffer = await generateFeeReceiptPDFDual(receiptWithInstitute);
 
         return new Response(pdfBuffer, {
           status: 200,
@@ -150,7 +165,7 @@ export async function POST(req) {
         console.error('Puppeteer PDF generation failed:', puppeteerError);
         // Fallback to Vercel method
         try {
-          const pdfData = await generateFeeReceiptPDFVercel(receipt);
+          const pdfData = await generateFeeReceiptPDFVercel(receiptWithInstitute);
           
           return new Response(JSON.stringify({ 
             success: true,

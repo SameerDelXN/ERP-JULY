@@ -34,14 +34,27 @@ export default function EnquiryForm() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch("/api/courses");
-      if (!response.ok) throw new Error("Failed to fetch departments");
-      const departments = await response.json();
+      setLoadingCourses(true);
+      
+      // Fetch dynamic program types
+      const ptResponse = await fetch("/api/program-types");
+      const ptData = await ptResponse.json();
+      if (ptData.success) {
+        setProgramTypeOptions(ptData.programTypes.map(pt => pt.name));
+      }
 
-      console.log(departments);
-
-      setCourseOptions(departments.courses);
-      setProgramTypeOptions(departments.programTypes);
+      // Fetch dynamic departments
+      const deptResponse = await fetch("/api/department");
+      const deptData = await deptResponse.json();
+      
+      if (deptData.departments) {
+        // Map departments to the format expected by the form
+        const mappedCourses = deptData.departments.map(dept => ({
+          name: dept.department,
+          programType: dept.programType
+        }));
+        setCourseOptions(mappedCourses);
+      }
     } catch (error) {
       console.error("Error fetching departments:", error);
     } finally {

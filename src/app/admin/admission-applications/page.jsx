@@ -752,6 +752,20 @@ const AdmissionDetailsModal = ({ admissionId, admission, onClose }) => {
 
             />
 
+            <DetailCard
+
+              icon={<Columns className="w-5 h-5" />}
+
+              label="Division"
+
+              value={application.division || "Not Assigned"}
+
+              bgColor="bg-indigo-50"
+
+              iconColor="text-indigo-600"
+
+            />
+
           </div>
 
 

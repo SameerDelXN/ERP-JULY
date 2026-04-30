@@ -43,7 +43,8 @@ export async function generateFeeReceiptPDF(receiptData) {
         feesCategory: receiptData.student?.feesCategory || 'N/A',
         division: receiptData.student?.division || 'N/A'
       },
-      feeStructure: receiptData.feeStructure || null
+      feeStructure: receiptData.feeStructure || null,
+      instituteName: receiptData.instituteName || 'Dnyaneshwari Primary and Secondary School'
     };
     
     console.log('Formatted data for template:', JSON.stringify(formattedData, null, 2));
@@ -218,15 +219,15 @@ export async function generateFeeReceiptPDF(receiptData) {
     // Set content and wait for it to load
     await page.setContent(html, { waitUntil: 'networkidle0' });
     
-    // Generate PDF
+    // Generate PDF with A5 format
     const pdf = await page.pdf({
-      format: 'A4',
+      format: 'A5',
       printBackground: true,
       margin: {
-        top: '12mm',
-        right: '12mm',
-        bottom: '12mm',
-        left: '12mm'
+        top: '8mm',
+        right: '8mm',
+        bottom: '8mm',
+        left: '8mm'
       },
       preferCSSPageSize: true
     });
