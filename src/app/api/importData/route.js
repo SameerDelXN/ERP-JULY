@@ -170,7 +170,11 @@ export async function POST(request) {
           nationality: row.Nationality?.toString().trim() || "Indian",
           familyIncome: row.FamilyIncome?.toString().trim() || "",
           admissionYear: row.AdmissionYear?.toString().trim() || new Date().getFullYear().toString(),
-          dateOfBirth: row.DateofBirth ? new Date(row.DateofBirth) : null,
+          quota: row.Quota?.toString().trim() || "",
+          motherMobileNumber: row.MotherMobileNumber?.toString().trim() || "",
+          religionAsPerLC: row.ReligionAsPerLC?.toString().trim() || "",
+          isForeignNational: row.IsForeignNational === "Yes" || row.IsForeignNational === true,
+          dateOfBirth: row.DateOfBirth || row.DateofBirth ? new Date(row.DateOfBirth || row.DateofBirth) : null,
           status: "inProcess",
           counsellorId: counsellorId,
         };

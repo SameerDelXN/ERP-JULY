@@ -208,6 +208,12 @@ export async function POST(req) {
     await connectToDatabase();
 
     const body = await req.json();
+    console.log("📩 ADMISSION API POST RECEIVED:", {
+      fullName: body.fullName,
+      feesCategory: body.feesCategory,
+      totalFees: body.totalFees,
+      numberOfInstallments: body.numberOfInstallments
+    });
 
     // Destructure all possible fields from the request body
     const {
@@ -250,7 +256,8 @@ export async function POST(req) {
       documents,
       status,
       totalFees,
-      assignedStaff // Add this
+      assignedStaff,
+      numberOfInstallments
     } = body;
 
     // ... (validators)
@@ -296,6 +303,7 @@ export async function POST(req) {
       address,
       documents,
       status: status || "inProcess",
+      numberOfInstallments,
     });
 
     await newAdmission.save();
@@ -410,7 +418,7 @@ export async function PUT(req) {
       'domicile', 'nationality', 'religionAsPerLC', 'isForeignNational',
       'dateOfBirth', 'motherName', 'familyIncome', 'studentWhatsappNumber',
       'fatherGuardianWhatsappNumber', 'motherMobileNumber', 'address',
-      'documents'
+      'documents', 'numberOfInstallments'
     ];
     
     optionalFields.forEach(field => {

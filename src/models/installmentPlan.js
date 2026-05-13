@@ -14,6 +14,11 @@ const installmentPlanSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  numberOfInstallments: {
+    type: Number,
+    required: true,
+    default: 1
+  },
   createdAt: {
     type: Date,
     default: Date.now

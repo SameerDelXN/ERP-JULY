@@ -23,23 +23,70 @@ export async function GET(req) {
       }, { status: 400 });
     }
     
-    // If branch, programType, and year are provided (for enquiries)
-    if (branch && programType && year) {
-      console.log('Searching fee structure for enquiry:', { branch, programType, year });
+    // If branch and programType are provided (year is optional)
+    if (branch && programType) {
+      const caste = searchParams.get('caste');
+      const scholarshipParticular = searchParams.get('scholarshipParticular');
       
-      // Find fee structure for this enquiry
-      let feeStructure = await FeeStructure.findOne({
-        programType: programType,
-        departmentName: branch,
-        year: year,
-        category: 'general'
-      });
+      console.log('Searching fee structure with params:', { branch, programType, year, caste, scholarshipParticular });
+      
+      // Build query with case-insensitive matching and escaping special characters
+      const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const caseInsensitive = (val) => val ? { $regex: new RegExp(`^${escapeRegExp(val.trim())}$`, 'i') } : val;
 
-      // If not found, try any matching record
+      let query = {
+        programType: caseInsensitive(programType),
+        departmentName: caseInsensitive(branch)
+      };
+
+      if (year) {
+        query.year = caseInsensitive(year);
+      }
+
+      // If scholarshipParticular is provided, try to match it
+      if (scholarshipParticular) {
+        query.scholarshipParticular = caseInsensitive(scholarshipParticular);
+      } else {
+        query.category = 'regular';
+      }
+
+      // If caste is provided, try to match it
+      if (caste) {
+        query.caste = caseInsensitive(caste);
+      }
+
+      let feeStructure = await FeeStructure.findOne(query);
+
+      // Fallback 1: Try without caste if provided
+      if (!feeStructure && caste) {
+        delete query.caste;
+        feeStructure = await FeeStructure.findOne(query);
+      }
+
+      // Fallback 2: Try with category 'general' if still not found
       if (!feeStructure) {
         feeStructure = await FeeStructure.findOne({
-          programType: programType,
-          departmentName: branch
+          programType: caseInsensitive(programType),
+          departmentName: caseInsensitive(branch),
+          year: year ? caseInsensitive(year) : { $exists: true },
+          category: 'regular'
+        });
+      }
+
+      // Fallback 2.5: Try with any year if specific year not found
+      if (!feeStructure && year) {
+        feeStructure = await FeeStructure.findOne({
+          programType: caseInsensitive(programType),
+          departmentName: caseInsensitive(branch),
+          category: 'regular'
+        });
+      }
+
+      // Fallback 3: Try any matching record for branch/program
+      if (!feeStructure) {
+        feeStructure = await FeeStructure.findOne({
+          programType: caseInsensitive(programType),
+          departmentName: caseInsensitive(branch)
         });
       }
 
@@ -47,7 +94,7 @@ export async function GET(req) {
         console.log('No fee structure found for:', { branch, programType, year });
         return NextResponse.json({
           success: false,
-          error: 'Fee structure not found for this enquiry'
+          error: 'Fee structure not found'
         }, { status: 404 });
       }
 

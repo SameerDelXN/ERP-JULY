@@ -33,7 +33,7 @@ const feeStructureSchema = new mongoose.Schema(
     },
     scholarshipParticular: {
       type: String,
-      enum: ["none", "merit", "need", "government", "institutional", "sports", "minority"],
+      enum: ["none", "merit", "need", "government", "institutional", "sports", "minority", "installment"],
       default: "none",
     },
     feesFromStudent: [

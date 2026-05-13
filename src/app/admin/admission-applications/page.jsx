@@ -1657,57 +1657,12 @@ const AdmissionApplications = () => {
       // Define required columns (match your backend expectations)
 
       const requiredColumns = [
-
         "DTEApplicationNumber",
-
-        "FirstName", 
-
+        "FirstName",
         "LastName",
-
-        "Gender", 
-
+        "Gender",
         "Email",
-
-        "StudentWhatsappNo",
-
-        "AdmissionYear",
-
-        "ProgramType",
-
-        "Year", 
-
-        "Branch",
-
-        "Round",
-
-        "Quota",
-
-        "SeatType",
-
-        "AdmissionCategoryDTE",
-
-        "CasteAsPerLC",
-
-        "Domicile",
-
-        "Nationality",
-
-        "ReligionAsPerLC",
-
-        "IsForeignNational",
-
-        "DateOfBirth",
-
-        "MotherName",
-
-        "FamilyIncome",
-
-        "FatherGuardianWhatsappNo",
-
-        "MotherMobileNumber",
-
-        "Address"
-
+        "StudentWhatsappNo"
       ];
 
 

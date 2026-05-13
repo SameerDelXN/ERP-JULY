@@ -4,8 +4,9 @@ import { connectToDatabase } from '@/lib/mongoose';
 import Student from '@/models/student';
 import {FeeStructure} from '@/models/feeStructure';
 import InstallmentPlan from '@/models/installmentPlan';
+import Admission from '@/app/models/admissionSchema';
 
-export async function POST(req, context) {
+export async function POST(req, { params }) {
   console.log("🚀 POST /api/students/[id]/fee/installments - Start");
 
   await connectToDatabase();
@@ -18,37 +19,45 @@ export async function POST(req, context) {
       return NextResponse.json({ success: false, error: 'Invalid student ID' }, { status: 400 });
     }
 
-    const student = await Student.findById(studentId);
+    let student = await Student.findById(studentId);
+    
     if (!student) {
-      return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+      console.log("🔍 Checking Admission collection for identifier in POST:", studentId);
+      student = await Admission.findById(studentId);
+    }
+
+    if (!student) {
+      return NextResponse.json({ success: false, error: 'Student/Admission not found' }, { status: 404 });
     }
 
     console.log("📄 Student document:", student);
 
-    const { course, category, class: studentClass, department } = student;
+    // Map fields correctly based on whether it's a Student or Admission document
+    const programType = student.programType;
+    const departmentName = student.departmentName || student.branch;
+    const year = student.year || student.currentYear;
+    const category = student.feesCategory || student.category || "regular";
+    const caste = (student.casteAsPerLC || student.caste || "general").toLowerCase();
 
     const feeStructureQuery = {
-      course,
+      programType,
+      departmentName,
+      year,
       category,
-      class: studentClass,
-      department,
+      caste: ["general", "obc", "sc", "st", "ews"].includes(caste) ? caste : "general"
     };
 
-    console.log("🔍 Searching FeeStructure for:", feeStructureQuery);
+    const body = await req.json();
+    let { installments, totalFee: bodyTotalFee, numberOfInstallments } = body;
 
-    const feeStructure = await FeeStructure.findOne(feeStructureQuery); // ✅ FIXED
-
-    if (!feeStructure) {
-      return NextResponse.json({ success: false, error: 'Fee structure not found' }, { status: 404 });
+    // Prioritize fees in this order: Request Body > Student's saved totalFees
+    const totalFee = bodyTotalFee || student.totalFees || 0;
+    
+    if (!totalFee || totalFee === 0) {
+      return NextResponse.json({ success: false, error: 'Total fees not found. Please enter fees in the admission form first.' }, { status: 400 });
     }
 
-    console.log("📦 FeeStructure found:", feeStructure);
-
-    const totalFee = feeStructure.totalFee;
-    console.log("💰 totalFee from FeeStructure:", totalFee);
-
-    const body = await req.json();
-    let { installments } = body;
+    console.log("💰 Final totalFee to be used:", totalFee);
 
     console.log("📥 Received installments:", installments);
 
@@ -71,6 +80,7 @@ export async function POST(req, context) {
       studentId,
       installments,
       totalFee,
+      numberOfInstallments: numberOfInstallments || installments.length,
     });
 
     console.log("🆕 Created InstallmentPlan:", installmentPlan);
@@ -160,6 +170,12 @@ export async function GET(request, { params }) {
     // 2️⃣ If not found or invalid ObjectId, try to find by string studentId
     if (!student) {
       student = await Student.findOne({ studentId: inputId });
+    }
+
+    // 2.1️⃣ If still not found, check Admission collection
+    if (!student && mongoose.Types.ObjectId.isValid(inputId)) {
+      console.log("🔍 Checking Admission collection for identifier:", inputId);
+      student = await Admission.findById(inputId);
     }
 
     // 3️⃣ Handle case where student isn't found

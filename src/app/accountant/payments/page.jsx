@@ -13,7 +13,10 @@ import {
   BookOpen,
   Users,
   Calendar,
-  DollarSign
+  DollarSign,
+  Plus,
+  Trash2,
+  ListChecks
 } from "lucide-react";
 
 export default function PaymentPage() {
@@ -33,6 +36,11 @@ export default function PaymentPage() {
   const [paymentAllocation, setPaymentAllocation] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [installmentPlan, setInstallmentPlan] = useState(null);
+  const [isInstallmentLoading, setIsInstallmentLoading] = useState(false);
+  const [showDefineInstallment, setShowDefineInstallment] = useState(false);
+  const [newInstallments, setNewInstallments] = useState([""]);
+  const [feesCollectionModule, setFeesCollectionModule] = useState("");
 
   // Component-wise payments tracking
   const [componentPayments, setComponentPayments] = useState({});
@@ -132,7 +140,14 @@ export default function PaymentPage() {
     try {
       setIsLoading(true);
       console.log('Fetching fee structure for admission:', admission._id);
-      const response = await fetch(`/api/fee/feestructure?branch=${admission.branch}&programType=${admission.programType}&year=${admission.year}`);
+      const query = new URLSearchParams({
+        branch: admission.branch || "",
+        programType: admission.programType || "",
+        year: admission.year || "",
+        caste: admission.casteAsPerLC || admission.caste || "",
+        scholarshipParticular: admission.feesCategory || ""
+      });
+      const response = await fetch(`/api/fee/feestructure?${query.toString()}`);
       const data = await response.json();
       console.log('Fee structure response:', data);
       if (data.success && data.feeStructure) {
@@ -173,12 +188,124 @@ export default function PaymentPage() {
     }
   };
 
+  const fetchInstallmentPlan = async (admission) => {
+    try {
+      setIsInstallmentLoading(true);
+      console.log('Fetching installment plan for admission:', admission._id);
+      const response = await fetch(`/api/students/${admission._id}/fee/installments`);
+      const data = await response.json();
+      if (data.success && data.data && data.data.installments) {
+        setInstallmentPlan(data.data);
+        console.log('Installment plan loaded:', data.data);
+      } else {
+        setInstallmentPlan(null);
+        console.log('No installment plan found');
+      }
+    } catch (error) {
+      console.error("Error fetching installment plan:", error);
+      setInstallmentPlan(null);
+    } finally {
+      setIsInstallmentLoading(false);
+    }
+  };
+
+  const handleDefineInstallmentPlan = async () => {
+    if (!selectedAdmission || newInstallments.some(amt => !amt || isNaN(parseFloat(amt)))) {
+      alert("Please enter valid amounts for all installments");
+      return;
+    }
+
+    const amounts = newInstallments.map(amt => parseFloat(amt));
+    const totalDefined = amounts.reduce((sum, val) => sum + val, 0);
+
+    if (totalDefined > admissionFeeStructure?.totalFee) {
+      alert(`Total installments (₹${totalDefined}) exceed total fees (₹${admissionFeeStructure.totalFee})`);
+      return;
+    }
+
+    try {
+      setIsInstallmentLoading(true);
+      const response = await fetch(`/api/students/${selectedAdmission._id}/fee/installments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          installments: amounts,
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setInstallmentPlan(data.data);
+        setShowDefineInstallment(false);
+        setNewInstallments([""]);
+      } else {
+        alert(data.error || "Failed to save installment plan");
+      }
+    } catch (error) {
+      console.error("Error saving installment plan:", error);
+      alert("An error occurred while saving the plan");
+    } finally {
+      setIsInstallmentLoading(false);
+    }
+  };
+
+  const handleModuleChange = async (val) => {
+    setFeesCollectionModule(val);
+    if (val !== "Pay full" && admissionFeeStructure) {
+      const total = parseFloat(admissionFeeStructure.totalFees || admissionFeeStructure.totalFee || 0);
+      if (total <= 0) return;
+
+      const half = Math.floor(total / 2);
+      const installments = [half, total - half];
+
+      try {
+        setIsInstallmentLoading(true);
+        const response = await fetch(`/api/students/${selectedAdmission._id}/fee/installments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            installments: installments,
+            totalFee: total,
+            numberOfInstallments: 2
+          })
+        });
+        const data = await response.json();
+        if (data.success) {
+          setInstallmentPlan(data.data);
+        }
+      } catch (error) {
+        console.error("Error creating plan from module:", error);
+      } finally {
+        setIsInstallmentLoading(false);
+      }
+    }
+  };
+
   const handleAdmissionSelect = (admission) => {
     setSelectedAdmission(admission);
     setSearchTerm(admission.fullName || admission.name);
     setAdmissions([]);
     fetchAdmissionFeeStructure(admission);
     fetchPaymentHistory(admission);
+    fetchInstallmentPlan(admission);
+
+    // Set default module based on admission data
+    if (admission.feesCollectionModule) {
+      setFeesCollectionModule(admission.feesCollectionModule);
+      // alert(`Fees collection module already set by staff: ${admission.feesCollectionModule}`);
+      // Using a small delay to ensure UI is ready
+      setTimeout(() => {
+        alert(`Note: Fees collection module was already set by staff as "${admission.feesCollectionModule}"`);
+      }, 500);
+    } else {
+      const isCAP = admission.admissionCategoryDTE === "CAP";
+      const hasInst = admission.numberOfInstallments === 2;
+      if (hasInst) {
+        setFeesCollectionModule(isCAP ? "pay installment 2" : "pay installment 1");
+      } else {
+        setFeesCollectionModule("Pay full");
+      }
+    }
   };
 
   const handleComponentPayment = (componentName, amount) => {
@@ -207,6 +334,18 @@ export default function PaymentPage() {
     if (!amountPaid || amountPaid <= 0) {
       alert('Please enter a valid payment amount');
       return;
+    }
+
+    // New validation: If "pay installment 2" is selected, force first installment amount
+    if (feesCollectionModule === "pay installment 2" && installmentPlan?.installments?.length > 0) {
+      const firstInstallment = installmentPlan.installments[0];
+      // Check if this is likely the first payment (no history or history sum < first installment)
+      const totalPaidPreviously = paymentHistory.reduce((sum, r) => sum + (r.totalPaid || 0), 0);
+      
+      if (totalPaidPreviously < firstInstallment && Math.abs(amountPaid - firstInstallment) > 1) {
+        alert(`You must enter the first installment amount exactly: ₹${firstInstallment}`);
+        return;
+      }
     }
 
     try {
@@ -327,8 +466,30 @@ export default function PaymentPage() {
                 {selectedAdmission.fullName || selectedAdmission.name}
               </div>
               <div className="text-xs text-blue-600">
-                DTE: {selectedAdmission.dteApplicationNumber} • {selectedAdmission.branch} • {selectedAdmission.programType}
+                DTE: {selectedAdmission.dteApplicationNumber || 'N/A'} • {selectedAdmission.branch} • {selectedAdmission.programType} • {selectedAdmission.year || 'No Year Set'}
               </div>
+            </div>
+          )}
+
+          {/* Fees Collection Module Selection */}
+          {selectedAdmission && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fees Collection Module
+              </label>
+              <select
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={feesCollectionModule}
+                onChange={(e) => handleModuleChange(e.target.value)}
+              >
+                <option value="Pay full">Pay full</option>
+                {/* Always provide installment option unless it is explicitly TFWS */}
+                {selectedAdmission.feesCategory !== "TFWS" && (
+                    <>
+                      <option value="pay installment 2">pay installment 2</option>
+                    </>
+                )}
+              </select>
             </div>
           )}
 
@@ -361,8 +522,39 @@ export default function PaymentPage() {
             </div>
           )}
 
-          {/* Payment Amount */}
-          {admissionFeeStructure && (
+          {/* Installment Plan Display */}
+          {selectedAdmission && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <ListChecks size={16} className="inline mr-1" />
+                Installment Plan
+              </label>
+
+              {isInstallmentLoading ? (
+                <div className="text-xs text-gray-500 animate-pulse py-2">Checking for installments...</div>
+              ) : installmentPlan && installmentPlan.installments && installmentPlan.installments.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {installmentPlan.installments.map((amount, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handlePaymentAmountChange(amount.toString())}
+                      className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-left hover:bg-blue-100 transition-colors group"
+                    >
+                      <div className="text-xs text-blue-600 font-medium">Installment {index + 1}</div>
+                      <div className="text-sm font-bold text-blue-800 group-hover:text-blue-900">₹{amount}</div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center">
+                  <p className="text-xs text-gray-500 italic">No installment plan generated. Use the "Fees Collection Module" dropdown above to set the plan.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Payment Amount (Now called Payment Received) */}
+          {selectedAdmission && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <DollarSign size={16} className="inline mr-1" />
@@ -370,16 +562,23 @@ export default function PaymentPage() {
               </label>
               <input
                 type="number"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter amount received"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-lg"
+                placeholder="Enter payment amount..."
                 value={paymentData.amountPaid}
                 onChange={(e) => handlePaymentAmountChange(e.target.value)}
                 min="0"
                 step="0.01"
               />
-              <div className="text-xs text-gray-500 mt-1">
-                Total Fees: ₹{admissionFeeStructure.totalFees || 0}
-              </div>
+              {feesCollectionModule === "pay installment 2" && installmentPlan?.installments?.[0] && (
+                <div className="text-xs text-blue-600 mt-1 font-medium italic">
+                  * First installment required: ₹{installmentPlan.installments[0]}
+                </div>
+              )}
+              {admissionFeeStructure && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Total Fees: ₹{admissionFeeStructure.totalFees || 0}
+                </div>
+              )}
             </div>
           )}
 

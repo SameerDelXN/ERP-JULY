@@ -423,6 +423,7 @@ const admissionSchema = new mongoose.Schema(
     familyIncome: { type: Number, default: 0 },
 
     totalFees: { type: Number, default: 0 },
+    numberOfInstallments: { type: String, default: "" },
 
 
 

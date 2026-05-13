@@ -1389,8 +1389,8 @@ const FormField = ({
             return (
 
               <select
-
                 {...field}
+                value={field.value ?? ""}
 
                 className={`w-full px-3 py-2 border ${
 
@@ -2222,6 +2222,8 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
   const selectedFeesCategory = watch("feesCategory");
 
+  const selectedAdmissionCategory = watch("admissionCategoryDTE");
+
 
 
   // Destructure trigger from useForm
@@ -2399,15 +2401,34 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
       
 
       if (matchingFeeStructures.length === 0) {
+        // Try fallback: match without caste (use general fee structure for any caste)
+        const fallbackStructures = feeStructures.filter((fee) => {
+          const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+          const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+          const feeYear = normalizeYear(fee.year);
+          const selYear = normalizeYear(selectedYear);
+          const matchYear = feeYear === selYear;
+          return matchProgram && matchBranch && matchYear;
+        });
 
-        // Only clear if the user is actively selecting. If loading existing data, we might want to be careful.
+        if (fallbackStructures.length === 0) {
+          // No fee structure at all — preserve installment if selected
+          const currentCat = watch("feesCategory");
+          if (currentCat !== "" && currentCat !== "installment") {
+            setValue("feesCategory", "");
+          }
+          return;
+        }
 
-        // But if no structure exists, we probably should clear it to avoid invalid state.
-
-        if (watch("feesCategory") !== "") setValue("feesCategory", "");
-
+        // Use fallback structures — student caste not in DB, use general
+        const scholarshipOptions = [...new Set(fallbackStructures.map((fee) => fee.scholarshipParticular))];
+        const currentFeesCategory = watch("feesCategory");
+        if (currentFeesCategory && currentFeesCategory !== "installment" && !scholarshipOptions.includes(currentFeesCategory)) {
+          setValue("feesCategory", "");
+        } else if (scholarshipOptions.length === 1 && !currentFeesCategory) {
+          setValue("feesCategory", scholarshipOptions[0]);
+        }
         return;
-
       }
 
       
@@ -2439,27 +2460,14 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
       
 
        if (
-
           currentFeesCategory &&
-
+          currentFeesCategory !== "installment" &&
           !scholarshipOptions.includes(currentFeesCategory)
-
         ) {
-
-          // Verify if it's a case of "none" mismatch or similar
-
-          // If current is "Active Fee Structure" user-side but "none" in data... actually the value is "none".
-
            setValue("feesCategory", "");
-
         } else if (scholarshipOptions.length === 1 && !currentFeesCategory) {
-
-           // Auto-select if only 1 option available? 
-
-           // Better UX might be to select it
-
+           // Auto-select if only 1 option available
            setValue("feesCategory", scholarshipOptions[0]);
-
         }
 
       
@@ -2483,9 +2491,8 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
     feeStructures,
 
     setValue,
-
     watch,
-
+    watch("quota"),
   ]);
 
 
@@ -2508,28 +2515,41 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
     ) {
 
-        const found = feeStructures.find(
+        const selectedQuota = watch("quota")?.toLowerCase() || "regular";
+        const categoryToMatch = selectedQuota.includes("management") ? "management" : "regular";
 
-            (fee) => {
+        // Try caste-specific match first, then fall back to general
+        let found = feeStructures.find((fee) => {
+          const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+          const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+          const matchYear = !selectedYear || !fee.year || normalizeYear(fee.year) === normalizeYear(selectedYear);
+          const feeCaste = fee.caste?.trim().toLowerCase() || "general";
+          const selCaste = selectedCaste?.trim().toLowerCase() || "general";
+          const matchCaste = feeCaste === selCaste;
+          const matchCategoryQuota = (fee.category || "regular").toLowerCase() === categoryToMatch;
+          let matchCategory = fee.scholarshipParticular === selectedFeesCategory;
+          if (!matchCategory && selectedFeesCategory === "installment") {
+            matchCategory = fee.scholarshipParticular === "none";
+          }
+          return matchProgram && matchBranch && matchYear && matchCaste && matchCategory && matchCategoryQuota;
+        });
 
-              const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
-
-              const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
-
-              const matchYear = normalizeYear(fee.year) === normalizeYear(selectedYear);
-
-              const matchCategory = fee.scholarshipParticular === selectedFeesCategory;
-
-              
-
-              // Only match on 3 factors: year, program type, and branch, plus category
-
-              return matchProgram && matchBranch && matchYear && matchCategory;
-
+        // If no caste-specific match, fall back to general
+        if (!found) {
+          found = feeStructures.find((fee) => {
+            const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+            const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+            const matchYear = !selectedYear || !fee.year || normalizeYear(fee.year) === normalizeYear(selectedYear);
+            const matchCategoryQuota = (fee.category || "regular").toLowerCase() === categoryToMatch;
+            let matchCategory = fee.scholarshipParticular === selectedFeesCategory;
+            if (!matchCategory && selectedFeesCategory === "installment") {
+              matchCategory = fee.scholarshipParticular === "none";
             }
+            return matchProgram && matchBranch && matchYear && matchCategory && matchCategoryQuota;
+          });
+        }
 
-        );
-
+        const isNewStructure = found?._id?.toString() !== currentFeeStructure?._id?.toString();
         setCurrentFeeStructure(found || null);
 
         
@@ -2537,21 +2557,22 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
         // Auto-calculate and set totalFees
 
         if (found) {
-
             const studentTotal = found.feesFromStudent?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-
             const welfareTotal = found.feesFromSocialWelfare?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-
             const total = studentTotal + welfareTotal;
 
-            // Only update if changed to avoid loop (though useEffect deps handle it)
-
-            setValue("totalFees", total);
-
+            // ONLY auto-fill if the field is currently empty or 0.
+            // This prevents the system from overwriting manual entries (like ₹40,000)
+            // with database defaults (like ₹80,000).
+            const currentVal = watch("totalFees");
+            
+            if (!currentVal || currentVal == 0 || currentVal === "") {
+                setValue("totalFees", total);
+            }
         } else {
-
-             setValue("totalFees", 0);
-
+             if (isNewStructure && selectedFeesCategory !== "installment") {
+                setValue("totalFees", 0);
+             }
         }
 
     } else {
@@ -2566,7 +2587,7 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
     }
 
-  }, [selectedProgramType, selectedBranch, selectedYear, selectedCaste, selectedFeesCategory, feeStructures, setValue]);
+  }, [selectedProgramType, selectedBranch, selectedYear, selectedCaste, selectedFeesCategory, feeStructures, setValue, watch("quota")]);
 
 
 
@@ -2665,37 +2686,23 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
   const getFeeCategoryOptions = () => {
 
-      const matches = feeStructures.filter(
+      const selectedQuota = watch("quota")?.toLowerCase() || "regular";
+      const categoryToMatch = selectedQuota.includes("management") ? "management" : "regular";
 
-            (fee) => {
+      const matches = feeStructures.filter((fee) => {
+          const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
+          const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
+          const feeYear = normalizeYear(fee.year);
+          const selYear = normalizeYear(selectedYear);
+          const matchYear = feeYear === selYear;
+          const feeCaste = fee.caste?.trim().toLowerCase() || "general";
+          const selCaste = selectedCaste?.trim().toLowerCase() || "general";
+          // Match if caste is same OR fall back to general structure for any caste
+          const matchCaste = feeCaste === selCaste || feeCaste === "general";
+          const matchCategoryQuota = (fee.category || "regular").toLowerCase() === categoryToMatch;
 
-              const matchProgram = fee.programType?.trim().toLowerCase() === selectedProgramType?.trim().toLowerCase();
-
-              const matchBranch = fee.departmentName?.trim().toLowerCase() === selectedBranch?.trim().toLowerCase();
-
-              
-
-              const feeYear = normalizeYear(fee.year);
-
-              const selYear = normalizeYear(selectedYear);
-
-              const matchYear = feeYear === selYear; 
-
-              
-
-              const feeCaste = fee.caste?.trim().toLowerCase() || "";
-
-              const selCaste = selectedCaste?.trim().toLowerCase() || "";
-
-              const matchCaste = feeCaste === selCaste || (feeCaste && selCaste && (feeCaste.includes(selCaste) || selCaste.includes(feeCaste)));
-
-              
-
-              return matchProgram && matchBranch && matchYear && matchCaste;
-
-            }
-
-          );
+          return matchProgram && matchBranch && matchYear && matchCaste && matchCategoryQuota;
+        });
 
       
 
@@ -2713,11 +2720,9 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
 
 
-      if (uniqueCategories.length === 0) {
-
-        return [{ value: "", label: "No Fee Structure Found" }];
-
-      }
+      // if (uniqueCategories.length === 0) {
+      //   return [{ value: "", label: "No Fee Structure Found" }];
+      // }
 
       
 
@@ -2728,17 +2733,15 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
         
 
       return [
-
         { value: "", label: "Select Fees Category" },
-
         ...uniqueCategories.map((sp) => ({
-
           value: sp,
-
           label: (!sp || sp === "none") ? "Active Fee Structure" : sp.charAt(0).toUpperCase() + sp.slice(1),
-
         })),
-
+        { value: "Government Regulated Fees(Scholarship)", label: "Government Regulated Fees(Scholarship)" },
+        { value: "Management Fees", label: "Management Fees" },
+        { value: "TFWS", label: "TFWS" },
+        { value: "Institute Fees", label: "Institute Fees" },
       ];
 
   };
@@ -3088,20 +3091,49 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
           required
 
           disabled={
-
             !selectedProgramType ||
-
             !selectedBranch ||
-
             !selectedYear ||
-
             !selectedCaste ||
-
             feesCategoryOptions.length <= 1
-
           }
-
         />
+
+        {((selectedAdmissionCategory === "CAP" || selectedCaste?.toLowerCase() === "general" || selectedAdmissionCategory === "Institute Level" || watch("seatType") === "Management") && selectedFeesCategory) && (
+          <>
+            <FormField
+              control={control}
+              name="feesCollectionModule"
+              label="Fees Collection Module"
+              type="select"
+              options={[
+                { value: "Pay full", label: "Pay full" },
+                ...(selectedFeesCategory !== "TFWS" && 
+                   ["Government Regulated Fees(Scholarship)", "Institute Fees", "Management Fees"].includes(selectedFeesCategory) 
+                   ? (selectedAdmissionCategory === "CAP" 
+                      ? [{ value: "pay installment 2", label: "pay installment 2" }]
+                      : [
+                          { value: "pay installment 1", label: "pay installment 1" },
+                          { value: "pay installment 2", label: "pay installment 2" }
+                        ]
+                     )
+                   : [])
+              ]}
+              error={errors.feesCollectionModule}
+              required
+            />
+            {watch("feesCollectionModule") && watch("feesCollectionModule") !== "Pay full" && watch("totalFees") > 0 && (
+              <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-sm text-blue-700 font-medium">
+                  Installment Plan (2 Parts): 
+                  <span className="font-bold ml-1">
+                    ₹{(parseFloat(watch("totalFees")) / 2).toFixed(2)} per payment
+                  </span>
+                </p>
+              </div>
+            )}
+          </>
+        )}
 
         <FormField
 
@@ -3115,7 +3147,7 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
 
           error={errors.totalFees}
 
-          disabled={true} // Read-only
+          disabled={false} // Enabled for manual entry if autofill fails
 
           required
 
@@ -4216,7 +4248,8 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
         address: data.address || [{}],
 
         ...(!isUpdate && { counsellorId: user.id }),
-
+        totalFees: Number(data.totalFees || 0),
+        numberOfInstallments: (data.feesCollectionModule && data.feesCollectionModule !== "Pay full") ? 2 : 1,
       };
 
       delete payload.documents?.aadharCard;
@@ -4267,9 +4300,36 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
       const result = await response.json();
 
+      // Automatically create the installment plan if feesCollectionModule indicates installments
+      if (data.feesCollectionModule && data.feesCollectionModule !== "Pay full" && data.totalFees > 0) {
+        const admissionId = isUpdate ? admission._id : (result.admissionId || result.data?._id);
+        if (admissionId) {
+          const num = 2; // Always 2 installments if not "Pay full"
+          const total = parseFloat(data.totalFees);
+          const perInstallment = Math.floor(total / num);
+          const installments = Array(num).fill(perInstallment);
+          
+          // Adjust last installment for rounding
+          const remainder = total - (perInstallment * num);
+          if (num > 0) {
+            installments[num-1] += remainder;
+          }
 
-
-      console.log(result);
+          try {
+            await fetch(`/api/students/${admissionId}/fee/installments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                installments: installments,
+                totalFee: total,
+                numberOfInstallments: num,
+              })
+            });
+          } catch (instError) {
+            console.error("Failed to auto-create installments:", instError);
+          }
+        }
+      }
 
       
 
