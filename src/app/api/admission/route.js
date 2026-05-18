@@ -418,7 +418,7 @@ export async function PUT(req) {
       'domicile', 'nationality', 'religionAsPerLC', 'isForeignNational',
       'dateOfBirth', 'motherName', 'familyIncome', 'studentWhatsappNumber',
       'fatherGuardianWhatsappNumber', 'motherMobileNumber', 'address',
-      'documents', 'numberOfInstallments'
+      'documents', 'numberOfInstallments', 'feesCollectionModule'
     ];
     
     optionalFields.forEach(field => {

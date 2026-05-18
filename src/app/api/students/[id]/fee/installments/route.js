@@ -76,6 +76,9 @@ export async function POST(req, { params }) {
     console.log("📌 Remaining amount for last installment:", remaining);
     console.log("✅ Final Installment Plan:", installments);
 
+    // Delete any existing installment plan for this student first to avoid duplicates
+    await InstallmentPlan.deleteMany({ studentId });
+
     const installmentPlan = await InstallmentPlan.create({
       studentId,
       installments,

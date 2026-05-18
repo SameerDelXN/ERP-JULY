@@ -4,6 +4,9 @@ import Admission from "@/app/models/admissionSchema";
 import Student from "@/app/models/studentSchema";
 import Academic from "@/app/models/academicSchema";
 import ImportedFile from "@/app/models/importedFileSchema";
+import User from "@/app/models/userSchema";
+import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import * as XLSX from "xlsx";
@@ -175,7 +178,7 @@ export async function POST(request) {
           religionAsPerLC: row.ReligionAsPerLC?.toString().trim() || "",
           isForeignNational: row.IsForeignNational === "Yes" || row.IsForeignNational === true,
           dateOfBirth: row.DateOfBirth || row.DateofBirth ? new Date(row.DateOfBirth || row.DateofBirth) : null,
-          status: "inProcess",
+          status: "approved",
           counsellorId: counsellorId,
         };
       } catch (error) {
@@ -219,6 +222,18 @@ export async function POST(request) {
       console.log("Data inserted successfully");
     }
 
+    // Convert inserted admissions to student records
+    const conversionResults = [];
+    for (const doc of result) {
+      try {
+        const studentInfo = await convertAdmissionToStudent(doc);
+        conversionResults.push({ success: true, docId: doc._id, studentId: studentInfo.studentId });
+      } catch (err) {
+        console.error(`Failed to convert admission ${doc._id} to student:`, err);
+        conversionResults.push({ success: false, docId: doc._id, error: err.message });
+      }
+    }
+
     // Update imported file record with success status
     await ImportedFile.findByIdAndUpdate(importedFileRecord._id, {
       status: "completed",
@@ -239,6 +254,7 @@ export async function POST(request) {
       validationErrorCount: validationErrors.length,
       duplicates: duplicates,
       validationErrors: validationErrors,
+      conversions: conversionResults
     });
 
   } catch (error) {
@@ -274,134 +290,193 @@ export async function POST(request) {
   }
 }
 
-async function handleApprovedStatus(applications) {
-  try {
-    for (const admission of applications) {
-      if (admission.status === "approved") {
-        // Create student record
-        const student = new Student({
-          prn: generatePRN(),
-          fullName: admission.fullName,
-          email: admission.email,
-          studentWhatsappNumber: admission.studentWhatsappNumber,
-          branch: admission.branch,
-          programType: admission.programType,
-          year: admission.year,
-          counsellorId: admission.counsellorId,
-        });
-
-        const savedStudent = await student.save();
-
-        // Update academic record
-        await updateAcademicRecord(savedStudent, admission);
-      }
-    }
-  } catch (error) {
-    console.error("Error in handleApprovedStatus:", error);
+// Helper function to map admission gender to valid Student schema enum
+function mapGenderToValidEnum(gender) {
+  if (!gender) return 'Other';
+  
+  const genderLower = gender.toLowerCase();
+  if (genderLower === 'male' || genderLower === 'm') {
+    return 'Male';
+  } else if (genderLower === 'female' || genderLower === 'f') {
+    return 'Female';
+  } else {
+    return 'Other';
   }
 }
 
-function generatePRN() {
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-  return `${year}${random}`;
+// Helper function to map admission programType to valid Student schema enum
+function mapProgramTypeToValidEnum(programType) {
+  if (!programType) return 'UG';
+  
+  const programLower = programType.toLowerCase();
+  if (programLower.includes('diploma') || programLower.includes('polytechnic')) {
+    return 'Diploma';
+  } else if (programLower.includes('post') || programLower.includes('master') || programLower.includes('pg') || programLower.includes('m.')) {
+    return 'PG';
+  } else {
+    return 'UG'; // Default to Undergraduate
+  }
 }
 
-async function updateAcademicRecord(student, admission) {
+// Helper function to convert admission to student on Excel import
+async function convertAdmissionToStudent(admission) {
+  console.log(`🔄 [Excel Import] Starting conversion for admission: ${admission._id}`);
+  
+  // 1. Generate Unique Student ID
+  let studentId;
+  let isUnique = false;
+  let attempts = 0;
+  
+  while (!isUnique && attempts < 10) {
+    const yearSuffix = new Date().getFullYear().toString().slice(-2);
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    studentId = `STU${yearSuffix}${randomSuffix}`;
+    
+    const existingStudent = await Student.findOne({ studentId: studentId });
+    const existingUser = await User.findOne({ username: studentId });
+    
+    if (!existingStudent && !existingUser) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+  
+  if (!isUnique) {
+    throw new Error("Unable to generate unique student ID");
+  }
+
+  // 2. Generate Unique PRN
+  let prn;
+  let isPrnUnique = false;
+  let prnAttempts = 0;
+  
+  while (!isPrnUnique && prnAttempts < 50) {
+    const yearSuffix = new Date().getFullYear().toString().slice(-2);
+    const timestamp = Date.now().toString().slice(-6);
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    prn = `PRN${yearSuffix}${timestamp}${randomSuffix}`;
+    
+    const existingPrn = await Student.findOne({ prn: prn }).lean().exec();
+    if (!existingPrn) {
+      isPrnUnique = true;
+      break;
+    }
+    prnAttempts++;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  
+  if (!isPrnUnique) {
+    throw new Error("Unable to generate unique PRN");
+  }
+
+  // 3. Create Student Profile and User inside a transaction session
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    const academicRecord = await Academic.findOne({
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(studentId, salt);
+
+    // Create User record
+    const newUser = await User.create([{
+      fullName: admission.fullName,
+      email: admission.email,
+      phone: admission.studentWhatsappNumber?.toString() || "",
+      role: "student",
+      password: hashedPassword,
+      username: studentId,
+    }], { session });
+
+    // Create Student record
+    const newStudent = await Student.create([{
+      studentId: studentId,
+      admissionId: admission._id,
+      fullName: admission.fullName,
+      email: admission.email,
+      mobileNumber: admission.studentWhatsappNumber?.toString() || "",
+      dateOfBirth: admission.dateOfBirth ? new Date(admission.dateOfBirth) : new Date(),
+      gender: mapGenderToValidEnum(admission.gender),
+      address: admission.address && admission.address[0] ? admission.address[0] : {},
+      programType: mapProgramTypeToValidEnum(admission.programType),
       branch: admission.branch,
-      programType: admission.programType,
-    });
+      currentYear: admission.year,
+      division: admission.division || "",
+      prn: prn,
+      counsellorId: admission.counsellorId,
+      status: "active",
+      feesCategory: admission.feesCategory || "management",
+      casteAsPerLC: admission.casteAsPerLC || "",
+      subCasteAsPerLC: admission.subCasteAsPerLC || "",
+      domicile: admission.domicile || "Maharashtra",
+      nationality: admission.nationality || "Indian",
+      religionAsPerLC: admission.religionAsPerLC || "",
+      isForeignNational: admission.isForeignNational || false,
+      motherName: admission.motherName || "",
+      familyIncome: admission.familyIncome || "",
+      fatherGuardianWhatsappNumber: admission.fatherGuardianWhatsappNumber?.toString() || "",
+      motherMobileNumber: admission.motherMobileNumber?.toString() || "",
+      seatType: admission.seatType || "General",
+      admissionCategoryDTE: admission.admissionCategoryDTE || "General",
+      quota: admission.quota || "",
+      admissionYear: admission.admissionYear || new Date().getFullYear().toString(),
+      round: admission.round || "Round 1",
+      admissionType: admission.admissionType || "CAP",
+      dteApplicationNumber: admission.dteApplicationNumber,
+      totalFees: admission.totalFees || 0
+    }], { session });
 
-    if (!academicRecord) {
-      // Create new academic record if not exists
-      const newAcademic = new Academic({
-        branch: admission.branch,
-        programType: admission.programType,
-        years: [
-          {
-            year: admission.year,
-            divisions: [
-              {
-                name: "A",
-                students: [student._id],
-                subjects: [],
-                timetable: [],
-                exams: [],
-                attendance: [],
-              },
-            ],
-          },
-        ],
-      });
-      await newAcademic.save();
-    } else {
-      const yearIndex = academicRecord.years.findIndex(
-        (y) => y.year === admission.year
-      );
+    // 4. Assign student to academic division
+    let assignedDivisionName = "";
+    const academicDoc = await Academic.findOne({
+      department: admission.branch,
+      programType: mapProgramTypeToValidEnum(admission.programType)
+    }).session(session);
 
-      if (yearIndex === -1) {
-        // Add new year
-        academicRecord.years.push({
-          year: admission.year,
-          divisions: [
-            {
-              name: "A",
-              students: [student._id],
-              subjects: [],
-              timetable: [],
-              exams: [],
-              attendance: [],
-            },
-          ],
-        });
-        await academicRecord.save();
-      } else {
-        const yearBlock = academicRecord.years[yearIndex];
-        const targetDivision = yearBlock.divisions[0]; // Default to first division
+    if (academicDoc) {
+      const yearObj = academicDoc.years.find((y) => y.year === admission.year);
+      if (yearObj) {
+        let assignedDivision = yearObj.divisions.find((div) => div.students.length < 50);
 
-        if (targetDivision.students.length >= 60) {
-          // Create new division if current one is full
-          const newDivisionName = String.fromCharCode(
-            65 + yearBlock.divisions.length
-          );
-          await Academic.findByIdAndUpdate(
-            academicRecord._id,
-            {
-              $push: {
-                "years.$[yearElem].divisions": {
-                  name: newDivisionName,
-                  students: [student._id],
-                  subjects: [],
-                  timetable: [],
-                  exams: [],
-                  attendance: [],
-                },
-              },
-            },
-            {
-              arrayFilters: [{ "yearElem.year": admission.year }],
-            }
-          );
-        } else {
-          // Add student to existing division
-          await Academic.updateOne(
-            {
-              _id: academicRecord._id,
-              "years.year": admission.year,
-              "years.divisions.name": targetDivision.name,
-            },
-            {
-              $push: {
-                "years.$.divisions.$.students": student._id,
-              },
-            }
-          );
+        if (!assignedDivision) {
+          const nextDivisionLetter = String.fromCharCode(65 + yearObj.divisions.length);
+          assignedDivision = {
+            name: nextDivisionLetter,
+            students: [],
+            subjects: [],
+            timetable: [],
+            exams: [],
+            attendance: [],
+          };
+          yearObj.divisions.push(assignedDivision);
         }
+
+        assignedDivision.students.push(newStudent[0]._id);
+        await academicDoc.save({ session });
+        
+        assignedDivisionName = assignedDivision.name;
+        newStudent[0].division = assignedDivisionName;
+        await newStudent[0].save({ session });
       }
     }
-  } catch (error) {
-    console.error("Error updating academic record:", error);
+
+    // Update Admission status
+    await Admission.findByIdAndUpdate(admission._id, {
+      status: "approved",
+      prn: prn,
+      isPrnGenerated: true
+    }, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+    
+    return {
+      success: true,
+      studentId: studentId,
+      prn: prn
+    };
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
   }
 }

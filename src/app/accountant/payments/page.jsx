@@ -13,7 +13,6 @@ import {
   BookOpen,
   Users,
   Calendar,
-  DollarSign,
   Plus,
   Trash2,
   ListChecks
@@ -251,33 +250,59 @@ export default function PaymentPage() {
 
   const handleModuleChange = async (val) => {
     setFeesCollectionModule(val);
-    if (val !== "Pay full" && admissionFeeStructure) {
-      const total = parseFloat(admissionFeeStructure.totalFees || admissionFeeStructure.totalFee || 0);
-      if (total <= 0) return;
+    if (!admissionFeeStructure) return;
 
-      const half = Math.floor(total / 2);
-      const installments = [half, total - half];
+    const total = parseFloat(admissionFeeStructure.totalFees || admissionFeeStructure.totalFee || 0);
+    if (total <= 0) return;
 
-      try {
-        setIsInstallmentLoading(true);
-        const response = await fetch(`/api/students/${selectedAdmission._id}/fee/installments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            installments: installments,
-            totalFee: total,
-            numberOfInstallments: 2
-          })
-        });
-        const data = await response.json();
-        if (data.success) {
-          setInstallmentPlan(data.data);
-        }
-      } catch (error) {
-        console.error("Error creating plan from module:", error);
-      } finally {
-        setIsInstallmentLoading(false);
+    let numInstallments = 1;
+    let installments = [total];
+
+    if (val !== "Pay full") {
+      if (val === "pay installment 2") numInstallments = 2;
+      else if (val === "pay installment 3") numInstallments = 3;
+      else if (val === "pay installment 4") numInstallments = 4;
+      else if (val === "pay installment 5") numInstallments = 5;
+
+      const baseAmount = Math.floor(total / numInstallments);
+      installments = [];
+      for (let i = 0; i < numInstallments - 1; i++) {
+        installments.push(baseAmount);
       }
+      installments.push(total - (baseAmount * (numInstallments - 1)));
+    }
+
+    try {
+      setIsInstallmentLoading(true);
+
+      // Create/Update installment plan in database
+      const response = await fetch(`/api/students/${selectedAdmission._id}/fee/installments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          installments: installments,
+          totalFee: total,
+          numberOfInstallments: numInstallments
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setInstallmentPlan(data.data);
+      }
+
+      // Update admission record for full state synchronization
+      await fetch(`/api/admission?id=${selectedAdmission._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feesCollectionModule: val,
+          numberOfInstallments: numInstallments.toString()
+        })
+      });
+    } catch (error) {
+      console.error("Error creating plan from module:", error);
+    } finally {
+      setIsInstallmentLoading(false);
     }
   };
 
@@ -298,10 +323,9 @@ export default function PaymentPage() {
         alert(`Note: Fees collection module was already set by staff as "${admission.feesCollectionModule}"`);
       }, 500);
     } else {
-      const isCAP = admission.admissionCategoryDTE === "CAP";
-      const hasInst = admission.numberOfInstallments === 2;
-      if (hasInst) {
-        setFeesCollectionModule(isCAP ? "pay installment 2" : "pay installment 1");
+      const numInst = parseInt(admission.numberOfInstallments);
+      if (numInst >= 2 && numInst <= 5) {
+        setFeesCollectionModule(`pay installment ${numInst}`);
       } else {
         setFeesCollectionModule("Pay full");
       }
@@ -336,8 +360,8 @@ export default function PaymentPage() {
       return;
     }
 
-    // New validation: If "pay installment 2" is selected, force first installment amount
-    if (feesCollectionModule === "pay installment 2" && installmentPlan?.installments?.length > 0) {
+    // New validation: If an installment module is selected, force first installment amount for first payment
+    if (feesCollectionModule && feesCollectionModule.startsWith("pay installment") && installmentPlan?.installments?.length > 0) {
       const firstInstallment = installmentPlan.installments[0];
       // Check if this is likely the first payment (no history or history sum < first installment)
       const totalPaidPreviously = paymentHistory.reduce((sum, r) => sum + (r.totalPaid || 0), 0);
@@ -483,10 +507,13 @@ export default function PaymentPage() {
                 onChange={(e) => handleModuleChange(e.target.value)}
               >
                 <option value="Pay full">Pay full</option>
-                {/* Always provide installment option unless it is explicitly TFWS */}
+                {/* Always provide installment options unless it is explicitly TFWS */}
                 {selectedAdmission.feesCategory !== "TFWS" && (
                     <>
                       <option value="pay installment 2">pay installment 2</option>
+                      <option value="pay installment 3">pay installment 3</option>
+                      <option value="pay installment 4">pay installment 4</option>
+                      <option value="pay installment 5">pay installment 5</option>
                     </>
                 )}
               </select>
@@ -533,14 +560,17 @@ export default function PaymentPage() {
               {isInstallmentLoading ? (
                 <div className="text-xs text-gray-500 animate-pulse py-2">Checking for installments...</div>
               ) : installmentPlan && installmentPlan.installments && installmentPlan.installments.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {installmentPlan.installments.map((amount, index) => (
                     <button
                       key={index}
+                      type="button"
                       onClick={() => handlePaymentAmountChange(amount.toString())}
                       className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-left hover:bg-blue-100 transition-colors group"
                     >
-                      <div className="text-xs text-blue-600 font-medium">Installment {index + 1}</div>
+                      <div className="text-xs text-blue-600 font-medium">
+                        {installmentPlan.installments.length === 1 ? "Full Payment" : `Installment ${index + 1}`}
+                      </div>
                       <div className="text-sm font-bold text-blue-800 group-hover:text-blue-900">₹{amount}</div>
                     </button>
                   ))}
@@ -557,7 +587,7 @@ export default function PaymentPage() {
           {selectedAdmission && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                <DollarSign size={16} className="inline mr-1" />
+                <IndianRupee size={16} className="inline mr-1" />
                 Amount Received
               </label>
               <input
@@ -569,7 +599,7 @@ export default function PaymentPage() {
                 min="0"
                 step="0.01"
               />
-              {feesCollectionModule === "pay installment 2" && installmentPlan?.installments?.[0] && (
+              {feesCollectionModule && feesCollectionModule.startsWith("pay installment") && installmentPlan?.installments?.[0] && (
                 <div className="text-xs text-blue-600 mt-1 font-medium italic">
                   * First installment required: ₹{installmentPlan.installments[0]}
                 </div>

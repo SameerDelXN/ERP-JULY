@@ -424,6 +424,7 @@ const admissionSchema = new mongoose.Schema(
 
     totalFees: { type: Number, default: 0 },
     numberOfInstallments: { type: String, default: "" },
+    feesCollectionModule: { type: String, default: "" },
 
 
 

@@ -6,6 +6,7 @@ import FeeStructure from "@/app/models/feeStructureSchema";
 import SystemSetting from "@/models/systemSetting";
 import { generateFeeReceiptPDF } from "@/utils/generateFeeReceiptPdf";
 import { generateFeeReceiptPDFDual } from "@/utils/generateFeeReceiptPdfDual";
+import { generateFeeReceiptPDFVercel } from "@/utils/generateFeeReceiptPdfVercel";
 
 export async function GET(req) {
   try {

@@ -5,6 +5,10 @@ export async function generatePdfClient(htmlContent, filename) {
     if (typeof window !== 'undefined') {
       // Create a new window with the HTML content
       const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        console.warn('Popup blocked: Fallback to HTML file download.');
+        return false;
+      }
       printWindow.document.write(htmlContent);
       printWindow.document.close();
       

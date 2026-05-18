@@ -3110,28 +3110,32 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
                 { value: "Pay full", label: "Pay full" },
                 ...(selectedFeesCategory !== "TFWS" && 
                    ["Government Regulated Fees(Scholarship)", "Institute Fees", "Management Fees"].includes(selectedFeesCategory) 
-                   ? (selectedAdmissionCategory === "CAP" 
-                      ? [{ value: "pay installment 2", label: "pay installment 2" }]
-                      : [
-                          { value: "pay installment 1", label: "pay installment 1" },
-                          { value: "pay installment 2", label: "pay installment 2" }
-                        ]
-                     )
+                   ? [
+                       { value: "pay installment 2", label: "pay installment 2" },
+                       { value: "pay installment 3", label: "pay installment 3" },
+                       { value: "pay installment 4", label: "pay installment 4" },
+                       { value: "pay installment 5", label: "pay installment 5" }
+                     ]
                    : [])
               ]}
               error={errors.feesCollectionModule}
               required
             />
-            {watch("feesCollectionModule") && watch("feesCollectionModule") !== "Pay full" && watch("totalFees") > 0 && (
-              <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <p className="text-sm text-blue-700 font-medium">
-                  Installment Plan (2 Parts): 
-                  <span className="font-bold ml-1">
-                    ₹{(parseFloat(watch("totalFees")) / 2).toFixed(2)} per payment
-                  </span>
-                </p>
-              </div>
-            )}
+            {watch("feesCollectionModule") && watch("feesCollectionModule") !== "Pay full" && watch("totalFees") > 0 && (() => {
+              const num = watch("feesCollectionModule") === "pay installment 3" ? 3 :
+                            watch("feesCollectionModule") === "pay installment 4" ? 4 :
+                            watch("feesCollectionModule") === "pay installment 5" ? 5 : 2;
+              return (
+                <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <p className="text-sm text-blue-700 font-medium">
+                    Installment Plan ({num} Parts): 
+                    <span className="font-bold ml-1">
+                      ₹{(parseFloat(watch("totalFees")) / num).toFixed(2)} per payment
+                    </span>
+                  </p>
+                </div>
+              );
+            })()}
           </>
         )}
 
@@ -4237,6 +4241,14 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
       }
 
+      let numInstallments = 1;
+      if (data.feesCollectionModule && data.feesCollectionModule !== "Pay full") {
+        if (data.feesCollectionModule === "pay installment 2") numInstallments = 2;
+        else if (data.feesCollectionModule === "pay installment 3") numInstallments = 3;
+        else if (data.feesCollectionModule === "pay installment 4") numInstallments = 4;
+        else if (data.feesCollectionModule === "pay installment 5") numInstallments = 5;
+      }
+
       const payload = {
 
         ...data,
@@ -4249,7 +4261,7 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
         ...(!isUpdate && { counsellorId: user.id }),
         totalFees: Number(data.totalFees || 0),
-        numberOfInstallments: (data.feesCollectionModule && data.feesCollectionModule !== "Pay full") ? 2 : 1,
+        numberOfInstallments: numInstallments.toString(),
       };
 
       delete payload.documents?.aadharCard;
@@ -4304,7 +4316,11 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
       if (data.feesCollectionModule && data.feesCollectionModule !== "Pay full" && data.totalFees > 0) {
         const admissionId = isUpdate ? admission._id : (result.admissionId || result.data?._id);
         if (admissionId) {
-          const num = 2; // Always 2 installments if not "Pay full"
+          let num = 2;
+          if (data.feesCollectionModule === "pay installment 3") num = 3;
+          else if (data.feesCollectionModule === "pay installment 4") num = 4;
+          else if (data.feesCollectionModule === "pay installment 5") num = 5;
+
           const total = parseFloat(data.totalFees);
           const perInstallment = Math.floor(total / num);
           const installments = Array(num).fill(perInstallment);
