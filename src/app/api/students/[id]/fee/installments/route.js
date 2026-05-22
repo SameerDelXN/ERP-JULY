@@ -48,7 +48,7 @@ export async function POST(req, { params }) {
     };
 
     const body = await req.json();
-    let { installments, totalFee: bodyTotalFee, numberOfInstallments } = body;
+    let { installments, totalFee: bodyTotalFee, numberOfInstallments, dueDates } = body;
 
     // Prioritize fees in this order: Request Body > Student's saved totalFees
     const totalFee = bodyTotalFee || student.totalFees || 0;
@@ -60,6 +60,7 @@ export async function POST(req, { params }) {
     console.log("💰 Final totalFee to be used:", totalFee);
 
     console.log("📥 Received installments:", installments);
+    console.log("📅 Received dueDates:", dueDates);
 
     const definedInstallments = installments.filter(i => i !== null);
     const sum = definedInstallments.reduce((acc, val) => acc + val, 0);
@@ -82,6 +83,7 @@ export async function POST(req, { params }) {
     const installmentPlan = await InstallmentPlan.create({
       studentId,
       installments,
+      dueDates: dueDates || [],
       totalFee,
       numberOfInstallments: numberOfInstallments || installments.length,
     });

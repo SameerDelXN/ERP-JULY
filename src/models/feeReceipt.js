@@ -36,6 +36,10 @@ const feeReceiptSchema = new mongoose.Schema({
   academicYear: {
     type: String,
     required: true
+  },
+  createdBy: {
+    type: String,
+    default: 'System'
   }
 });
 

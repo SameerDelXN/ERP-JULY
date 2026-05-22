@@ -194,7 +194,7 @@ export async function generateFeeReceiptPDFVercel(receiptData) {
     // Add A5 page size styling for Vercel/Browser printing
     html = html.replace('</head>', `<style>
         @page {
-            size: A5;
+            size: A5 landscape;
             margin: 0;
         }
     </style></head>`);

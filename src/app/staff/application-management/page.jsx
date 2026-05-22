@@ -2194,7 +2194,7 @@ const FamilyDetailsStep = ({ control, errors }) => {
 
 
 
-const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
+const AcademicDetailsStep = ({ control, errors, watch, setValue, customInstallments, setCustomInstallments }) => {
 
   const [coursesData, setCoursesData] = useState([]);
 
@@ -3121,18 +3121,81 @@ const AcademicDetailsStep = ({ control, errors, watch, setValue }) => {
               error={errors.feesCollectionModule}
               required
             />
-            {watch("feesCollectionModule") && watch("feesCollectionModule") !== "Pay full" && watch("totalFees") > 0 && (() => {
-              const num = watch("feesCollectionModule") === "pay installment 3" ? 3 :
-                            watch("feesCollectionModule") === "pay installment 4" ? 4 :
-                            watch("feesCollectionModule") === "pay installment 5" ? 5 : 2;
+            {watch("feesCollectionModule") && watch("feesCollectionModule") !== "Pay full" && watch("totalFees") > 0 && customInstallments && customInstallments.length > 0 && (() => {
+              const num = customInstallments.length;
+              const totalFees = parseFloat(watch("totalFees") || 0);
+              const sum = customInstallments.reduce((acc, inst) => acc + (parseFloat(inst.amount) || 0), 0);
+              const isMatch = Math.abs(sum - totalFees) < 0.01;
+
+              const handleAmountChange = (index, val) => {
+                setCustomInstallments(prev => {
+                  const updated = [...prev];
+                  updated[index] = { ...updated[index], amount: val };
+                  return updated;
+                });
+              };
+
+              const handleDateChange = (index, val) => {
+                setCustomInstallments(prev => {
+                  const updated = [...prev];
+                  updated[index] = { ...updated[index], dueDate: val };
+                  return updated;
+                });
+              };
+
               return (
-                <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                  <p className="text-sm text-blue-700 font-medium">
-                    Installment Plan ({num} Parts): 
-                    <span className="font-bold ml-1">
-                      ₹{(parseFloat(watch("totalFees")) / num).toFixed(2)} per payment
-                    </span>
-                  </p>
+                <div className="md:col-span-2 p-4 bg-blue-50/50 border border-blue-100 rounded-xl space-y-3">
+                  <h4 className="text-xs font-semibold text-blue-900 flex items-center gap-1.5">
+                    <Calendar size={14} className="text-blue-600" />
+                    Customize Installment Amounts & Due Dates
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {customInstallments.map((inst, index) => (
+                      <div key={index} className="p-3 bg-white border border-gray-200 rounded-lg space-y-2 shadow-sm">
+                        <div className="text-xs font-bold text-gray-700">Part {index + 1}</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-medium text-gray-500 mb-0.5">
+                              Amount (₹)
+                            </label>
+                            <input
+                              type="number"
+                              value={inst.amount || ""}
+                              onChange={(e) => handleAmountChange(index, e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-semibold text-gray-800 focus:ring-1 focus:ring-blue-500"
+                              placeholder="Amount"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-medium text-gray-500 mb-0.5">
+                              Due Date
+                            </label>
+                            <input
+                              type="date"
+                              value={inst.dueDate || ""}
+                              onChange={(e) => handleDateChange(index, e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-xs text-gray-800 focus:ring-1 focus:ring-blue-500 font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2.5 border-t border-blue-100 flex items-center justify-between text-xs">
+                    <div className="font-bold text-gray-700">
+                      Total Allocated:{" "}
+                      <span className={isMatch ? "text-green-600" : "text-red-500"}>
+                        ₹{sum.toFixed(2)}
+                      </span> / ₹{totalFees.toFixed(2)}
+                    </div>
+                    {!isMatch && (
+                      <div className="text-[10px] text-red-500 font-medium animate-pulse">
+                        * Allocations must sum to ₹{totalFees.toFixed(2)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })()}
@@ -3943,6 +4006,79 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
   }, [admission, setValue]);
 
+  const [customInstallments, setCustomInstallments] = useState([]);
+
+  // Fetch pre-existing installments if editing
+  useEffect(() => {
+    const fetchInstallmentsForAdmission = async () => {
+      if (admission?._id) {
+        try {
+          const response = await fetch(`/api/students/${admission._id}/fee/installments`);
+          const data = await response.json();
+          if (data.success && data.data && data.data.installments) {
+            const loaded = data.data.installments.map((amount, index) => {
+              let dateStr = "";
+              if (data.data.dueDates && data.data.dueDates[index]) {
+                dateStr = new Date(data.data.dueDates[index]).toISOString().split('T')[0];
+              } else {
+                const d = new Date();
+                d.setDate(d.getDate() + (index * 30));
+                dateStr = d.toISOString().split('T')[0];
+              }
+              return {
+                amount: amount.toString(),
+                dueDate: dateStr
+              };
+            });
+            setCustomInstallments(loaded);
+          }
+        } catch (error) {
+          console.error("Error fetching admission installments:", error);
+        }
+      }
+    };
+    fetchInstallmentsForAdmission();
+  }, [admission]);
+
+  const watchedModule = watch("feesCollectionModule");
+  const watchedTotalFees = watch("totalFees");
+
+  // Sync custom installments when module or total fees change
+  useEffect(() => {
+    if (!watchedModule || watchedModule === "Pay full" || !watchedTotalFees || parseFloat(watchedTotalFees) <= 0) {
+      setCustomInstallments([]);
+      return;
+    }
+
+    let num = 2;
+    if (watchedModule === "pay installment 3") num = 3;
+    else if (watchedModule === "pay installment 4") num = 4;
+    else if (watchedModule === "pay installment 5") num = 5;
+
+    // Only auto-initialize if length does not match num or customInstallments is completely empty
+    if (customInstallments.length !== num || customInstallments.length === 0) {
+      const total = parseFloat(watchedTotalFees);
+      const baseAmount = Math.floor(total / num);
+      const newInsts = Array(num).fill(0).map((_, index) => {
+        let amt = baseAmount;
+        if (index === num - 1) {
+          amt = total - (baseAmount * (num - 1));
+        }
+
+        // Generate date with 30 days interval
+        const d = new Date();
+        d.setDate(d.getDate() + (index * 30));
+        const dateStr = d.toISOString().split('T')[0];
+
+        return {
+          amount: amt.toString(),
+          dueDate: dateStr
+        };
+      });
+      setCustomInstallments(newInsts);
+    }
+  }, [watchedModule, watchedTotalFees, customInstallments.length]);
+
 
 
   const steps = [
@@ -4192,6 +4328,21 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
     setIsSubmitting(true);
 
     try {
+      // Validate custom installments before submitting the admission form if installments are enabled
+      if (data.feesCollectionModule && data.feesCollectionModule !== "Pay full" && data.totalFees > 0) {
+        const total = parseFloat(data.totalFees);
+        const sum = customInstallments.reduce((acc, inst) => acc + (parseFloat(inst.amount) || 0), 0);
+        if (Math.abs(sum - total) > 0.01) {
+          toast.error(`The sum of installments (₹${sum.toFixed(2)}) must equal the total fees (₹${total.toFixed(2)}). Please adjust them in Step 3 (Academic).`);
+          setIsSubmitting(false);
+          return;
+        }
+        if (customInstallments.some(inst => !inst.dueDate)) {
+          toast.error("Please specify a due date for all installments in Step 3 (Academic).");
+          setIsSubmitting(false);
+          return;
+        }
+      }
 
       const isUpdate = !!admission?._id;
 
@@ -4312,37 +4463,27 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
 
       const result = await response.json();
 
-      // Automatically create the installment plan if feesCollectionModule indicates installments
-      if (data.feesCollectionModule && data.feesCollectionModule !== "Pay full" && data.totalFees > 0) {
+      // Automatically create/update the installment plan using the customized values
+      if (data.feesCollectionModule && data.feesCollectionModule !== "Pay full" && data.totalFees > 0 && customInstallments && customInstallments.length > 0) {
         const admissionId = isUpdate ? admission._id : (result.admissionId || result.data?._id);
         if (admissionId) {
-          let num = 2;
-          if (data.feesCollectionModule === "pay installment 3") num = 3;
-          else if (data.feesCollectionModule === "pay installment 4") num = 4;
-          else if (data.feesCollectionModule === "pay installment 5") num = 5;
-
           const total = parseFloat(data.totalFees);
-          const perInstallment = Math.floor(total / num);
-          const installments = Array(num).fill(perInstallment);
-          
-          // Adjust last installment for rounding
-          const remainder = total - (perInstallment * num);
-          if (num > 0) {
-            installments[num-1] += remainder;
-          }
+          const amounts = customInstallments.map(inst => parseFloat(inst.amount));
+          const dates = customInstallments.map(inst => new Date(inst.dueDate));
 
           try {
             await fetch(`/api/students/${admissionId}/fee/installments`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                installments: installments,
+                installments: amounts,
+                dueDates: dates,
                 totalFee: total,
-                numberOfInstallments: num,
+                numberOfInstallments: customInstallments.length,
               })
             });
           } catch (instError) {
-            console.error("Failed to auto-create installments:", instError);
+            console.error("Failed to save custom installments:", instError);
           }
         }
       }
@@ -4428,6 +4569,10 @@ const AdmissionForm = ({ admission, onClose, onUpdate }) => {
             watch={watch}
 
             setValue={setValue}
+
+            customInstallments={customInstallments}
+
+            setCustomInstallments={setCustomInstallments}
 
           />
 

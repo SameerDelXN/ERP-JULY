@@ -1650,8 +1650,9 @@ export default function FeeStructurePage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingStructure, setEditingStructure] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [paymentRecords, setPaymentRecords] = useState([]);
+  const [paymentSearchTerm, setPaymentSearchTerm] = useState("");
 
   // Filter States
   const [filterDepartment, setFilterDepartment] = useState("");
@@ -1801,6 +1802,73 @@ export default function FeeStructurePage() {
       }
     }
   }, [formData.departmentName, departmentData]);
+
+  const fetchPaymentRecords = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/payments");
+      const data = await response.json();
+      if (data.success) {
+        setPaymentRecords(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching payment records:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "payments") {
+      fetchPaymentRecords();
+    }
+  }, [activeTab]);
+
+  const downloadReceipt = async (payment) => {
+    try {
+      console.log('Starting receipt download for payment:', payment);
+
+      if (payment.receiptNumber) {
+        const downloadKey = `downloading_${payment._id}`;
+        if (window[downloadKey]) return;
+        window[downloadKey] = true;
+
+        const downloadUrl = `/api/fee/receipts/pdf?receiptId=${payment._id}`;
+        try {
+          const response = await fetch(downloadUrl);
+          const blob = await response.blob();
+          const link = document.createElement('a');
+          const url = window.URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `Receipt-${payment.receiptNumber}.pdf`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            delete window[downloadKey];
+          }, 200);
+        } catch (err) {
+          console.error(err);
+          delete window[downloadKey];
+          alert('Failed to download receipt');
+        }
+      }
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      alert('Failed to download receipt');
+    }
+  };
+
+  const filteredPayments = paymentRecords.filter((payment) => {
+    const matchesSearch = payment.studentName?.toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
+                          payment.receiptNumber?.toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
+                          payment.generatedBy?.toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
+                          payment.feeType?.toLowerCase().includes(paymentSearchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
   // Handlers
   const handleInputChange = (e) => {
@@ -2459,26 +2527,98 @@ export default function FeeStructurePage() {
         </div>
       )}
 
-      {/* PAYMENTS TAB (Placeholder for now) */}
+      {/* PAYMENTS TAB */}
       {activeTab === "payments" && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Recent Transactions</h2>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-sm">
-              <Download className="w-4 h-4" />
-              Export Report
-            </button>
+          {/* Search and Export */}
+          <div className="flex gap-4 mb-6 items-center">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search transactions, receipt numbers, generators..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                value={paymentSearchTerm}
+                onChange={(e) => setPaymentSearchTerm(e.target.value)}
+              />
+            </div>
+            <ExportButton
+              data={filteredPayments.map(p => ({
+                StudentName: p.studentName,
+                ReceiptNumber: p.receiptNumber,
+                Amount: p.amount,
+                Date: p.paymentDate,
+                Time: p.paymentTime || 'N/A',
+                WhoGenerated: p.generatedBy || 'System',
+                PaymentMode: p.paymentMode || 'Cash'
+              }))}
+              filename="Fee_Receipt_Report"
+            />
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
-            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="w-8 h-8 text-green-400" />
+          {/* Payment Records Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Student Name</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Receipt Number</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Amount</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Time</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Who Generated</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Payment Mode</th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredPayments.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="py-12 text-center text-gray-500">
+                        No transactions found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPayments.map((payment) => (
+                      <tr key={payment._id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-gray-800 font-medium">{payment.studentName}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-gray-800">{payment.receiptNumber}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm font-bold text-green-600">₹{payment.amount}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-gray-800">{payment.paymentDate}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-gray-800">{payment.paymentTime || 'N/A'}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm font-medium text-blue-600">{payment.generatedBy}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-gray-800">{payment.paymentMode || 'Cash'}</span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <button
+                            onClick={() => downloadReceipt(payment)}
+                            className="text-green-600 hover:text-green-800 flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors"
+                            title="Download Receipt"
+                          >
+                            <Download size={14} />
+                            <span className="text-xs font-semibold">Download</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">Payment Module Integration</h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto mt-2">
-              This section would show the list of student payments, due dates, and collection status.
-              It requires integration with the student database and payment gateway records.
-            </p>
           </div>
         </div>
       )}

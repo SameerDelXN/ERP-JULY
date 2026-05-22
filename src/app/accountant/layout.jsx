@@ -61,7 +61,7 @@ const Layout = ({ children }) => {
       return;
     }
 
-    if (user.role === "accountant") {
+    if (user.role === "accountant" || user.role === "staff" || user.role === "admin") {
       setIsAuthorized(true);
     } else {
       setIsAuthorized(false);

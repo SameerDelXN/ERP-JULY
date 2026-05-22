@@ -47,6 +47,9 @@ const Layout = ({ children }) => {
       const requiredPermission = Object.entries(ROUTE_PERMISSIONS).find(([route, perm]) => currentPath.startsWith(route))?.[1];
 
       if (requiredPermission) {
+        if (requiredPermission === "sidebar.feeStructure&payments" && (user.role === "admin" || user.role === "superadmin")) {
+          return;
+        }
         const userPerms = user.roleId?.permissions || [];
         if (!userPerms.includes(requiredPermission)) {
           console.warn(`Access denied to ${currentPath}. Missing: ${requiredPermission}`);
@@ -62,7 +65,10 @@ const Layout = ({ children }) => {
     const perms = user.roleId?.permissions || [];
 
 
-    const items = adminSidebarItems.filter(item => perms.includes(`sidebar.${item.id}`));
+    const items = adminSidebarItems.filter(item => {
+      if (item.id === "feeStructure&payments" && (user.role === "admin" || user.role === "superadmin")) return true;
+      return perms.includes(`sidebar.${item.id}`);
+    });
 
     // Inject Blogs for SuperAdmin ONLY (Bypassing permission system)
     // Inject Blogs for SuperAdmin ONLY (Bypassing permission system)

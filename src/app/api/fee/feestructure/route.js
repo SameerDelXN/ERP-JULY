@@ -3,6 +3,26 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import FeeStructure from "@/app/models/feeStructureSchema";
 import Student from "@/app/models/studentSchema";
 import academic from "@/app/models/academicSchema";
+import { jwtVerify } from "jose";
+import { cookies } from "next/headers";
+
+async function verifyAdminRole() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    if (!token) return false;
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(process.env.JWT_SECRET)
+    );
+    if (!payload || !payload.role) return false;
+    const role = payload.role.toLowerCase().replace(/\s+/g, '');
+    return role === 'admin' || role === 'superadmin';
+  } catch (err) {
+    console.error("verifyAdminRole error:", err);
+    return false;
+  }
+}
 
 export async function GET(req) {
   try {
@@ -145,6 +165,9 @@ export async function GET(req) {
 
 export async function DELETE(req) {
   try {
+    if (!(await verifyAdminRole())) {
+      return NextResponse.json({ error: "Forbidden: Admins only" }, { status: 403 });
+    }
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -176,6 +199,9 @@ export async function DELETE(req) {
 
 export async function PUT(req) {
   try {
+    if (!(await verifyAdminRole())) {
+      return NextResponse.json({ error: "Forbidden: Admins only" }, { status: 403 });
+    }
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -314,6 +340,9 @@ export async function PUT(req) {
 
 export async function POST(req) {
   try {
+    if (!(await verifyAdminRole())) {
+      return NextResponse.json({ error: "Forbidden: Admins only" }, { status: 403 });
+    }
     await connectToDatabase();
     const body = await req.json();
     console.log("Received payload:", body);

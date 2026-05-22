@@ -5,12 +5,50 @@ import Student from '@/app/models/studentSchema';
 import FeeStructure from '@/app/models/feeStructureSchema';
 import PaymentTracking from '@/app/models/paymentTrackingSchema';
 import Admission from '@/app/models/admissionSchema';
+import { cookies } from 'next/headers';
+import userSchema from '@/app/models/userSchema';
+import teacherSchema from '@/app/models/teacherSchema';
+import studentSchema from '@/app/models/studentSchema';
 
 export async function POST(req) {
   try {
     await connectToDatabase();
 
     const { studentId, admissionId, paymentMode, remarks, amountPaid, componentPayments, feeStructure } = await req.json();
+
+    // Resolve session user for createdBy field
+    let createdByUser = null;
+    let createdByString = 'System';
+    try {
+      const cookieStore = await cookies();
+      const sessionToken = cookieStore.get('sessionToken')?.value;
+      const role = cookieStore.get('role')?.value;
+
+      if (sessionToken && role) {
+        if (role === 'hod' || role === 'teacher') {
+          const teacher = await teacherSchema.findOne({ sessionToken });
+          if (teacher) {
+            createdByString = `${teacher.fullName} (${role.toUpperCase()})`;
+          }
+        } else if (role === 'student') {
+          const student = await studentSchema.findOne({ sessionToken });
+          if (student) {
+            createdByString = `${student.fullName} (Student)`;
+          }
+        } else {
+          const user = await userSchema.findOne({ sessionToken });
+          if (user) {
+            createdByUser = user;
+            const roleName = user.role || role || 'User';
+            createdByString = `${user.fullName || user.username || 'User'} (${roleName})`;
+          }
+        }
+      } else if (role) {
+        createdByString = `Session (${role})`;
+      }
+    } catch (sessionError) {
+      console.error('Error resolving session user:', sessionError);
+    }
 
     // Validate admission (primary check)
     let admission = null;
@@ -100,7 +138,8 @@ export async function POST(req) {
       amountPaid: actualAmountPaid,
       paymentMode,
       remarks,
-      academicYear: admission.admissionYear || '2025-2026'
+      academicYear: admission.admissionYear || '2025-2026',
+      createdBy: createdByString
     });
 
     // Populate the receipt with admission data
@@ -185,7 +224,7 @@ export async function POST(req) {
           academicYear: admission.admissionYear || '2025-2026',
           status: actualAmountPaid === totalFees ? 'Paid' : 'Partial',
           transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`,
-          createdBy: admission._id // TODO: Update with actual user ID from session
+          createdBy: createdByUser ? createdByUser._id : admission._id
         });
 
         console.log('Payment tracking saved:', paymentTracking);

@@ -1,32 +1,63 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongoose';
-import Student from '@/app/models/studentSchema';
+import { connectToDatabase } from '@/app/lib/mongodb';
+import { FeeReceipt } from '@/models/feeReceipt';
+import Admission from '@/app/models/admissionSchema';
 
 export async function GET() {
   try {
     await connectToDatabase();
 
-    const students = await Student.find({}).lean();
+    // Query real fee receipts
+    const receipts = await FeeReceipt.find({})
+      .populate('student')
+      .populate('admission')
+      .sort({ date: -1 })
+      .lean();
 
-    // Transform student data to payment records
-    const paymentRecords = students.map(student => ({
-      _id: student._id,
-      studentName: student.fullName,
-      studentId: student.studentId,
-      feeType: student.feesCategory || 'Tuition Fee',
-      amount: student.totalFees || 0,
-      paymentDate: student.totalFees > 0 ?
-        new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : // Random date within last 90 days
-        new Date().toISOString().split('T')[0],
-      status: student.totalFees > 0 ?
-        (Math.random() > 0.3 ? 'Paid' : 'Pending') : // Mock payment status
-        'Paid',
-      transactionId: student.totalFees > 0 ?
-        `TXN${Date.now()}${Math.floor(Math.random() * 1000)}` :
-        `TXN000000`,
-      email: student.email,
-      department: student.branch || 'Not Assigned'
-    }));
+    // Transform receipt records to payment report records
+    const paymentRecords = receipts.map(receipt => {
+      // Find the associated student/admission profile
+      const recordUser = receipt.admission || receipt.student;
+      const studentName = recordUser?.fullName || 'Unknown Student';
+      const studentId = recordUser?.studentId || 'N/A';
+      const department = recordUser?.branch || 'Not Assigned';
+      const email = recordUser?.email || '';
+
+      // Date parsing
+      const dateObj = receipt.date ? new Date(receipt.date) : new Date();
+
+      // Format Date: DD/MM/YYYY
+      const paymentDate = dateObj.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+      // Format Time: HH:MM:SS AM/PM
+      const paymentTime = dateObj.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+
+      return {
+        _id: receipt._id,
+        studentName,
+        studentId,
+        feeType: receipt.remarks || 'Fee Payment',
+        amount: receipt.amountPaid || 0,
+        paymentDate,
+        paymentTime,
+        status: 'Paid',
+        transactionId: receipt.receiptNumber,
+        receiptNumber: receipt.receiptNumber,
+        generatedBy: receipt.createdBy || 'System',
+        email,
+        department,
+        paymentMode: receipt.paymentMode || 'Cash'
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -37,7 +68,7 @@ export async function GET() {
     console.error('[GET_PAYMENTS_ERROR]', error);
     return NextResponse.json({
       success: false,
-      message: 'Internal Server Error'
+      message: 'Internal Server Error: ' + error.message
     }, { status: 500 });
   }
 }

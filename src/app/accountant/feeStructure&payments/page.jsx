@@ -26,7 +26,7 @@ import { useSession } from "@/context/SessionContext";
 
 export default function AccountantFeeStructurePage() {
   const { user } = useSession();
-  const [activeTab, setActiveTab] = useState("structures");
+  const [activeTab, setActiveTab] = useState("payments");
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingStructure, setEditingStructure] = useState(null);
@@ -275,6 +275,42 @@ export default function AccountantFeeStructurePage() {
   const downloadReceipt = async (payment) => {
     try {
       console.log('Starting receipt download for payment:', payment);
+
+      // If it is already a generated receipt in our table, download it directly!
+      if (payment.receiptNumber) {
+        const downloadKey = `downloading_${payment._id}`;
+        if (window[downloadKey]) {
+          console.log('Download already in progress for receipt:', payment._id);
+          return;
+        }
+        window[downloadKey] = true;
+
+        const downloadUrl = `/api/fee/receipts/pdf?receiptId=${payment._id}`;
+        console.log('Direct Download URL:', downloadUrl);
+
+        try {
+          const response = await fetch(downloadUrl);
+          const blob = await response.blob();
+          const link = document.createElement('a');
+          const url = window.URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `Receipt-${payment.receiptNumber}.pdf`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            delete window[downloadKey];
+          }, 200);
+        } catch (err) {
+          console.error('Download failed:', err);
+          delete window[downloadKey];
+          alert('Failed to download receipt');
+        }
+        return;
+      }
       
       // Get the custom amount for this specific payment
       const customAmount = receiptAmounts[payment._id];
@@ -310,8 +346,8 @@ export default function AccountantFeeStructurePage() {
       console.log('Receipt creation response:', receiptData);
       
       if (receiptData.success) {
-        // Create download link with full URL
-        const downloadUrl = `http://localhost:3000/api/fee/receipts/pdf?receiptId=${receiptData.receipt._id}`;
+        // Create download link with relative URL
+        const downloadUrl = `/api/fee/receipts/pdf?receiptId=${receiptData.receipt._id}`;
         console.log('Download URL:', downloadUrl);
         
         // Single download approach - fetch and create blob
@@ -395,166 +431,19 @@ export default function AccountantFeeStructurePage() {
 
   const filteredPayments = paymentRecords.filter((payment) => {
     const matchesSearch = payment.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.feeType?.toLowerCase().includes(searchTerm.toLowerCase());
+                          payment.receiptNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          payment.generatedBy?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          payment.feeType?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Fee Structure & Payments</h1>
-        <p className="text-gray-500 text-sm">Manage fee structures and payment records</p>
+        <h1 className="text-2xl font-bold text-gray-800">Payment Records</h1>
+        <p className="text-gray-500 text-sm">Manage and view payment records</p>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 mb-6 bg-white rounded-lg p-1 shadow-sm">
-        <button
-          onClick={() => setActiveTab("structures")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "structures"
-              ? "bg-blue-600 text-white"
-              : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-          }`}
-        >
-          Fee Structures
-        </button>
-        <button
-          onClick={() => setActiveTab("payments")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "payments"
-              ? "bg-blue-600 text-white"
-              : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-          }`}
-        >
-          Payment Records
-        </button>
-      </div>
-
-      {activeTab === "structures" && (
-        <>
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search fee structures..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <select
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-              >
-                <option value="">All Departments</option>
-                {departmentData.map((dept) => (
-                  <option key={dept._id} value={dept.name}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-              >
-                <option value="">All Years</option>
-                {yearList.map((year) => (
-                  <option key={year._id} value={year.year}>
-                    {year.year}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <Plus size={20} />
-                Add Structure
-              </button>
-              <ExportButton
-                data={filteredStructures.map(s => ({
-                  Department: s.departmentName,
-                  Program: s.programType,
-                  Year: s.year,
-                  Category: s.category || 'General',
-                  StudentFees: s.totalStudentFees || 0,
-                  WelfareFees: s.totalSocialWelfareFees || 0,
-                  TotalFees: s.totalFees || 0
-                }))}
-                filename="Fee_Structures"
-              />
-            </div>
-          </div>
-
-          {/* Fee Structures Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Department</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Program</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Year</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Category</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Student Fees</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Welfare Fees</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Total Fees</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredStructures.map((structure) => (
-                    <tr key={structure._id} className="hover:bg-gray-50">
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.departmentName}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.programType}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.year}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{structure.category || 'General'}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm font-medium text-gray-800">₹{structure.totalStudentFees || 0}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm font-medium text-gray-800">₹{structure.totalSocialWelfareFees || 0}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm font-bold text-blue-600">₹{structure.totalFees || 0}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(structure)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(structure._id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
 
       {activeTab === "payments" && (
         <>
@@ -573,13 +462,14 @@ export default function AccountantFeeStructurePage() {
             <ExportButton
               data={filteredPayments.map(p => ({
                 StudentName: p.studentName,
-                FeeType: p.feeType,
+                ReceiptNumber: p.receiptNumber || p.transactionId,
                 Amount: p.amount,
-                PaymentDate: p.paymentDate,
-                Status: p.status,
-                TransactionId: p.transactionId
+                Date: p.paymentDate,
+                Time: p.paymentTime || 'N/A',
+                WhoGenerated: p.generatedBy || 'System',
+                PaymentMode: p.paymentMode || 'Cash'
               }))}
-              filename="Payment_Records"
+              filename="Fee_Receipt_Report"
             />
           </div>
 
@@ -590,12 +480,12 @@ export default function AccountantFeeStructurePage() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Student Name</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Fee Type</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Receipt Number</th>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Amount</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Payment Date</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Transaction ID</th>
-                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Receipt Amount</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Date</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Time</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Who Generated</th>
+                    <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Payment Mode</th>
                     <th className="text-left py-3 px-6 text-sm font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -603,72 +493,35 @@ export default function AccountantFeeStructurePage() {
                   {filteredPayments.map((payment) => (
                     <tr key={payment._id} className="hover:bg-gray-50">
                       <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{payment.studentName}</span>
+                        <span className="text-sm text-gray-800 font-medium">{payment.studentName}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm text-gray-800">{payment.feeType}</span>
+                        <span className="text-sm text-gray-800">{payment.receiptNumber || payment.transactionId}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm font-medium text-gray-800">₹{payment.amount}</span>
+                        <span className="text-sm font-bold text-green-600">₹{payment.amount}</span>
                       </td>
                       <td className="py-4 px-6">
                         <span className="text-sm text-gray-800">{payment.paymentDate}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <select
-                          value={payment.status}
-                          onChange={(e) => handlePaymentStatusChange(payment, e.target.value)}
-                          className={`px-3 py-1 text-xs rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-blue-500 ${
-                            payment.status === "Paid"
-                              ? "bg-green-100 text-green-700"
-                              : payment.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                        <span className="text-sm text-gray-800">{payment.paymentTime || 'N/A'}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm font-medium text-blue-600">{payment.generatedBy || 'System'}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm text-gray-800">{payment.paymentMode || 'Cash'}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <button
+                          onClick={() => downloadReceipt(payment)}
+                          className="text-green-600 hover:text-green-800 flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors"
+                          title="Download Receipt"
                         >
-                          <option value="Pending">Pending</option>
-                          <option value="Paid">Paid</option>
-                          <option value="Failed">Failed</option>
-                        </select>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-600">{payment.transactionId}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex flex-col gap-2">
-                          <input
-                            type="number"
-                            placeholder="Enter amount"
-                            value={receiptAmounts[payment._id] || ''}
-                            onChange={(e) => setReceiptAmounts(prev => ({
-                              ...prev,
-                              [payment._id]: e.target.value
-                            }))}
-                            className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                            min="0"
-                            step="0.01"
-                          />
-                          {receiptAmounts[payment._id] && (
-                            <span className="text-xs text-gray-500">
-                              Remaining: ₹{Math.max(0, (payment.amount || 0) - parseFloat(receiptAmounts[payment._id]))}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        {payment.status === "Paid" && (
-                          <button
-                            onClick={() => downloadReceipt(payment)}
-                            className="text-green-600 hover:text-green-800 flex items-center gap-1"
-                            title="Download Receipt"
-                          >
-                            <Download size={16} />
-                            <span className="text-xs">Receipt</span>
-                          </button>
-                        )}
-                        {payment.status !== "Paid" && (
-                          <span className="text-gray-400 text-xs">Not Available</span>
-                        )}
+                          <Download size={14} />
+                          <span className="text-xs font-semibold">Download</span>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -679,143 +532,6 @@ export default function AccountantFeeStructurePage() {
         </>
       )}
 
-      {/* Add/Edit Modal */}
-      {(showAddForm || showEditForm) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-800">
-                {editingStructure ? "Edit Fee Structure" : "Add Fee Structure"}
-              </h2>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Program Type</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.programType}
-                  onChange={(e) => setFormData({ ...formData, programType: e.target.value, department: "", year: "" })}
-                  required
-                >
-                  <option value="">Select Program Type</option>
-                  {programTypes.map((pt) => (
-                    <option key={pt._id} value={pt.name}>
-                      {pt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value, year: "" })}
-                  disabled={!formData.programType}
-                  required
-                >
-                  <option value="">{formData.programType ? "Select Department" : "Select Program Type first"}</option>
-                  {filteredDepartments.map((dept) => (
-                    <option key={dept._id} value={dept.department}>
-                      {dept.department}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  disabled={!formData.department}
-                  required
-                >
-                  <option value="">{formData.department ? "Select Year" : "Select Department first"}</option>
-                  {yearList.map((year, index) => (
-                    <option key={index} value={year.year}>
-                      {year.year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.semester}
-                  onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                  placeholder="e.g., 1st Semester"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fee Type</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.feeType}
-                  onChange={(e) => setFormData({ ...formData, feeType: e.target.value })}
-                  placeholder="e.g., Tuition Fee"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="0"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input
-                  type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Optional description"
-                  rows={3}
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setShowEditForm(false);
-                    setEditingRole(null);
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isLoading ? "Saving..." : editingStructure ? "Update" : "Create"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

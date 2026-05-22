@@ -40,6 +40,7 @@ export default function PaymentPage() {
   const [showDefineInstallment, setShowDefineInstallment] = useState(false);
   const [newInstallments, setNewInstallments] = useState([""]);
   const [feesCollectionModule, setFeesCollectionModule] = useState("");
+  const [editingInstallments, setEditingInstallments] = useState([]); // Array of { amount: string, dueDate: string }
 
   // Component-wise payments tracking
   const [componentPayments, setComponentPayments] = useState({});
@@ -195,14 +196,31 @@ export default function PaymentPage() {
       const data = await response.json();
       if (data.success && data.data && data.data.installments) {
         setInstallmentPlan(data.data);
+        const loadedEditing = data.data.installments.map((amount, index) => {
+          let dateStr = "";
+          if (data.data.dueDates && data.data.dueDates[index]) {
+            dateStr = new Date(data.data.dueDates[index]).toISOString().split('T')[0];
+          } else {
+            const d = new Date();
+            d.setDate(d.getDate() + (index * 30));
+            dateStr = d.toISOString().split('T')[0];
+          }
+          return {
+            amount: amount.toString(),
+            dueDate: dateStr
+          };
+        });
+        setEditingInstallments(loadedEditing);
         console.log('Installment plan loaded:', data.data);
       } else {
         setInstallmentPlan(null);
+        setEditingInstallments([]);
         console.log('No installment plan found');
       }
     } catch (error) {
       console.error("Error fetching installment plan:", error);
       setInstallmentPlan(null);
+      setEditingInstallments([]);
     } finally {
       setIsInstallmentLoading(false);
     }
@@ -248,6 +266,71 @@ export default function PaymentPage() {
     }
   };
 
+  const handleEditInstallmentAmount = (index, value) => {
+    setEditingInstallments(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], amount: value };
+      return updated;
+    });
+  };
+
+  const handleEditInstallmentDate = (index, value) => {
+    setEditingInstallments(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], dueDate: value };
+      return updated;
+    });
+  };
+
+  const sumEditingAmounts = () => {
+    return editingInstallments.reduce((sum, inst) => sum + (parseFloat(inst.amount) || 0), 0);
+  };
+
+  const saveCustomInstallmentPlan = async () => {
+    if (!selectedAdmission || !admissionFeeStructure) return;
+    const totalFees = parseFloat(admissionFeeStructure.totalFees || admissionFeeStructure.totalFee || 0);
+    const sum = sumEditingAmounts();
+
+    if (Math.abs(sum - totalFees) > 0.01) {
+      alert(`The sum of installments (₹${sum}) must equal the total fees (₹${totalFees})`);
+      return;
+    }
+
+    if (editingInstallments.some(inst => !inst.dueDate)) {
+      alert("Please select a due date for all installments");
+      return;
+    }
+
+    try {
+      setIsInstallmentLoading(true);
+      const amounts = editingInstallments.map(inst => parseFloat(inst.amount));
+      const dates = editingInstallments.map(inst => new Date(inst.dueDate));
+
+      const response = await fetch(`/api/students/${selectedAdmission._id}/fee/installments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          installments: amounts,
+          dueDates: dates,
+          totalFee: totalFees,
+          numberOfInstallments: editingInstallments.length
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setInstallmentPlan(data.data);
+        alert("Installment plan customized and saved successfully!");
+      } else {
+        alert(data.error || "Failed to save customized plan");
+      }
+    } catch (error) {
+      console.error("Error saving customized plan:", error);
+      alert("An error occurred while saving custom plan");
+    } finally {
+      setIsInstallmentLoading(false);
+    }
+  };
+
   const handleModuleChange = async (val) => {
     setFeesCollectionModule(val);
     if (!admissionFeeStructure) return;
@@ -272,15 +355,29 @@ export default function PaymentPage() {
       installments.push(total - (baseAmount * (numInstallments - 1)));
     }
 
+    // Generate default due dates (30 days interval)
+    const dueDates = installments.map((_, index) => {
+      const d = new Date();
+      d.setDate(d.getDate() + (index * 30));
+      return d.toISOString().split('T')[0];
+    });
+
+    const editingData = installments.map((amount, index) => ({
+      amount: amount.toString(),
+      dueDate: dueDates[index]
+    }));
+    setEditingInstallments(editingData);
+
     try {
       setIsInstallmentLoading(true);
 
-      // Create/Update installment plan in database
+      // Create/Update installment plan in database with default dates
       const response = await fetch(`/api/students/${selectedAdmission._id}/fee/installments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           installments: installments,
+          dueDates: dueDates.map(date => new Date(date)),
           totalFee: total,
           numberOfInstallments: numInstallments
         })
@@ -360,17 +457,7 @@ export default function PaymentPage() {
       return;
     }
 
-    // New validation: If an installment module is selected, force first installment amount for first payment
-    if (feesCollectionModule && feesCollectionModule.startsWith("pay installment") && installmentPlan?.installments?.length > 0) {
-      const firstInstallment = installmentPlan.installments[0];
-      // Check if this is likely the first payment (no history or history sum < first installment)
-      const totalPaidPreviously = paymentHistory.reduce((sum, r) => sum + (r.totalPaid || 0), 0);
-      
-      if (totalPaidPreviously < firstInstallment && Math.abs(amountPaid - firstInstallment) > 1) {
-        alert(`You must enter the first installment amount exactly: ₹${firstInstallment}`);
-        return;
-      }
-    }
+
 
     try {
       setIsLoading(true);
@@ -520,6 +607,64 @@ export default function PaymentPage() {
             </div>
           )}
 
+          {/* Custom Installment Editor */}
+          {selectedAdmission && feesCollectionModule && feesCollectionModule !== "Pay full" && editingInstallments.length > 0 && (
+            <div className="mb-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                <Calendar size={16} className="text-blue-600" />
+                Customize Installment Amounts & Due Dates
+              </h3>
+              
+              <div className="space-y-3">
+                {editingInstallments.map((inst, index) => (
+                  <div key={index} className="grid grid-cols-2 gap-3 items-center">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Amount (₹) for Part {index + 1}
+                      </label>
+                      <input
+                        type="number"
+                        value={inst.amount}
+                        onChange={(e) => handleEditInstallmentAmount(index, e.target.value)}
+                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800 focus:ring-1 focus:ring-blue-500"
+                        placeholder="Amount"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Due Date for Part {index + 1}
+                      </label>
+                      <input
+                        type="date"
+                        value={inst.dueDate}
+                        onChange={(e) => handleEditInstallmentDate(index, e.target.value)}
+                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-1 focus:ring-blue-500 font-medium"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total checking and Apply action */}
+              <div className="mt-4 pt-3 border-t border-blue-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs font-bold text-gray-700">
+                  Total Allocated:{" "}
+                  <span className={Math.abs(sumEditingAmounts() - parseFloat(admissionFeeStructure?.totalFees || admissionFeeStructure?.totalFee || 0)) < 0.01 ? "text-green-600" : "text-red-500"}>
+                    ₹{sumEditingAmounts()}
+                  </span> / ₹{admissionFeeStructure?.totalFees || admissionFeeStructure?.totalFee || 0}
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={saveCustomInstallmentPlan}
+                  className="px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold shadow hover:bg-blue-700 transition-colors"
+                >
+                  Apply & Save Plan
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Fee Structure Display */}
           {admissionFeeStructure && (
             <div className="mb-4">
@@ -572,6 +717,11 @@ export default function PaymentPage() {
                         {installmentPlan.installments.length === 1 ? "Full Payment" : `Installment ${index + 1}`}
                       </div>
                       <div className="text-sm font-bold text-blue-800 group-hover:text-blue-900">₹{amount}</div>
+                      {installmentPlan.dueDates && installmentPlan.dueDates[index] && (
+                        <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                          Due: {new Date(installmentPlan.dueDates[index]).toLocaleDateString('en-IN')}
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>

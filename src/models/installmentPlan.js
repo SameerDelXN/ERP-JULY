@@ -10,6 +10,10 @@ const installmentPlanSchema = new mongoose.Schema({
     type: [Number], // Array of installment amounts
     required: true
   },
+  dueDates: {
+    type: [Date], // Array of due dates for each installment
+    default: []
+  },
   totalFee: {
     type: Number,
     required: true

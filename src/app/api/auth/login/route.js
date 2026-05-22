@@ -54,7 +54,7 @@ export async function POST(request) {
       { expiresIn: '1d' }
     );
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('token', token, {
       httpOnly: true,
       path: '/',

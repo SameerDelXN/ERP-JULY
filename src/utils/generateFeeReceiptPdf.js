@@ -229,7 +229,8 @@ export async function generateFeeReceiptPDF(receiptData) {
         bottom: '8mm',
         left: '8mm'
       },
-      preferCSSPageSize: true
+      preferCSSPageSize: true,
+      landscape: true
     });
     
     await browser.close();

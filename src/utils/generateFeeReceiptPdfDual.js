@@ -217,7 +217,7 @@ export async function generateFeeReceiptPDFDual(receiptData) {
         left: '8mm'
       },
       preferCSSPageSize: true,
-      landscape: false // Portrait orientation for dual copies
+      landscape: true // Landscape orientation for dual copies
     });
     
     await browser.close();
